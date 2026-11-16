@@ -1,5 +1,6 @@
 import { Enemy, Series } from '../book/book.models';
 import { combatResult } from './combat-results-table';
+import { itemsCombatBonus } from './equipment';
 import { Character, CombatRound, CombatState } from './game.models';
 
 export interface SeriesRules {
@@ -78,6 +79,7 @@ export const DISCIPLINE = {
   weaponskill: 'Weaponskill',
   mindblast: 'Mindblast',
   healing: 'Healing',
+  hunting: 'Hunting',
 } as const;
 
 export function hasDiscipline(character: Character, name: string): boolean {
@@ -107,6 +109,8 @@ export interface CombatSkillBreakdown {
   weaponskill: number;
   noWeapon: number;
   mindblast: number;
+  /** Objets spéciaux (ex. Shield +2). */
+  items: number;
   modifier: number;
   total: number;
 }
@@ -123,14 +127,16 @@ export function effectiveCombatSkill(
       : 0;
   const noWeapon = weapons.length === 0 ? -4 : 0;
   const mindblast = combat.useMindblast && hasDiscipline(character, DISCIPLINE.mindblast) ? 2 : 0;
+  const items = itemsCombatBonus(character);
   const base = character.combatSkill;
   return {
     base,
     weaponskill,
     noWeapon,
     mindblast,
+    items,
     modifier: combat.modifier,
-    total: base + weaponskill + noWeapon + mindblast + combat.modifier,
+    total: base + weaponskill + noWeapon + mindblast + items + combat.modifier,
   };
 }
 

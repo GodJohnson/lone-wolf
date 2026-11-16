@@ -3,7 +3,16 @@ import { Enemy } from '../book/book.models';
 import { database } from '../storage/database';
 import { Character, CombatState, GameState } from './game.models';
 import { randomNumber } from './random';
-import { effectiveCombatSkill, healingOnLeave, playRound, startCombat } from './rules';
+import {
+  InventoryError,
+  ItemSlot,
+  MealChoice,
+  addItem,
+  removeItem,
+  resolveMeal,
+  useItem,
+} from './equipment';
+import { SeriesRules, effectiveCombatSkill, healingOnLeave, playRound, startCombat } from './rules';
 
 /**
  * État de la partie en cours. Chaque modification est immédiatement persistée en IndexedDB :
@@ -60,6 +69,7 @@ export class GameService {
       history: [...state.history, state.section],
       character,
       combat: null,
+      mealResolved: false,
     });
   }
 
@@ -73,6 +83,7 @@ export class GameService {
       section: state.history[state.history.length - 1],
       history,
       combat: null,
+      mealResolved: false,
     });
   }
 
@@ -80,6 +91,34 @@ export class GameService {
     const state = this._state();
     if (!state) return;
     await this.commit({ ...state, character: update(state.character) });
+  }
+
+  /** Ajoute un objet en respectant les capacités ; retourne l'erreur éventuelle. */
+  async addItem(slot: ItemSlot, name: string, rules: SeriesRules): Promise<InventoryError | null> {
+    const state = this._state();
+    if (!state) return null;
+    const result = addItem(state.character, slot, name, rules);
+    if (result.error) return result.error;
+    await this.commit({ ...state, character: result.character });
+    return null;
+  }
+
+  async removeItem(slot: ItemSlot, index: number): Promise<void> {
+    await this.updateCharacter((c) => removeItem(c, slot, index));
+  }
+
+  async useItem(index: number): Promise<void> {
+    await this.updateCharacter((c) => useItem(c, index));
+  }
+
+  async resolveMeal(choice: MealChoice): Promise<void> {
+    const state = this._state();
+    if (!state) return;
+    await this.commit({
+      ...state,
+      character: resolveMeal(state.character, choice),
+      mealResolved: true,
+    });
   }
 
   async startCombat(blockIndex: number, enemy: Enemy): Promise<void> {

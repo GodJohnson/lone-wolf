@@ -14,11 +14,19 @@ const DICTIONARIES: Record<UiLanguage, Record<MessageKey, string>> = { fr, en };
 export class I18nService {
   private readonly document = inject(DOCUMENT);
   readonly lang = signal<UiLanguage>(this.initialLanguage());
+  /**
+   * Langue du texte du livre affiché (ex. `en`), ou `null` hors lecture. Quand elle est définie,
+   * elle devient la langue du document : les navigateurs mobiles (Chrome, Safari) proposent alors
+   * de traduire la page. L'interface est exclue de cette traduction (`translate="no"`).
+   */
+  readonly contentLang = signal<string | null>(null);
 
   constructor() {
     effect(() => {
+      this.document.documentElement.lang = this.contentLang() ?? this.lang();
+    });
+    effect(() => {
       const lang = this.lang();
-      this.document.documentElement.lang = lang;
       try {
         localStorage.setItem(STORAGE_KEY, lang);
       } catch {

@@ -47,6 +47,8 @@ export interface GameState {
   combat: CombatState | null;
   /** Sections où un combat a été mené (pour la règle de Guérison). */
   foughtIn: number[];
+  /** Le Repas imposé par la section courante a été réglé (remis à faux à chaque changement de section). */
+  mealResolved?: boolean;
   createdAt: string;
   updatedAt: string;
 }

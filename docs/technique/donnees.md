@@ -18,7 +18,7 @@ erDiagram
 | `sections` | `[bookId, number]` | Blocs de la section numérotée |
 | `pages` | `[bookId, id]` | Pages hors sections (règles, équipement, carte…) |
 | `images` | `[bookId, name]` | Illustrations (Blob) |
-| `games` | `bookId` | Partie : section, historique, personnage, combat en cours, sections avec combat |
+| `games` | `bookId` | Partie : section, historique, personnage (dont inventaire), combat en cours, sections avec combat, `mealResolved` (Repas de la section réglé, champ optionnel ajouté sans migration) |
 
 Les stores `sections`, `pages` et `images` ont un index `byBook`, utilisé pour la suppression d'un livre.
 

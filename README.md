@@ -12,16 +12,18 @@ Conséquence :
 - le joueur télécharge le zip officiel d'un livre (lien direct dans l'appli), puis l'importe ;
 - le livre est converti et stocké **uniquement dans le navigateur** (IndexedDB) et reste jouable hors ligne.
 
-Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bilingue FR/EN ; le texte du livre reste dans la langue du zip.
+Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bilingue FR/EN ; le texte du livre reste dans la langue du zip, et le joueur peut le faire traduire par son navigateur.
 
 ## Fonctionnalités (v0.1)
 
 - Bibliothèque : import d'un zip, catalogue des 29 livres avec liens de téléchargement.
-- Création du personnage : tirages HABILETÉ / ENDURANCE, choix des disciplines (lues dans le livre), arme de Weaponskill.
+- Création du personnage : tirages HABILETÉ / ENDURANCE, choix des disciplines (lues dans le livre), arme de Weaponskill, équipement de départ guidé (livres 1 à 5).
 - Lecture section par section, choix en gros boutons, illustrations, pages de règles et annexes.
-- Feuille d'aventure : caractéristiques, disciplines, armes, sac à dos, objets spéciaux, or, repas, notes.
+- Feuille d'aventure : caractéristiques, disciplines, inventaire avec capacités (2 armes, 8 places de sac à dos Repas compris, 50 couronnes), effets des objets (Helmet, Chainmail, Shield), potions à boire, notes.
+- Repas : quand le texte l'impose, l'appli propose de manger un Repas, de chasser ou de perdre 3 END.
 - Combat : quotient d'attaque calculé (Weaponskill +2, Mindblast +2, sans arme −4, modificateur de section), table des résultats, fuite, journal des assauts.
 - Table de hasard (tirage cryptographique 0-9), Guérison automatique (+1 END par section sans combat).
+- Lecture en français : la page de lecture déclare la langue du livre et exclut l'interface de la traduction, pour que la fonction « Traduire » du navigateur (Chrome, Safari) traduise uniquement le texte du livre ([ADR 0004](docs/technique/adr/0004-traduction-par-le-navigateur.md)).
 - Sauvegarde automatique à chaque action, retour à la section précédente, PWA installable.
 
 ## Développement
@@ -62,9 +64,10 @@ src/app/
 
 ## Dette technique et limites connues
 
-- **Table des résultats de combat retranscrite dans le code** (`combat-results-table.ts`) : le zip ne la fournit qu'en image. C'est une donnée de mécanique, pas du texte, mais le point reste à garder en tête vis-à-vis de la licence.
+- **Table des résultats de combat et équipement de départ retranscrits dans le code** (`combat-results-table.ts`) : le zip ne la fournit qu'en image. C'est une donnée de mécanique, pas du texte, mais le point reste à garder en tête vis-à-vis de la licence.
 - **Seules les règles de la série Kaï (livres 1 à 5) sont vérifiées.** Pour Magnakaï, Grand Maître et Nouvel Ordre, les valeurs de création (`SERIES_RULES`) sont des défauts signalés comme non vérifiés dans l'UI, et les disciplines avancées n'ont pas d'effet automatique.
-- L'équipement de départ (spécifique à chaque livre) est saisi à la main.
+- L'équipement de départ n'est guidé que pour les livres 1 à 5 (données relevées dans `core/game/equipment.ts`). Pour les autres livres, il se saisit à la main.
+- Les objets trouvés en cours de lecture s'ajoutent à la main sur la Feuille d'aventure (avec suggestions).
 - Pas de transfert de personnage d'un livre à l'autre.
 - Les effets spécifiques à une section (perte d'END, objets gagnés, ennemis insensibles à Mindblast…) sont appliqués par le joueur.
 - Pas encore de tests de composants ni de tests e2e versionnés.

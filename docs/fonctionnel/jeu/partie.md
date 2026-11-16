@@ -29,7 +29,7 @@ Règles du jeu vérifiées sur le livre 1 (série Kaï). Les autres séries util
 | RG-JEU-005 | Chaque assaut applique la table des résultats selon le quotient d'attaque ; `K` = END à 0 ; le combat se termine quand une END atteint 0 | Livre 1, *Combat Results Table* | à valider |
 | RG-JEU-006 | Fuite : seules les pertes du héros sont appliquées pour l'assaut, puis le combat se termine | Livre 1, *Rules for Combat* | à valider |
 | RG-JEU-007 | Healing : +1 END en quittant une section où le héros n'a pas combattu, sans dépasser l'END initiale | Livre 1, *Kai Disciplines* | à valider |
-| RG-JEU-008 | Au plus 2 armes, 8 objets dans le sac à dos (Kaï), 50 couronnes d'or | Livre 1, *Equipment* | à valider |
+| RG-JEU-008 | Capacités de transport : voir [RG-EQU-004](equipement.md) | Livre 1, *Equipment* | à valider |
 | RG-JEU-009 | La partie est enregistrée à chaque action ; une seule partie par livre | Choix de conception | à valider |
 | RG-JEU-010 | Le retour à la section précédente n'annule pas les modifications de la Feuille d'aventure | Choix de conception | à valider |
 
@@ -75,3 +75,4 @@ Routes `/book/:bookId/new`, `/book/:bookId/play`, `/book/:bookId/chart`, `/book/
 | Date | WI | Changement |
 |---|---|---|
 | 2026-11-16 | n/a | Création |
+| 2026-11-16 | n/a | Équipement déplacé dans [equipement.md](equipement.md) |

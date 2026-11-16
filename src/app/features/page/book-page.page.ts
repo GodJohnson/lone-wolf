@@ -15,6 +15,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { BlocksComponent } from '../../shared/blocks.component';
 import { RandomNumberComponent } from '../../shared/random-number.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
+import { useBookLanguage } from '../../shared/book-language';
 
 /** Pages hors sections : règles, disciplines, équipement, carte, histoire... */
 @Component({
@@ -30,7 +31,12 @@ import { TopBarComponent } from '../../shared/top-bar.component';
     <main class="page">
       @if (page.value(); as p) {
         <article class="section-text">
-          <lw-blocks [bookId]="bookId()" [blocks]="p.blocks" (page)="openPage($event)" />
+          <lw-blocks
+            [bookId]="bookId()"
+            [blocks]="p.blocks"
+            [lang]="book.value()?.lang ?? 'en'"
+            (page)="openPage($event)"
+          />
         </article>
       } @else if (!page.isLoading()) {
         <p class="notice notice--error">{{ i18n.t('page.notFound') }}</p>
@@ -85,6 +91,7 @@ export class BookPagePage {
   );
 
   constructor() {
+    useBookLanguage(() => this.book.value()?.lang);
     effect(() => {
       if (this.page.value()) window.scrollTo({ top: 0 });
     });

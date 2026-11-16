@@ -11,11 +11,14 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
+import { MealChoice, requiresMeal } from '../../core/game/equipment';
 import { GameService } from '../../core/game/game.service';
+import { DISCIPLINE, hasDiscipline } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { BlocksComponent } from '../../shared/blocks.component';
 import { RandomNumberComponent } from '../../shared/random-number.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
+import { useBookLanguage } from '../../shared/book-language';
 import { CombatPanelComponent } from './combat-panel.component';
 
 @Component({
@@ -67,11 +70,42 @@ export class ReaderPage {
     loader: ({ params }) => this.books.section(params.bookId, params.number),
   });
 
+  /** La section impose un Repas qui n'a pas encore été réglé. */
+  protected readonly mealDue = computed(() => {
+    const blocks = this.section.value()?.blocks ?? [];
+    const text = blocks.map((b) => ('html' in b ? b.html.replace(/<[^>]+>/g, '') : '')).join(' ');
+    return requiresMeal(text) && !this.game.state()?.mealResolved && !this.game.isDead();
+  });
+  protected readonly canHunt = computed(() => {
+    const c = this.game.character();
+    return !!c && hasDiscipline(c, DISCIPLINE.hunting);
+  });
+
+  protected eat(choice: MealChoice): void {
+    this.game.resolveMeal(choice);
+  }
+
   protected readonly isDeadEnd = computed(
     () => !!this.section.value()?.blocks.some((b) => b.kind === 'deadend'),
   );
 
+  /** Astuce « Traduire » : affichée si l'interface est en français (les livres Project Aon sont en anglais ou espagnol). */
+  protected readonly showTranslateTip = signal(!readTipDismissed());
+  protected readonly translateTipVisible = computed(
+    () => this.showTranslateTip() && this.i18n.lang() === 'fr' && !!this.book.value(),
+  );
+
+  protected dismissTranslateTip(): void {
+    this.showTranslateTip.set(false);
+    try {
+      localStorage.setItem(TIP_KEY, '1');
+    } catch {
+      // Stockage indisponible : l'astuce réapparaîtra simplement plus tard.
+    }
+  }
+
   constructor() {
+    useBookLanguage(() => this.book.value()?.lang);
     // Remonte en haut de page à chaque changement de section.
     effect(() => {
       if (this.sectionNumber() !== null) window.scrollTo({ top: 0 });
@@ -104,5 +138,15 @@ export class ReaderPage {
   private flash(text: string): void {
     this.toast.set(text);
     setTimeout(() => this.toast.set(null), 2500);
+  }
+}
+
+const TIP_KEY = 'lone-wolf.translateTipDismissed';
+
+function readTipDismissed(): boolean {
+  try {
+    return localStorage.getItem(TIP_KEY) === '1';
+  } catch {
+    return false;
   }
 }

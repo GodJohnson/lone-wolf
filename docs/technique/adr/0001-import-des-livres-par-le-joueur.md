@@ -23,5 +23,5 @@ Option 3. Le joueur télécharge le zip depuis projectaon.org, l'application le 
 ## Conséquences
 
 - Positives : conforme à la licence ; aucun serveur ; jouable hors ligne.
-- Négatives / dette assumée : étape manuelle à l'installation de chaque livre ; la table des résultats de combat, fournie seulement en image dans le zip, est retranscrite dans le code (donnée de mécanique, pas texte du livre).
+- Négatives / dette assumée : étape manuelle à l'installation de chaque livre ; la table des résultats de combat, fournie seulement en image dans le zip, est retranscrite dans le code, de même que l'équipement de départ des livres 1 à 5 (`core/game/equipment.ts`) : ce sont des données de mécanique (noms d'objets, nombres), pas le texte des livres.
 - À revoir si : Project Aon accorde une autorisation explicite (option 4).

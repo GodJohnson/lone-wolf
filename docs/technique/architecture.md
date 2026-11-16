@@ -40,6 +40,7 @@ flowchart LR
 - **Contenu importé non fiable** : nettoyage par liste blanche à l'import (`html-cleaner.ts`, qui retire scripts, styles, attributs d'événement et liens hors `*.htm` / http(s)), puis assainissement Angular au rendu (`[innerHTML]`). Les illustrations sont servies en URL `blob:`.
 - **Garde-fous à l'import** : zip ≤ 50 Mo, total décompressé ≤ 150 Mo, entrée ≤ 20 Mo.
 - **Services tiers** : GitHub Pages (hébergement de l'application statique) et projectaon.org (lien de téléchargement suivi par le joueur, sans appel de l'application). Aucun envoi de données. L'hébergement GitHub Pages est **à valider par le Groupement SIC** si l'application devient un outil SDIS.
+- **Traduction des livres** : l'application n'envoie rien. C'est le joueur qui déclenche la traduction de son navigateur (Chrome, Safari), dont le service peut transmettre le texte affiché aux serveurs de Google ou d'Apple. Il s'agit uniquement du texte public du livre, sans donnée personnelle. Voir l'[ADR 0004](adr/0004-traduction-par-le-navigateur.md).
 - **Journalisation** : aucune.
 
 ## Décisions structurantes
