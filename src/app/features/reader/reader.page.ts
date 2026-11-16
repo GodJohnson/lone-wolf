@@ -18,6 +18,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { BlocksComponent } from '../../shared/blocks.component';
 import { RandomNumberComponent } from '../../shared/random-number.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
+import { useBookLanguage } from '../../shared/book-language';
 import { CombatPanelComponent } from './combat-panel.component';
 
 @Component({
@@ -88,7 +89,23 @@ export class ReaderPage {
     () => !!this.section.value()?.blocks.some((b) => b.kind === 'deadend'),
   );
 
+  /** Astuce « Traduire » : affichée si l'interface est en français (les livres Project Aon sont en anglais ou espagnol). */
+  protected readonly showTranslateTip = signal(!readTipDismissed());
+  protected readonly translateTipVisible = computed(
+    () => this.showTranslateTip() && this.i18n.lang() === 'fr' && !!this.book.value(),
+  );
+
+  protected dismissTranslateTip(): void {
+    this.showTranslateTip.set(false);
+    try {
+      localStorage.setItem(TIP_KEY, '1');
+    } catch {
+      // Stockage indisponible : l'astuce réapparaîtra simplement plus tard.
+    }
+  }
+
   constructor() {
+    useBookLanguage(() => this.book.value()?.lang);
     // Remonte en haut de page à chaque changement de section.
     effect(() => {
       if (this.sectionNumber() !== null) window.scrollTo({ top: 0 });
@@ -121,5 +138,15 @@ export class ReaderPage {
   private flash(text: string): void {
     this.toast.set(text);
     setTimeout(() => this.toast.set(null), 2500);
+  }
+}
+
+const TIP_KEY = 'lone-wolf.translateTipDismissed';
+
+function readTipDismissed(): boolean {
+  try {
+    return localStorage.getItem(TIP_KEY) === '1';
+  } catch {
+    return false;
   }
 }

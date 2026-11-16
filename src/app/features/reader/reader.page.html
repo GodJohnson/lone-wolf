@@ -19,8 +19,18 @@
   }
 
   @if (section.value(); as s) {
+    @if (translateTipVisible()) {
+      <aside class="notice translate-tip">
+        <p>{{ i18n.t('reader.translateTip') }}</p>
+        <button type="button" class="button button--small" (click)="dismissTranslateTip()">
+          {{ i18n.t('reader.translateTipOk') }}
+        </button>
+      </aside>
+    }
+
     <article class="section-text">
       <lw-blocks
+        [lang]="book.value()?.lang ?? 'en'"
         [bookId]="bookId()"
         [blocks]="s.blocks"
         [interactive]="true"

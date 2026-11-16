@@ -75,6 +75,9 @@ export const fr = {
   'reader.restart': 'Recommencer',
   'reader.fight': 'Combattre',
   'reader.healing': '+1 ENDURANCE (Guérison)',
+  'reader.translateTip':
+    'Le livre est en anglais. Pour le lire en français, utilisez « Traduire » dans le menu de votre navigateur (Chrome : ⋮ › Traduire ; Safari : aA › Traduire). Seul le texte du livre est traduit, par le service de traduction de votre navigateur.',
+  'reader.translateTipOk': 'Compris',
 
   'random.title': 'Table de hasard',
   'random.draw': 'Tirer un nombre',
@@ -207,6 +210,9 @@ export const en: Record<MessageKey, string> = {
   'reader.restart': 'Start again',
   'reader.fight': 'Fight',
   'reader.healing': '+1 ENDURANCE (Healing)',
+  'reader.translateTip':
+    'Use your browser’s “Translate” menu to read the book in another language. Only the book text is translated.',
+  'reader.translateTipOk': 'Got it',
 
   'random.title': 'Random Number Table',
   'random.draw': 'Pick a number',

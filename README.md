@@ -12,7 +12,7 @@ Conséquence :
 - le joueur télécharge le zip officiel d'un livre (lien direct dans l'appli), puis l'importe ;
 - le livre est converti et stocké **uniquement dans le navigateur** (IndexedDB) et reste jouable hors ligne.
 
-Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bilingue FR/EN ; le texte du livre reste dans la langue du zip.
+Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bilingue FR/EN ; le texte du livre reste dans la langue du zip, et le joueur peut le faire traduire par son navigateur.
 
 ## Fonctionnalités (v0.1)
 
@@ -23,6 +23,7 @@ Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bil
 - Repas : quand le texte l'impose, l'appli propose de manger un Repas, de chasser ou de perdre 3 END.
 - Combat : quotient d'attaque calculé (Weaponskill +2, Mindblast +2, sans arme −4, modificateur de section), table des résultats, fuite, journal des assauts.
 - Table de hasard (tirage cryptographique 0-9), Guérison automatique (+1 END par section sans combat).
+- Lecture en français : la page de lecture déclare la langue du livre et exclut l'interface de la traduction, pour que la fonction « Traduire » du navigateur (Chrome, Safari) traduise uniquement le texte du livre ([ADR 0004](docs/technique/adr/0004-traduction-par-le-navigateur.md)).
 - Sauvegarde automatique à chaque action, retour à la section précédente, PWA installable.
 
 ## Développement

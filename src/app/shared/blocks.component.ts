@@ -29,16 +29,26 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
               [disabled]="choicesDisabled()"
               (click)="section.emit(block.target)"
             >
-              <span class="choice__text" [innerHTML]="block.html"></span>
+              <span
+                class="choice__text"
+                translate="yes"
+                [attr.lang]="lang()"
+                [innerHTML]="block.html"
+              ></span>
               <span class="choice__target">{{ block.target }}</span>
             </button>
           } @else {
-            <p class="choice-static" [innerHTML]="block.html"></p>
+            <p
+              class="choice-static"
+              translate="yes"
+              [attr.lang]="lang()"
+              [innerHTML]="block.html"
+            ></p>
           }
         }
         @case ('combat') {
           <div class="combat-block">
-            <p [innerHTML]="block.html"></p>
+            <p translate="yes" [attr.lang]="lang()" [innerHTML]="block.html"></p>
             @if (interactive() && block.enemy; as enemy) {
               <button
                 type="button"
@@ -57,10 +67,15 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
           <figure><lw-book-image [bookId]="bookId()" [name]="block.image" /></figure>
         }
         @case ('deadend') {
-          <p class="deadend" [innerHTML]="block.html"></p>
+          <p class="deadend" translate="yes" [attr.lang]="lang()" [innerHTML]="block.html"></p>
         }
         @default {
-          <div class="html-block" [innerHTML]="block.html"></div>
+          <div
+            class="html-block"
+            translate="yes"
+            [attr.lang]="lang()"
+            [innerHTML]="block.html"
+          ></div>
         }
       }
     }
@@ -72,6 +87,8 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
 export class BlocksComponent {
   protected readonly i18n = inject(I18nService);
   readonly bookId = input.required<string>();
+  /** Langue du texte du livre : seul ce texte est traduisible par le navigateur. */
+  readonly lang = input('en');
   readonly blocks = input.required<Block[]>();
   /** Choix cliquables et boutons de combat (lecture d'une section en jeu). */
   readonly interactive = input(false);
