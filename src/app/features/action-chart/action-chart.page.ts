@@ -1,0 +1,85 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  resource,
+  signal,
+} from '@angular/core';
+import { Router } from '@angular/router';
+import { BookRepository } from '../../core/book/book-repository';
+import { Character } from '../../core/game/game.models';
+import { GameService } from '../../core/game/game.service';
+import { rulesFor } from '../../core/game/rules';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TopBarComponent } from '../../shared/top-bar.component';
+import { ItemListComponent } from './item-list.component';
+
+type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'meals';
+
+@Component({
+  selector: 'lw-action-chart-page',
+  imports: [TopBarComponent, ItemListComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './action-chart.page.html',
+})
+export class ActionChartPage {
+  protected readonly i18n = inject(I18nService);
+  protected readonly game = inject(GameService);
+  private readonly books = inject(BookRepository);
+  private readonly router = inject(Router);
+
+  readonly bookId = input.required<string>();
+
+  protected readonly book = resource({
+    params: () => this.bookId(),
+    loader: async ({ params }) => {
+      const [book, state] = await Promise.all([this.books.get(params), this.game.load(params)]);
+      if (!state) await this.router.navigate(['/book', params, 'new'], { replaceUrl: true });
+      return book;
+    },
+  });
+  protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
+  protected readonly character = this.game.character;
+  protected readonly editingDisciplines = signal(false);
+
+  protected adjust(field: NumericField, delta: number): void {
+    const maxGold = this.rules().maxGold;
+    this.game.updateCharacter((c) => {
+      const next = { ...c, [field]: Math.max(0, c[field] + delta) };
+      if (field === 'gold') next.gold = Math.min(next.gold, maxGold);
+      if (field === 'endurance') next.endurance = Math.min(next.endurance, next.enduranceMax);
+      if (field === 'enduranceMax') next.endurance = Math.min(next.endurance, next.enduranceMax);
+      return next;
+    });
+  }
+
+  protected eatMeal(): void {
+    this.game.updateCharacter((c) => ({ ...c, meals: Math.max(0, c.meals - 1) }));
+  }
+
+  protected setList(field: 'weapons' | 'backpack' | 'specialItems', items: string[]): void {
+    this.game.updateCharacter((c) => ({ ...c, [field]: items }));
+  }
+
+  protected toggleDiscipline(name: string): void {
+    this.game.updateCharacter((c) => ({
+      ...c,
+      disciplines: c.disciplines.includes(name)
+        ? c.disciplines.filter((d) => d !== name)
+        : [...c.disciplines, name],
+    }));
+  }
+
+  protected saveNotes(notes: string): void {
+    if (notes !== this.character()?.notes)
+      this.game.updateCharacter((c: Character) => ({ ...c, notes }));
+  }
+
+  protected async abandon(): Promise<void> {
+    if (!confirm(this.i18n.t('chart.deleteConfirm'))) return;
+    await this.game.deleteGame(this.bookId());
+    await this.router.navigate(['/']);
+  }
+}

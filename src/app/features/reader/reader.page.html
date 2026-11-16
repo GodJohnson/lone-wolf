@@ -1,0 +1,82 @@
+<lw-top-bar
+  [title]="sectionNumber() !== null ? i18n.t('reader.section', { number: sectionNumber()! }) : ''"
+  [subtitle]="book.value()?.title ?? ''"
+  [backLink]="['/']"
+/>
+
+<main class="page page--reader">
+  @if (game.character(); as c) {
+    <div class="status-strip">
+      <span
+        >{{ i18n.t('combat.cs') }} <strong>{{ c.combatSkill }}</strong></span
+      >
+      <span [class.danger]="c.endurance <= 5">
+        {{ i18n.t('combat.ep') }} <strong>{{ c.endurance }}</strong>/{{ c.enduranceMax }}
+      </span>
+      <span>🪙 {{ c.gold }}</span>
+      <span>🍖 {{ c.meals }}</span>
+    </div>
+  }
+
+  @if (section.value(); as s) {
+    <article class="section-text">
+      <lw-blocks
+        [bookId]="bookId()"
+        [blocks]="s.blocks"
+        [interactive]="true"
+        [choicesDisabled]="game.isDead()"
+        (section)="goTo($event)"
+        (page)="openPage($event)"
+        (fight)="fight($event)"
+        [activeCombat]="game.combat()?.blockIndex ?? null"
+      >
+        <lw-combat-panel />
+      </lw-blocks>
+    </article>
+
+    @if (game.isDead() || isDeadEnd()) {
+      <section class="card notice--error end-card">
+        <p>{{ game.isDead() ? i18n.t('reader.dead') : i18n.t('reader.deadend') }}</p>
+        <a class="button button--primary" [routerLink]="['/book', bookId(), 'new']">{{
+          i18n.t('reader.restart')
+        }}</a>
+      </section>
+    }
+
+    @if (game.state()?.history?.length) {
+      <button type="button" class="button button--ghost button--block" (click)="game.back()">
+        ↶ {{ i18n.t('reader.previous') }}
+      </button>
+    }
+
+    @if (book.value()?.copyright; as copyright) {
+      <footer class="license-footer small muted">
+        {{ copyright }} {{ i18n.t('footer.license') }}
+      </footer>
+    }
+  } @else if (section.isLoading() || !loaded.hasValue()) {
+    <p class="muted center">{{ i18n.t('common.loading') }}</p>
+  } @else if (sectionNumber() !== null) {
+    <p class="notice notice--error">{{ i18n.t('reader.missing', { number: sectionNumber()! }) }}</p>
+  }
+</main>
+
+@if (toast(); as text) {
+  <div class="toast" role="status">{{ text }}</div>
+}
+
+<nav class="bottom-nav">
+  <a [routerLink]="['/book', bookId(), 'chart']">
+    <span aria-hidden="true">📜</span>{{ i18n.t('reader.chart') }}
+  </a>
+  <button type="button" (click)="showRandom.set(true)">
+    <span aria-hidden="true">🎲</span>{{ i18n.t('reader.random') }}
+  </button>
+  <a [routerLink]="['/book', bookId(), 'page', book.value()?.pages?.[0]?.id ?? 'title']">
+    <span aria-hidden="true">📖</span>{{ i18n.t('reader.rules') }}
+  </a>
+</nav>
+
+@if (showRandom()) {
+  <lw-random-number (closed)="showRandom.set(false)" />
+}

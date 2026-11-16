@@ -1,0 +1,105 @@
+@if (combat(); as c) {
+  <section class="card combat-panel" aria-live="polite">
+    <h2>⚔ {{ i18n.t('combat.title') }}</h2>
+
+    <div class="combatants">
+      <div class="combatant">
+        <span class="combatant__name">{{ i18n.t('combat.you') }}</span>
+        <span
+          >{{ i18n.t('combat.cs') }} <strong>{{ cs()?.total }}</strong></span
+        >
+        <span
+          >{{ i18n.t('combat.ep') }} <strong>{{ character()?.endurance }}</strong></span
+        >
+      </div>
+      <div class="combatant combatant--enemy">
+        <span class="combatant__name">{{ c.enemy.name }}</span>
+        <span
+          >{{ i18n.t('combat.cs') }} <strong>{{ c.enemy.combatSkill }}</strong></span
+        >
+        <span
+          >{{ i18n.t('combat.ep') }} <strong>{{ c.enemyEndurance }}</strong> /
+          {{ c.enemy.endurance }}</span
+        >
+      </div>
+    </div>
+
+    <p class="combat-ratio">
+      {{ i18n.t('combat.ratio') }} : <strong>{{ signed(ratio()) }}</strong>
+    </p>
+
+    @if (cs(); as b) {
+      <ul class="modifiers small muted">
+        @if (b.weaponskill) {
+          <li>{{ i18n.t('combat.weaponskill') }} {{ signed(b.weaponskill) }}</li>
+        }
+        @if (b.noWeapon) {
+          <li>{{ i18n.t('combat.noWeapon') }} {{ signed(b.noWeapon) }}</li>
+        }
+        @if (b.mindblast) {
+          <li>Mindblast {{ signed(b.mindblast) }}</li>
+        }
+      </ul>
+    }
+
+    @if (c.outcome === 'ongoing') {
+      <div class="stepper">
+        <span>{{ i18n.t('combat.modifier') }}</span>
+        <button type="button" class="icon-button" (click)="adjustModifier(-1)" aria-label="-1">
+          −
+        </button>
+        <strong>{{ signed(c.modifier) }}</strong>
+        <button type="button" class="icon-button" (click)="adjustModifier(1)" aria-label="+1">
+          +
+        </button>
+      </div>
+      @if (canMindblast()) {
+        <label class="toggle">
+          <input type="checkbox" [checked]="c.useMindblast" (change)="toggleMindblast()" />
+          {{ i18n.t('combat.mindblast') }}
+        </label>
+      }
+      <div class="combat-actions">
+        <button type="button" class="button" (click)="game.fightRound(true)">
+          {{ i18n.t('combat.evade') }}
+        </button>
+        <button type="button" class="button button--danger" (click)="game.fightRound()">
+          {{ i18n.t('combat.fight') }}
+        </button>
+      </div>
+    } @else {
+      <p class="combat-outcome combat-outcome--{{ c.outcome }}">
+        @switch (c.outcome) {
+          @case ('won') {
+            {{ i18n.t('combat.won') }}
+          }
+          @case ('lost') {
+            {{ i18n.t('combat.lost') }}
+          }
+          @case ('evaded') {
+            {{ i18n.t('combat.evaded') }}
+          }
+        }
+      </p>
+      <button type="button" class="button button--block" (click)="game.closeCombat()">
+        {{ i18n.t('combat.close') }}
+      </button>
+    }
+
+    @if (rounds().length) {
+      <ol class="combat-log small" reversed>
+        @for (r of rounds(); track $index) {
+          <li>
+            {{
+              i18n.t('combat.log', {
+                roll: r.roll,
+                enemy: loss(r.enemyLoss),
+                player: loss(r.playerLoss),
+              })
+            }}
+          </li>
+        }
+      </ol>
+    }
+  </section>
+}

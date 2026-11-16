@@ -1,0 +1,180 @@
+<lw-top-bar
+  [title]="i18n.t('chart.title')"
+  [subtitle]="book.value()?.title ?? ''"
+  [backLink]="['/book', bookId(), 'play']"
+/>
+
+<main class="page">
+  @if (character(); as c) {
+    <section class="card">
+      <div class="stat-grid">
+        <div class="stat">
+          <span class="stat__label">{{ i18n.t('chart.combatSkill') }}</span>
+          <div class="stepper">
+            <button
+              type="button"
+              class="icon-button"
+              (click)="adjust('combatSkill', -1)"
+              aria-label="-1"
+            >
+              −
+            </button>
+            <span class="stat__value">{{ c.combatSkill }}</span>
+            <button
+              type="button"
+              class="icon-button"
+              (click)="adjust('combatSkill', 1)"
+              aria-label="+1"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat__label">{{ i18n.t('chart.endurance') }}</span>
+          <div class="stepper">
+            <button
+              type="button"
+              class="icon-button"
+              (click)="adjust('endurance', -1)"
+              aria-label="-1"
+            >
+              −
+            </button>
+            <span class="stat__value" [class.danger]="c.endurance <= 5">{{ c.endurance }}</span>
+            <button
+              type="button"
+              class="icon-button"
+              (click)="adjust('endurance', 1)"
+              aria-label="+1"
+            >
+              +
+            </button>
+          </div>
+          <div class="stepper stepper--small">
+            <span>{{ i18n.t('chart.max') }}</span>
+            <button
+              type="button"
+              class="icon-button"
+              (click)="adjust('enduranceMax', -1)"
+              aria-label="-1"
+            >
+              −
+            </button>
+            <span>{{ c.enduranceMax }}</span>
+            <button
+              type="button"
+              class="icon-button"
+              (click)="adjust('enduranceMax', 1)"
+              aria-label="+1"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat__label">{{ i18n.t('chart.gold') }}</span>
+          <div class="stepper">
+            <button type="button" class="icon-button" (click)="adjust('gold', -1)" aria-label="-1">
+              −
+            </button>
+            <span class="stat__value">{{ c.gold }}</span>
+            <button type="button" class="icon-button" (click)="adjust('gold', 1)" aria-label="+1">
+              +
+            </button>
+          </div>
+          <span class="stat__hint">max {{ rules().maxGold }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat__label">{{ i18n.t('chart.meals') }}</span>
+          <div class="stepper">
+            <button type="button" class="icon-button" (click)="adjust('meals', -1)" aria-label="-1">
+              −
+            </button>
+            <span class="stat__value">{{ c.meals }}</span>
+            <button type="button" class="icon-button" (click)="adjust('meals', 1)" aria-label="+1">
+              +
+            </button>
+          </div>
+          <button
+            type="button"
+            class="button button--small"
+            [disabled]="!c.meals"
+            (click)="eatMeal()"
+          >
+            {{ i18n.t('chart.eatMeal') }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <h2>{{ i18n.t('chart.disciplines') }}</h2>
+        <button
+          type="button"
+          class="button button--small button--ghost"
+          (click)="editingDisciplines.set(!editingDisciplines())"
+        >
+          {{ editingDisciplines() ? i18n.t('common.close') : i18n.t('chart.editDisciplines') }}
+        </button>
+      </div>
+      <div class="chips">
+        @if (editingDisciplines()) {
+          @for (d of book.value()?.disciplines ?? []; track d) {
+            <button
+              type="button"
+              class="chip"
+              [class.chip--on]="c.disciplines.includes(d)"
+              (click)="toggleDiscipline(d)"
+            >
+              {{ d }}
+            </button>
+          }
+        } @else {
+          @for (d of c.disciplines; track d) {
+            <span class="chip chip--on">{{ d }}</span>
+          }
+        }
+      </div>
+      @if (c.weaponskill) {
+        <p class="small">{{ i18n.t('chart.weaponskill', { weapon: c.weaponskill }) }}</p>
+      }
+    </section>
+
+    <section class="card">
+      <lw-item-list
+        [title]="i18n.t('chart.weapons', { count: c.weapons.length, max: rules().maxWeapons })"
+        [items]="c.weapons"
+        [max]="rules().maxWeapons"
+        (changed)="setList('weapons', $event)"
+      />
+    </section>
+    <section class="card">
+      <lw-item-list
+        [title]="
+          i18n.t('chart.backpack', { count: c.backpack.length, max: rules().maxBackpackItems })
+        "
+        [items]="c.backpack"
+        [max]="rules().maxBackpackItems"
+        (changed)="setList('backpack', $event)"
+      />
+    </section>
+    <section class="card">
+      <lw-item-list
+        [title]="i18n.t('chart.specialItems')"
+        [items]="c.specialItems"
+        (changed)="setList('specialItems', $event)"
+      />
+    </section>
+
+    <section class="card">
+      <h2>{{ i18n.t('chart.notes') }}</h2>
+      <textarea rows="4" [value]="c.notes" (blur)="saveNotes($any($event.target).value)"></textarea>
+    </section>
+
+    <button type="button" class="button button--ghost button--block danger" (click)="abandon()">
+      {{ i18n.t('chart.deleteGame') }}
+    </button>
+  }
+</main>

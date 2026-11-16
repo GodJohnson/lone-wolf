@@ -1,0 +1,97 @@
+<lw-top-bar [title]="i18n.t('app.title')" [subtitle]="i18n.t('library.title')" />
+
+<main class="page">
+  <label class="button button--primary button--block import-button" [class.is-busy]="importing()">
+    <input
+      type="file"
+      accept=".zip,application/zip"
+      (change)="onFile($event)"
+      [disabled]="importing()"
+      hidden
+    />
+    {{ importing() ? i18n.t('library.importing') : '＋ ' + i18n.t('library.import') }}
+  </label>
+
+  @if (message(); as msg) {
+    <p class="notice" [class.notice--error]="msg.error" role="status">{{ msg.text }}</p>
+  }
+
+  @if (library.value(); as entries) {
+    @if (entries.length) {
+      <ul class="book-list">
+        @for (entry of entries; track entry.book.id) {
+          <li class="card book-card">
+            <div class="book-card__header">
+              <span class="book-card__number">{{ entry.book.number }}</span>
+              <div>
+                <h2>{{ entry.book.title }}</h2>
+                <p class="muted">
+                  {{ seriesLabel(entry.book) }} · {{ entry.book.lang.toUpperCase() }}
+                </p>
+              </div>
+            </div>
+            <div class="book-card__actions">
+              @if (entry.savedSection !== null) {
+                <a class="button button--primary" [routerLink]="['/book', entry.book.id, 'play']">
+                  ▶ {{ i18n.t('library.continue', { section: entry.savedSection }) }}
+                </a>
+              }
+              <a
+                class="button"
+                [class.button--primary]="entry.savedSection === null"
+                [routerLink]="['/book', entry.book.id, 'new']"
+              >
+                {{ i18n.t('library.newGame') }}
+              </a>
+              <a
+                class="button"
+                [routerLink]="['/book', entry.book.id, 'page', entry.book.pages[0]?.id ?? 'title']"
+              >
+                {{ i18n.t('library.read') }}
+              </a>
+              <button type="button" class="button button--ghost" (click)="remove(entry.book)">
+                {{ i18n.t('common.delete') }}
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="muted center">{{ i18n.t('library.empty') }}</p>
+    }
+  }
+
+  <section class="card how-to">
+    <h2>{{ i18n.t('library.howTo.title') }}</h2>
+    <ol>
+      <li>{{ i18n.t('library.howTo.step1') }}</li>
+      <li>{{ i18n.t('library.howTo.step2') }}</li>
+      <li>{{ i18n.t('library.howTo.step3') }}</li>
+    </ol>
+    <p class="muted small">
+      {{ i18n.t('library.howTo.license') }}
+      <a [href]="licenseUrl" target="_blank" rel="noopener noreferrer">{{
+        i18n.t('library.license')
+      }}</a>
+    </p>
+  </section>
+
+  <section>
+    <h2 class="section-title">{{ i18n.t('library.catalog') }}</h2>
+    <ul class="catalog">
+      @for (entry of catalog(); track entry.code) {
+        <li [class.is-imported]="entry.imported">
+          <span class="catalog__number">{{ entry.number }}</span>
+          <span class="catalog__title">{{ entry.title }}</span>
+          @if (entry.imported) {
+            <span class="catalog__check" aria-hidden="true">✓</span>
+          } @else {
+            <a class="button button--small" [href]="entry.url" rel="noopener noreferrer"
+              >⇩ {{ i18n.t('library.download') }}</a
+            >
+          }
+        </li>
+      }
+    </ul>
+  </section>
+</main>

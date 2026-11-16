@@ -1,0 +1,95 @@
+<lw-top-bar
+  [title]="i18n.t('newGame.title')"
+  [subtitle]="book.value()?.title ?? ''"
+  [backLink]="['/']"
+/>
+
+<main class="page">
+  @if (book.value(); as b) {
+    @if (!rules().verified) {
+      <p class="notice notice--warning">{{ i18n.t('newGame.unverifiedRules') }}</p>
+    }
+
+    <section class="card">
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
+          <span class="stat__value">{{
+            csRoll() === null ? '–' : rules().combatSkillBase + csRoll()!
+          }}</span>
+          <span class="stat__hint">{{
+            i18n.t('newGame.formula', { base: rules().combatSkillBase })
+          }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
+          <span class="stat__value">{{
+            epRoll() === null ? '–' : rules().enduranceBase + epRoll()!
+          }}</span>
+          <span class="stat__hint">{{
+            i18n.t('newGame.formula', { base: rules().enduranceBase })
+          }}</span>
+        </div>
+      </div>
+      <button type="button" class="button button--block" (click)="rollStats()">
+        🎲 {{ csRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
+      </button>
+    </section>
+
+    <section class="card">
+      <h2>
+        {{
+          i18n.t('newGame.disciplines', {
+            count: selected().length,
+            max: rules().disciplinesToChoose,
+          })
+        }}
+      </h2>
+      <div class="chips">
+        @for (d of b.disciplines; track d) {
+          <button
+            type="button"
+            class="chip"
+            [class.chip--on]="isSelected(d)"
+            [attr.aria-pressed]="isSelected(d)"
+            (click)="toggle(d)"
+          >
+            {{ d }}
+          </button>
+        }
+      </div>
+      <a class="small" [routerLink]="['/book', b.id, 'page', 'discplnz']"
+        >{{ i18n.t('newGame.readDisciplines') }} ›</a
+      >
+
+      @if (needsWeapon()) {
+        <div class="weapon-roll">
+          <span
+            >{{ i18n.t('newGame.weaponskill') }} : <strong>{{ weapon() ?? '–' }}</strong></span
+          >
+          <button type="button" class="button button--small" (click)="rollWeapon()">
+            🎲 {{ weapon() ? i18n.t('newGame.reroll') : i18n.t('newGame.roll') }}
+          </button>
+        </div>
+      }
+    </section>
+
+    @if (equipmentPage(); as page) {
+      <p class="notice">
+        {{ i18n.t('newGame.equipmentHint', { page: page.title }) }}
+        <a [routerLink]="['/book', b.id, 'page', page.id]">{{ page.title }} ›</a>
+      </p>
+    }
+
+    <button
+      type="button"
+      class="button button--primary button--block"
+      [disabled]="!canStart()"
+      (click)="start()"
+    >
+      {{ i18n.t('newGame.start') }}
+    </button>
+  } @else {
+    <p class="muted center">{{ i18n.t('common.loading') }}</p>
+  }
+</main>
