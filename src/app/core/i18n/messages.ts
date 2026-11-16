@@ -54,6 +54,9 @@ export const fr = {
   'newGame.disciplines': 'Disciplines ({count} / {max})',
   'newGame.weaponskill': 'Arme maîtrisée',
   'newGame.readDisciplines': 'Lire la description des disciplines',
+  'newGame.equipment': 'Équipement de départ',
+  'newGame.randomItem': 'Objet trouvé',
+  'newGame.chooseItems': 'Objets au choix ({count} / {max})',
   'newGame.equipmentHint':
     "L'équipement de départ dépend du livre : consultez la page « {page} » puis complétez votre Feuille d'aventure.",
   'newGame.unverifiedRules':
@@ -95,6 +98,13 @@ export const fr = {
   'combat.close': 'Terminer le combat',
   'combat.log': 'Tirage {roll} · ennemi −{enemy} · vous −{player}',
   'combat.killed': 'tué',
+  'combat.items': 'Objets',
+
+  'meal.title': 'Vous devez manger',
+  'meal.eat': 'Manger un Repas ({count})',
+  'meal.hunt': 'Chasser',
+  'meal.starve': 'Ne rien manger (−3 END)',
+  'meal.huntHint': 'La Chasse ne fonctionne pas partout : suivez les indications du texte.',
 
   'chart.title': "Feuille d'aventure",
   'chart.combatSkill': 'Habileté',
@@ -114,6 +124,10 @@ export const fr = {
   'chart.deleteGame': 'Abandonner la partie',
   'chart.deleteConfirm': 'Abandonner la partie en cours ? Le livre reste importé.',
   'chart.full': 'Emplacement plein.',
+  'chart.use': 'Boire',
+  'chart.mealsInBackpack': 'Dont {count} Repas (comptés dans le sac à dos).',
+  'chart.error.weaponsFull': 'Vous portez déjà le maximum d’armes : abandonnez-en une d’abord.',
+  'chart.error.backpackFull': 'Votre sac à dos est plein : abandonnez un objet d’abord.',
 
   'page.notFound': 'Page introuvable.',
   'page.contents': 'Sommaire du livre',
@@ -172,6 +186,9 @@ export const en: Record<MessageKey, string> = {
   'newGame.disciplines': 'Disciplines ({count} / {max})',
   'newGame.weaponskill': 'Weaponskill weapon',
   'newGame.readDisciplines': 'Read the disciplines description',
+  'newGame.equipment': 'Starting equipment',
+  'newGame.randomItem': 'Item found',
+  'newGame.chooseItems': 'Items to choose ({count} / {max})',
   'newGame.equipmentHint':
     'Starting equipment depends on the book: read the “{page}” page, then fill in your Action Chart.',
   'newGame.unverifiedRules':
@@ -213,6 +230,13 @@ export const en: Record<MessageKey, string> = {
   'combat.close': 'End combat',
   'combat.log': 'Roll {roll} · enemy −{enemy} · you −{player}',
   'combat.killed': 'killed',
+  'combat.items': 'Items',
+
+  'meal.title': 'You must eat',
+  'meal.eat': 'Eat a Meal ({count})',
+  'meal.hunt': 'Hunt',
+  'meal.starve': 'Eat nothing (−3 EP)',
+  'meal.huntHint': 'Hunting does not work everywhere: follow the text.',
 
   'chart.title': 'Action Chart',
   'chart.combatSkill': 'Combat Skill',
@@ -232,6 +256,10 @@ export const en: Record<MessageKey, string> = {
   'chart.deleteGame': 'Abandon game',
   'chart.deleteConfirm': 'Abandon the current game? The book stays imported.',
   'chart.full': 'Slot full.',
+  'chart.use': 'Drink',
+  'chart.mealsInBackpack': 'Including {count} Meals (they count in the Backpack).',
+  'chart.error.weaponsFull': 'You already carry the maximum number of weapons: drop one first.',
+  'chart.error.backpackFull': 'Your Backpack is full: drop an item first.',
 
   'page.notFound': 'Page not found.',
   'page.contents': 'Book contents',

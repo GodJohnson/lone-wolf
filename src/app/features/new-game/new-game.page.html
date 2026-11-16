@@ -74,7 +74,67 @@
       }
     </section>
 
-    @if (equipmentPage(); as page) {
+    @if (equipment(); as eq) {
+      <section class="card">
+        <h2>{{ i18n.t('newGame.equipment') }}</h2>
+        <ul class="equipment-fixed">
+          @for (label of fixedLabels(); track $index) {
+            <li>{{ label }}</li>
+          }
+        </ul>
+
+        <div class="weapon-roll">
+          <span>
+            {{ i18n.t('chart.gold') }} :
+            <strong>{{ goldRoll() === null ? '–' : eq.goldBase + goldRoll()! }}</strong>
+            <span class="muted small"
+              >({{ i18n.t('newGame.formula', { base: eq.goldBase }) }})</span
+            >
+          </span>
+          <button type="button" class="button button--small" (click)="rollGold()">
+            🎲 {{ goldRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
+          </button>
+        </div>
+
+        @switch (eq.pick.mode) {
+          @case ('random') {
+            <div class="weapon-roll">
+              <span>
+                {{ i18n.t('newGame.randomItem') }} :
+                <strong>{{ randomItem()?.label ?? '–' }}</strong>
+              </span>
+              <button type="button" class="button button--small" (click)="rollItem()">
+                🎲 {{ itemRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
+              </button>
+            </div>
+          }
+          @case ('choose') {
+            @if (eq.pick.mode === 'choose') {
+              <h3 class="small">
+                {{ i18n.t('newGame.chooseItems', { count: chosen().length, max: eq.pick.count }) }}
+              </h3>
+              <div class="chips">
+                @for (option of eq.pick.options; track $index) {
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.chip--on]="isChosen($index)"
+                    [attr.aria-pressed]="isChosen($index)"
+                    [disabled]="!canChoose($index)"
+                    (click)="toggleOption($index)"
+                  >
+                    {{ option.label }}
+                  </button>
+                }
+              </div>
+            }
+          }
+        }
+        @if (equipmentPage(); as page) {
+          <a class="small" [routerLink]="['/book', b.id, 'page', page.id]">{{ page.title }} ›</a>
+        }
+      </section>
+    } @else if (equipmentPage(); as page) {
       <p class="notice">
         {{ i18n.t('newGame.equipmentHint', { page: page.title }) }}
         <a [routerLink]="['/book', b.id, 'page', page.id]">{{ page.title }} ›</a>

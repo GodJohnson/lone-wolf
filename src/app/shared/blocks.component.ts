@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Block, Enemy } from '../core/book/book.models';
 import { I18nService } from '../core/i18n/i18n.service';
 import { BookImageComponent } from './book-image.component';
@@ -17,6 +17,9 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
   host: { class: 'blocks', '(click)': 'onClick($event)' },
   template: `
     @for (block of blocks(); track $index; let i = $index) {
+      @if (i === firstChoice()) {
+        <ng-content select="[lwBeforeChoices]" />
+      }
       @switch (block.kind) {
         @case ('choice') {
           @if (interactive()) {
@@ -61,6 +64,9 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
         }
       }
     }
+    @if (firstChoice() === -1) {
+      <ng-content select="[lwBeforeChoices]" />
+    }
   `,
 })
 export class BlocksComponent {
@@ -72,6 +78,10 @@ export class BlocksComponent {
   readonly choicesDisabled = input(false);
   /** Index du bloc combat en cours : le contenu projeté (panneau de combat) s'affiche juste après. */
   readonly activeCombat = input<number | null>(null);
+  /** Position du premier choix : le contenu marqué `lwBeforeChoices` s'affiche juste avant. */
+  protected readonly firstChoice = computed(() =>
+    this.blocks().findIndex((b) => b.kind === 'choice'),
+  );
 
   readonly section = output<number>();
   readonly page = output<string>();

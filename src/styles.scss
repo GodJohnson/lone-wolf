@@ -690,3 +690,36 @@ figure {
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+/* ---------- Équipement ---------- */
+
+.item-effect {
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.equipment-fixed {
+  margin: 0 0 0.5rem;
+  padding-left: 1.25rem;
+}
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.meal-card {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+.meal-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

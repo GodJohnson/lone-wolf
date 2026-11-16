@@ -142,29 +142,39 @@
       }
     </section>
 
+    @if (error(); as message) {
+      <p class="notice notice--error" role="alert">{{ message }}</p>
+    }
     <section class="card">
       <lw-item-list
+        slot="weapons"
         [title]="i18n.t('chart.weapons', { count: c.weapons.length, max: rules().maxWeapons })"
         [items]="c.weapons"
-        [max]="rules().maxWeapons"
-        (changed)="setList('weapons', $event)"
+        [full]="c.weapons.length >= rules().maxWeapons"
+        (added)="addItem('weapons', $event)"
+        (removed)="removeItem('weapons', $event)"
       />
     </section>
     <section class="card">
       <lw-item-list
-        [title]="
-          i18n.t('chart.backpack', { count: c.backpack.length, max: rules().maxBackpackItems })
-        "
+        slot="backpack"
+        [title]="i18n.t('chart.backpack', { count: backpackLoad(), max: rules().maxBackpackItems })"
         [items]="c.backpack"
-        [max]="rules().maxBackpackItems"
-        (changed)="setList('backpack', $event)"
+        [full]="backpackLoad() >= rules().maxBackpackItems"
+        [canUse]="!inCombat() && c.endurance < c.enduranceMax"
+        (added)="addItem('backpack', $event)"
+        (removed)="removeItem('backpack', $event)"
+        (used)="useItem($event)"
       />
+      <p class="small muted">{{ i18n.t('chart.mealsInBackpack', { count: c.meals }) }}</p>
     </section>
     <section class="card">
       <lw-item-list
+        slot="specialItems"
         [title]="i18n.t('chart.specialItems')"
         [items]="c.specialItems"
-        (changed)="setList('specialItems', $event)"
+        (added)="addItem('specialItems', $event)"
+        (removed)="removeItem('specialItems', $event)"
       />
     </section>
 

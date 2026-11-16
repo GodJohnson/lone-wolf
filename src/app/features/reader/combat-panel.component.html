@@ -39,6 +39,9 @@
         @if (b.mindblast) {
           <li>Mindblast {{ signed(b.mindblast) }}</li>
         }
+        @if (b.items) {
+          <li>{{ i18n.t('combat.items') }} {{ signed(b.items) }}</li>
+        }
       </ul>
     }
 

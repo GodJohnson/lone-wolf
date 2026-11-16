@@ -15,6 +15,7 @@ import { rulesFor } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
+import { ItemSlot, backpackLoad } from '../../core/game/equipment';
 
 type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'meals';
 
@@ -44,8 +45,20 @@ export class ActionChartPage {
   protected readonly character = this.game.character;
   protected readonly editingDisciplines = signal(false);
 
+  protected readonly backpackLoad = computed(() => {
+    const c = this.character();
+    return c ? backpackLoad(c) : 0;
+  });
+  protected readonly inCombat = computed(() => this.game.combat()?.outcome === 'ongoing');
+  protected readonly error = signal<string | null>(null);
+
   protected adjust(field: NumericField, delta: number): void {
     const maxGold = this.rules().maxGold;
+    this.error.set(null);
+    if (field === 'meals' && delta > 0 && this.backpackLoad() >= this.rules().maxBackpackItems) {
+      this.error.set(this.i18n.t('chart.error.backpackFull'));
+      return;
+    }
     this.game.updateCharacter((c) => {
       const next = { ...c, [field]: Math.max(0, c[field] + delta) };
       if (field === 'gold') next.gold = Math.min(next.gold, maxGold);
@@ -59,8 +72,18 @@ export class ActionChartPage {
     this.game.updateCharacter((c) => ({ ...c, meals: Math.max(0, c.meals - 1) }));
   }
 
-  protected setList(field: 'weapons' | 'backpack' | 'specialItems', items: string[]): void {
-    this.game.updateCharacter((c) => ({ ...c, [field]: items }));
+  protected async addItem(slot: ItemSlot, name: string): Promise<void> {
+    const error = await this.game.addItem(slot, name, this.rules());
+    this.error.set(error ? this.i18n.t(`chart.error.${error}`) : null);
+  }
+
+  protected removeItem(slot: ItemSlot, index: number): void {
+    this.error.set(null);
+    this.game.removeItem(slot, index);
+  }
+
+  protected useItem(index: number): void {
+    this.game.useItem(index);
   }
 
   protected toggleDiscipline(name: string): void {

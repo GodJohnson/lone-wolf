@@ -11,7 +11,9 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
+import { MealChoice, requiresMeal } from '../../core/game/equipment';
 import { GameService } from '../../core/game/game.service';
+import { DISCIPLINE, hasDiscipline } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { BlocksComponent } from '../../shared/blocks.component';
 import { RandomNumberComponent } from '../../shared/random-number.component';
@@ -66,6 +68,21 @@ export class ReaderPage {
     },
     loader: ({ params }) => this.books.section(params.bookId, params.number),
   });
+
+  /** La section impose un Repas qui n'a pas encore été réglé. */
+  protected readonly mealDue = computed(() => {
+    const blocks = this.section.value()?.blocks ?? [];
+    const text = blocks.map((b) => ('html' in b ? b.html.replace(/<[^>]+>/g, '') : '')).join(' ');
+    return requiresMeal(text) && !this.game.state()?.mealResolved && !this.game.isDead();
+  });
+  protected readonly canHunt = computed(() => {
+    const c = this.game.character();
+    return !!c && hasDiscipline(c, DISCIPLINE.hunting);
+  });
+
+  protected eat(choice: MealChoice): void {
+    this.game.resolveMeal(choice);
+  }
 
   protected readonly isDeadEnd = computed(
     () => !!this.section.value()?.blocks.some((b) => b.kind === 'deadend'),

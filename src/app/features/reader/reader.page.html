@@ -31,6 +31,37 @@
         [activeCombat]="game.combat()?.blockIndex ?? null"
       >
         <lw-combat-panel />
+        @if (mealDue() && game.character(); as c) {
+          <section
+            lwBeforeChoices
+            class="card meal-card"
+            role="region"
+            [attr.aria-label]="i18n.t('meal.title')"
+          >
+            <h2>🍖 {{ i18n.t('meal.title') }}</h2>
+            <div class="meal-card__actions">
+              <button
+                type="button"
+                class="button button--primary"
+                [disabled]="!c.meals"
+                (click)="eat('meal')"
+              >
+                {{ i18n.t('meal.eat', { count: c.meals }) }}
+              </button>
+              @if (canHunt()) {
+                <button type="button" class="button" (click)="eat('hunting')">
+                  {{ i18n.t('meal.hunt') }}
+                </button>
+              }
+              <button type="button" class="button button--ghost danger" (click)="eat('starve')">
+                {{ i18n.t('meal.starve') }}
+              </button>
+            </div>
+            @if (canHunt()) {
+              <p class="small muted">{{ i18n.t('meal.huntHint') }}</p>
+            }
+          </section>
+        }
       </lw-blocks>
     </article>
 
