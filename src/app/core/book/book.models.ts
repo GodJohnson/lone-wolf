@@ -19,6 +19,11 @@ export interface BookMeta {
   sectionCount: number;
   /** Noms des disciplines tels qu'écrits dans le livre (page `discplnz.htm`). */
   disciplines: string[];
+  /**
+   * Mots capitalisés qui ne sont pas des objets (créatures, lieux…), pour la détection des objets
+   * ramassables. Absent pour les livres importés avant cette fonctionnalité (calculé à la volée).
+   */
+  nonItemWords?: string[];
   /** Pages hors sections disponibles (règles, carte, équipement...), dans l'ordre de la table des matières. */
   pages: PageRef[];
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */

@@ -21,6 +21,7 @@ Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bil
 - Lecture section par section, choix en gros boutons, illustrations, pages de règles et annexes.
 - Choix conditionnés par une discipline (« If you have the Kai Discipline of Tracking… ») : en vert si vous l'avez, grisés et inaccessibles sinon. Seules les formulations sans ambiguïté sont reconnues ; les conditions de rang Kaï ou d'objet restent des boutons normaux, et une section n'est jamais entièrement bloquée.
 - Feuille d'aventure : caractéristiques, disciplines, inventaire avec capacités (2 armes, 8 places de sac à dos Repas compris, 50 couronnes), effets des objets (Helmet, Chainmail, Shield), potions à boire, notes.
+- Objets ramassables : dans les paragraphes où l'on peut prendre quelque chose, les objets (« a Giak Spear »), l'or (« 6 Gold Crowns ») et les Repas deviennent des liens. Un toucher ouvre une confirmation : nom modifiable, emplacement deviné d'après le texte (arme, sac à dos, objet spécial), capacités respectées. Un lexique propre à chaque livre (ennemis, lieux, disciplines) écarte la plupart des faux positifs.
 - Repas : quand le texte l'impose, l'appli propose de manger un Repas, de chasser ou de perdre 3 END.
 - Combat : quotient d'attaque calculé (Weaponskill +2, Mindblast +2, sans arme −4, modificateur de section), table des résultats, fuite, journal des assauts.
 - Table de hasard (tirage cryptographique 0-9), Guérison automatique (+1 END par section sans combat).
@@ -74,7 +75,7 @@ src/app/
 - **Table des résultats de combat et équipement de départ retranscrits dans le code** (`combat-results-table.ts`) : le zip ne la fournit qu'en image. C'est une donnée de mécanique, pas du texte, mais le point reste à garder en tête vis-à-vis de la licence.
 - **Seules les règles de la série Kaï (livres 1 à 5) sont vérifiées.** Pour Magnakaï, Grand Maître et Nouvel Ordre, les valeurs de création (`SERIES_RULES`) sont des défauts signalés comme non vérifiés dans l'UI, et les disciplines avancées n'ont pas d'effet automatique.
 - L'équipement de départ n'est guidé que pour les livres 1 à 5 (données relevées dans `core/game/equipment.ts`). Pour les autres livres, il se saisit à la main.
-- Les objets trouvés en cours de lecture s'ajoutent à la main sur la Feuille d'aventure (avec suggestions).
+- La détection des objets est heuristique : il reste quelques faux liens (noms de lieux rares) et des oublis (objet cité sans article). La confirmation permet d'ignorer ou de corriger ; sinon, l'ajout manuel sur la Feuille d'aventure reste disponible.
 - Pas de transfert de personnage d'un livre à l'autre.
 - Les effets spécifiques à une section (perte d'END, objets gagnés, ennemis insensibles à Mindblast…) sont appliqués par le joueur.
 - Pas encore de tests de composants ni de tests e2e versionnés.

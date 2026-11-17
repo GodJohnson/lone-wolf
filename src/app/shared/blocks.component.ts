@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Block, Enemy } from '../core/book/book.models';
 import { ChoiceCondition } from '../core/game/choice-conditions';
+import { ITEM_LINK_PREFIX } from '../core/game/item-detection';
 import { I18nService } from '../core/i18n/i18n.service';
 import { BookImageComponent } from './book-image.component';
 
@@ -124,11 +125,18 @@ export class BlocksComponent {
   readonly section = output<number>();
   readonly page = output<string>();
   readonly fight = output<{ index: number; enemy: Enemy }>();
+  /** Lien d'objet ramassable (`#item-N`) touché : N = index dans la liste des objets détectés. */
+  readonly item = output<number>();
 
   protected onClick(event: MouseEvent): void {
     const anchor = (event.target as HTMLElement | null)?.closest('a');
     if (!anchor) return;
     const href = anchor.getAttribute('href') ?? '';
+    if (href.startsWith(ITEM_LINK_PREFIX)) {
+      event.preventDefault();
+      this.item.emit(Number(href.slice(ITEM_LINK_PREFIX.length)));
+      return;
+    }
     if (/^https?:\/\//i.test(href)) {
       event.preventDefault();
       window.open(href, '_blank', 'noopener,noreferrer');

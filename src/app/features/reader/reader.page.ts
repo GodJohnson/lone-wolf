@@ -13,6 +13,9 @@ import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
 import { MealChoice, requiresMeal } from '../../core/game/equipment';
 import { evaluateChoices } from '../../core/game/choice-conditions';
+import { FoundItem, annotateItems } from '../../core/game/item-detection';
+import { rulesFor } from '../../core/game/rules';
+import { ItemSheetComponent } from './item-sheet.component';
 import { GameService } from '../../core/game/game.service';
 import { DISCIPLINE, hasDiscipline } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -30,6 +33,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     BlocksComponent,
     RandomNumberComponent,
     CombatPanelComponent,
+    ItemSheetComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reader.page.html',
@@ -77,6 +81,29 @@ export class ReaderPage {
     const text = blocks.map((b) => ('html' in b ? b.html.replace(/<[^>]+>/g, '') : '')).join(' ');
     return requiresMeal(text) && !this.game.state()?.mealResolved && !this.game.isDead();
   });
+  /** Mots non-objets du livre (créatures, lieux…) pour la détection des objets ramassables. */
+  private readonly nonItemWords = resource({
+    params: () => this.bookId(),
+    loader: ({ params }) => this.books.nonItemWords(params),
+  });
+
+  /** Blocs de la section avec les objets ramassables transformés en liens. */
+  protected readonly annotated = computed(() =>
+    annotateItems(this.section.value()?.blocks ?? [], this.nonItemWords.value() ?? []),
+  );
+  protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
+  protected readonly selectedItem = signal<FoundItem | null>(null);
+
+  protected openItem(index: number): void {
+    const item = this.annotated().items[index];
+    if (item && !this.game.isDead()) this.selectedItem.set(item);
+  }
+
+  protected itemAdded(label: string): void {
+    this.selectedItem.set(null);
+    this.flash(this.i18n.t('item.added', { item: label }));
+  }
+
   /** Choix accessibles selon les disciplines du personnage. */
   protected readonly choiceConditions = computed(() =>
     evaluateChoices(

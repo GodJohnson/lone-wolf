@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { database } from '../storage/database';
+import { buildNonItemLexicon } from '../game/item-detection';
 import { BookMeta, PageRecord, ParsedBook, SectionRecord } from './book.models';
 
 @Injectable({ providedIn: 'root' })
@@ -17,6 +18,18 @@ export class BookRepository {
 
   async section(bookId: string, number: number): Promise<SectionRecord | undefined> {
     return (await database()).get('sections', [bookId, number]);
+  }
+
+  /** Lexique des mots non-objets du livre ; calculé et mémorisé s'il manque (anciens imports). */
+  async nonItemWords(bookId: string): Promise<string[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    if (book.nonItemWords) return book.nonItemWords;
+    const sections = await db.getAllFromIndex('sections', 'byBook', bookId);
+    const nonItemWords = buildNonItemLexicon(sections, book.disciplines);
+    await db.put('books', { ...book, nonItemWords });
+    return nonItemWords;
   }
 
   async page(bookId: string, pageId: string): Promise<PageRecord | undefined> {

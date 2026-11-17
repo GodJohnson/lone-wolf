@@ -32,12 +32,13 @@
       <lw-blocks
         [lang]="book.value()?.lang ?? 'en'"
         [bookId]="bookId()"
-        [blocks]="s.blocks"
+        [blocks]="annotated().blocks"
         [interactive]="true"
         [choicesDisabled]="game.isDead()"
         (section)="goTo($event)"
         (page)="openPage($event)"
         (fight)="fight($event)"
+        (item)="openItem($event)"
         [activeCombat]="game.combat()?.blockIndex ?? null"
         [conditions]="choiceConditions()"
       >
@@ -118,6 +119,15 @@
     <span aria-hidden="true">📖</span>{{ i18n.t('reader.rules') }}
   </a>
 </nav>
+
+@if (selectedItem(); as found) {
+  <lw-item-sheet
+    [item]="found"
+    [rules]="rules()"
+    (closed)="selectedItem.set(null)"
+    (added)="itemAdded($event)"
+  />
+}
 
 @if (showRandom()) {
   <lw-random-number (closed)="showRandom.set(false)" />

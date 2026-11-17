@@ -1,0 +1,86 @@
+import { Block } from '../book/book.models';
+import { ITEM_LINK_PREFIX, annotateItems, buildNonItemLexicon, guessSlot } from './item-detection';
+
+const p = (html: string): Block => ({ kind: 'html', html: `<p>${html}</p>` });
+
+describe('item-detection', () => {
+  it('rend cliquable un objet trouvé et devine une arme', () => {
+    const { blocks, items } = annotateItems([
+      p('In the cellar you discover a Rusty Spear. You may keep this Weapon if you wish.'),
+    ]);
+    expect(items).toEqual([{ kind: 'item', name: 'Rusty Spear', slot: 'weapons' }]);
+    expect((blocks[0] as { html: string }).html).toContain(
+      `a <a href="${ITEM_LINK_PREFIX}0" class="item-link">Rusty Spear</a>`,
+    );
+  });
+
+  it('détecte l’or, les Repas et l’emplacement indiqué par le texte', () => {
+    const { items } = annotateItems([
+      p(
+        'The box holds 7 Gold Crowns, two Meals and a Moon Amulet (mark it as a Special Item). You may take them.',
+      ),
+    ]);
+    expect(items).toEqual([
+      { kind: 'gold', amount: 7, label: '7 Gold Crowns' },
+      { kind: 'meals', count: 2, label: 'two Meals' },
+      { kind: 'item', name: 'Moon Amulet', slot: 'specialItems' },
+    ]);
+  });
+
+  it('ignore les paragraphes sans prise possible et les phrases de perte', () => {
+    expect(annotateItems([p('A Grey Beast blocks the road to the Old Bridge.')]).items).toEqual([]);
+    expect(
+      annotateItems([
+        p('Erase the Moon Amulet from your Action Chart. You may keep the rest if you wish.'),
+      ]).items,
+    ).toEqual([]);
+  });
+
+  it('exclut possessifs, « Kai … » et les mots du lexique (sauf arme qualifiée)', () => {
+    const lexicon = ['grey', 'beast', 'giak'];
+    const { items } = annotateItems(
+      [
+        p(
+          'You find the Beast’s purse, a Grey Beast, the Kai Discipline of Tracking and a Giak Spear. Take them if you wish.',
+        ),
+      ],
+      lexicon,
+    );
+    expect(items).toEqual([{ kind: 'item', name: 'Giak Spear', slot: 'weapons' }]);
+  });
+
+  it('construit le lexique : ennemis, disciplines, mots employés sans article', () => {
+    const sections = [
+      {
+        blocks: [
+          {
+            kind: 'combat',
+            html: '',
+            enemy: { name: 'Grey Beast', combatSkill: 1, endurance: 1 },
+          } as Block,
+        ],
+      },
+      {
+        blocks: [
+          p('You ride to Westmoor at dawn.'),
+          p('The road from Westmoor is long.'),
+          p('You find a Rope.'),
+        ],
+      },
+    ];
+    const lexicon = buildNonItemLexicon(sections, ['Mind Over Matter']);
+    expect(lexicon).toEqual(
+      expect.arrayContaining(['grey', 'beast', 'westmoor', 'mind', 'matter']),
+    );
+    expect(lexicon).not.toContain('rope');
+  });
+
+  it('devine l’emplacement', () => {
+    expect(guessSlot('Silver Key', 'mark the Silver Key as a Special Item.')).toBe('specialItems');
+    expect(guessSlot('Jewelled Mace', 'mark the Jewelled Mace as a Special Item.')).toBe(
+      'specialItems',
+    );
+    expect(guessSlot('Bone Sword', 'You discover a Bone Sword.')).toBe('weapons');
+    expect(guessSlot('Rope', 'You may take the Rope.')).toBe('backpack');
+  });
+});
