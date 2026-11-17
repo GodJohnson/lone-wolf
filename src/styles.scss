@@ -831,3 +831,14 @@ figure {
   color: var(--muted);
   text-align: center;
 }
+
+.removed-links h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.removed-links .item-list li {
+  padding: 0.35rem 0;
+}

@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
   resource,
   signal,
 } from '@angular/core';
@@ -42,6 +43,26 @@ export class ActionChartPage {
     },
   });
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
+
+  /** Liens d'objets retirés par le joueur, pour pouvoir les rétablir. */
+  protected readonly userNonItems = signal(this.books.userNonItems());
+  private readonly dismissedItems = linkedSignal(() => this.book.value()?.dismissedItems ?? []);
+  protected readonly dismissedHere = computed(() =>
+    this.dismissedItems()
+      .map((key) => {
+        const [section, ...rest] = key.split('|');
+        return { key, section: Number(section), name: rest.join('|') };
+      })
+      .sort((a, b) => a.section - b.section || a.name.localeCompare(b.name)),
+  );
+
+  protected restoreNonItem(term: string): void {
+    this.userNonItems.set(this.books.removeUserNonItem(term));
+  }
+
+  protected async restoreDismissed(key: string): Promise<void> {
+    this.dismissedItems.set(await this.books.restoreItem(this.bookId(), key));
+  }
   protected readonly character = this.game.character;
   protected readonly editingDisciplines = signal(false);
 

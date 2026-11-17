@@ -178,6 +178,45 @@
       />
     </section>
 
+    @if (userNonItems().length || dismissedHere().length) {
+      <section class="card removed-links">
+        <h2>{{ i18n.t('chart.removedLinks') }}</h2>
+        <p class="small muted">{{ i18n.t('chart.removedLinksHint') }}</p>
+        @if (userNonItems().length) {
+          <h3>{{ i18n.t('chart.notItems') }}</h3>
+          <ul class="item-list">
+            @for (term of userNonItems(); track term) {
+              <li>
+                <span>{{ term }}</span>
+                <button type="button" class="button button--small" (click)="restoreNonItem(term)">
+                  {{ i18n.t('chart.restore') }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        @if (dismissedHere().length) {
+          <h3>{{ i18n.t('chart.notHere') }}</h3>
+          <ul class="item-list">
+            @for (entry of dismissedHere(); track entry.key) {
+              <li>
+                <span
+                  ><span class="muted">§{{ entry.section }}</span> · {{ entry.name }}</span
+                >
+                <button
+                  type="button"
+                  class="button button--small"
+                  (click)="restoreDismissed(entry.key)"
+                >
+                  {{ i18n.t('chart.restore') }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
     <section class="card">
       <h2>{{ i18n.t('chart.notes') }}</h2>
       <textarea rows="4" [value]="c.notes" (blur)="saveNotes($any($event.target).value)"></textarea>

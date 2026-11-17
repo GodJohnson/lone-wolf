@@ -45,7 +45,15 @@ export class BookRepository {
   }
 
   addUserNonItem(term: string): string[] {
-    const list = [...new Set([...this.userNonItems(), term])];
+    return this.saveUserNonItems([...new Set([...this.userNonItems(), term])]);
+  }
+
+  /** Annule un « Pas un objet » : le terme redevient détectable. */
+  removeUserNonItem(term: string): string[] {
+    return this.saveUserNonItems(this.userNonItems().filter((t) => t !== term));
+  }
+
+  private saveUserNonItems(list: string[]): string[] {
     try {
       localStorage.setItem(USER_NON_ITEMS_KEY, JSON.stringify(list));
     } catch {
@@ -60,6 +68,16 @@ export class BookRepository {
     const book = await db.get('books', bookId);
     if (!book) return [];
     const dismissedItems = [...new Set([...(book.dismissedItems ?? []), key])];
+    await db.put('books', { ...book, dismissedItems });
+    return dismissedItems;
+  }
+
+  /** Annule un « Pas ici » ; retourne la liste à jour. */
+  async restoreItem(bookId: string, key: string): Promise<string[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    const dismissedItems = (book.dismissedItems ?? []).filter((k) => k !== key);
     await db.put('books', { ...book, dismissedItems });
     return dismissedItems;
   }
