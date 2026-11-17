@@ -23,7 +23,7 @@ Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bil
 - Repas : quand le texte l'impose, l'appli propose de manger un Repas, de chasser ou de perdre 3 END.
 - Combat : quotient d'attaque calculé (Weaponskill +2, Mindblast +2, sans arme −4, modificateur de section), table des résultats, fuite, journal des assauts.
 - Table de hasard (tirage cryptographique 0-9), Guérison automatique (+1 END par section sans combat).
-- Lecture en français : la page de lecture déclare la langue du livre et exclut l'interface de la traduction, pour que la fonction « Traduire » du navigateur (Chrome, Safari) traduise uniquement le texte du livre ([ADR 0004](docs/technique/adr/0004-traduction-par-le-navigateur.md)).
+- Lecture en français : la page de lecture déclare la langue du livre et exclut l'interface de la traduction, pour que la fonction « Traduire » du navigateur (Chrome, Safari) traduise uniquement le texte du livre.
 - Sauvegarde automatique à chaque action, retour à la section précédente, PWA installable.
 
 ## Développement
@@ -60,7 +60,13 @@ src/app/
 
 - Le contenu importé est considéré comme **non fiable** : il est nettoyé par liste blanche à l'import (`html-cleaner.ts`, sans script, style, attribut d'événement ni lien `javascript:`), puis à nouveau par Angular au rendu (`[innerHTML]`).
 - Garde-fous à l'import : taille du zip ≤ 50 Mo, décompressé ≤ 150 Mo, seuls `.htm` et les images sont extraits.
-- i18n maison plutôt que `@angular/localize` : changement de langue à chaud, sans un build par langue.
+
+## Choix et pourquoi
+
+- **Import par le joueur** : imposé par la licence Project Aon (voir « Principe »).
+- **Site statique sur GitHub Pages, routage par `#`, PWA** : gratuit, sans serveur, jouable hors ligne. GitHub Pages ne réécrit pas les URL profondes, d'où le `#`. Pas de synchronisation entre appareils.
+- **i18n maison à signal** (`core/i18n`) plutôt que `@angular/localize` : changement de langue à chaud, clés typées (une clé manquante en anglais ne compile pas).
+- **Traduction des livres par le navigateur** : une traduction versionnée serait une œuvre dérivée, interdite par la licence, et aucune édition française n'est diffusée librement. Pendant la lecture, le document prend la langue du livre et l'interface est marquée `translate="no"` : seul le texte du livre est traduit par Chrome ou Safari. La traduction peut passer par les serveurs de Google ou d'Apple. Limite : elle n'est pas accessible depuis une appli ajoutée à l'écran d'accueil iOS (pas de barre Safari).
 
 ## Dette technique et limites connues
 
@@ -72,8 +78,3 @@ src/app/
 - Les effets spécifiques à une section (perte d'END, objets gagnés, ennemis insensibles à Mindblast…) sont appliqués par le joueur.
 - Pas encore de tests de composants ni de tests e2e versionnés.
 
-## Documentation
-
-- Technique : [architecture](docs/technique/architecture.md), [données](docs/technique/donnees.md), [exploitation](docs/technique/exploitation.md), [ADR](docs/technique/adr/)
-- Fonctionnelle : [import d'un livre](docs/fonctionnel/bibliotheque/import-livre.md), [partie](docs/fonctionnel/jeu/partie.md), [glossaire](docs/fonctionnel/glossaire.md)
-- Avant une PR : `bash tools/sic-doc/controler-doc.sh`
