@@ -39,6 +39,7 @@
         (page)="openPage($event)"
         (fight)="fight($event)"
         [activeCombat]="game.combat()?.blockIndex ?? null"
+        [conditions]="choiceConditions()"
       >
         <lw-combat-panel />
         @if (mealDue() && game.character(); as c) {

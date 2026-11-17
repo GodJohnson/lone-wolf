@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Block, Enemy } from '../core/book/book.models';
+import { ChoiceCondition } from '../core/game/choice-conditions';
 import { I18nService } from '../core/i18n/i18n.service';
 import { BookImageComponent } from './book-image.component';
 
@@ -23,18 +24,36 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
       @switch (block.kind) {
         @case ('choice') {
           @if (interactive()) {
+            @let cond = conditions()[i];
             <button
               type="button"
               class="choice"
-              [disabled]="choicesDisabled()"
+              [class.choice--met]="cond?.status === 'met' && !cond?.negated"
+              [class.choice--unmet]="cond?.status === 'unmet'"
+              [disabled]="choicesDisabled() || cond?.status === 'unmet'"
               (click)="section.emit(block.target)"
             >
-              <span
-                class="choice__text"
-                translate="yes"
-                [attr.lang]="lang()"
-                [innerHTML]="block.html"
-              ></span>
+              <span class="choice__body">
+                <span
+                  class="choice__text"
+                  translate="yes"
+                  [attr.lang]="lang()"
+                  [innerHTML]="block.html"
+                ></span>
+                @if (
+                  cond && cond.status !== 'unknown' && !(cond.status === 'met' && cond.negated)
+                ) {
+                  <span class="choice__condition">
+                    {{
+                      cond.status === 'met'
+                        ? '✓ ' + cond.disciplines.join(' · ')
+                        : i18n.t(cond.negated ? 'choice.excludedBy' : 'choice.requires', {
+                            disciplines: cond.disciplines.join(' / '),
+                          })
+                    }}
+                  </span>
+                }
+              </span>
               <span class="choice__target">{{ block.target }}</span>
             </button>
           } @else {
@@ -95,6 +114,8 @@ export class BlocksComponent {
   readonly choicesDisabled = input(false);
   /** Index du bloc combat en cours : le contenu projeté (panneau de combat) s'affiche juste après. */
   readonly activeCombat = input<number | null>(null);
+  /** Conditions des choix, par index de bloc (voir `evaluateChoices`). */
+  readonly conditions = input<readonly (ChoiceCondition | null)[]>([]);
   /** Position du premier choix : le contenu marqué `lwBeforeChoices` s'affiche juste avant. */
   protected readonly firstChoice = computed(() =>
     this.blocks().findIndex((b) => b.kind === 'choice'),

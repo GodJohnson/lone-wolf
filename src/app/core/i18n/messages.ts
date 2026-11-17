@@ -75,6 +75,8 @@ export const fr = {
   'reader.restart': 'Recommencer',
   'reader.fight': 'Combattre',
   'reader.healing': '+1 ENDURANCE (Guérison)',
+  'choice.requires': 'Requiert {disciplines}',
+  'choice.excludedBy': 'Vous possédez {disciplines}',
   'reader.translateTip':
     'Le livre est en anglais. Pour le lire en français, utilisez « Traduire » dans le menu de votre navigateur (Chrome : ⋮ › Traduire ; Safari : aA › Traduire). Seul le texte du livre est traduit, par le service de traduction de votre navigateur.',
   'reader.translateTipOk': 'Compris',
@@ -210,6 +212,8 @@ export const en: Record<MessageKey, string> = {
   'reader.restart': 'Start again',
   'reader.fight': 'Fight',
   'reader.healing': '+1 ENDURANCE (Healing)',
+  'choice.requires': 'Requires {disciplines}',
+  'choice.excludedBy': 'You have {disciplines}',
   'reader.translateTip':
     'Use your browser’s “Translate” menu to read the book in another language. Only the book text is translated.',
   'reader.translateTipOk': 'Got it',

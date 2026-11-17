@@ -12,6 +12,7 @@ import { Router, RouterLink } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
 import { MealChoice, requiresMeal } from '../../core/game/equipment';
+import { evaluateChoices } from '../../core/game/choice-conditions';
 import { GameService } from '../../core/game/game.service';
 import { DISCIPLINE, hasDiscipline } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -76,6 +77,15 @@ export class ReaderPage {
     const text = blocks.map((b) => ('html' in b ? b.html.replace(/<[^>]+>/g, '') : '')).join(' ');
     return requiresMeal(text) && !this.game.state()?.mealResolved && !this.game.isDead();
   });
+  /** Choix accessibles selon les disciplines du personnage. */
+  protected readonly choiceConditions = computed(() =>
+    evaluateChoices(
+      this.section.value()?.blocks ?? [],
+      this.game.character()?.disciplines ?? [],
+      this.book.value()?.disciplines ?? [],
+    ),
+  );
+
   protected readonly canHunt = computed(() => {
     const c = this.game.character();
     return !!c && hasDiscipline(c, DISCIPLINE.hunting);

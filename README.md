@@ -19,6 +19,7 @@ Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bil
 - Bibliothèque : import d'un zip, catalogue des 29 livres avec liens de téléchargement.
 - Création du personnage : tirages HABILETÉ / ENDURANCE, choix des disciplines (lues dans le livre), arme de Weaponskill, équipement de départ guidé (livres 1 à 5).
 - Lecture section par section, choix en gros boutons, illustrations, pages de règles et annexes.
+- Choix conditionnés par une discipline (« If you have the Kai Discipline of Tracking… ») : en vert si vous l'avez, grisés et inaccessibles sinon. Seules les formulations sans ambiguïté sont reconnues ; les conditions de rang Kaï ou d'objet restent des boutons normaux, et une section n'est jamais entièrement bloquée.
 - Feuille d'aventure : caractéristiques, disciplines, inventaire avec capacités (2 armes, 8 places de sac à dos Repas compris, 50 couronnes), effets des objets (Helmet, Chainmail, Shield), potions à boire, notes.
 - Repas : quand le texte l'impose, l'appli propose de manger un Repas, de chasser ou de perdre 3 END.
 - Combat : quotient d'attaque calculé (Weaponskill +2, Mindblast +2, sans arme −4, modificateur de section), table des résultats, fuite, journal des assauts.
