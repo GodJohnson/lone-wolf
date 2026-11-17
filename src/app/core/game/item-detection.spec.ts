@@ -1,5 +1,11 @@
 import { Block } from '../book/book.models';
-import { ITEM_LINK_PREFIX, annotateItems, buildNonItemLexicon, guessSlot } from './item-detection';
+import {
+  ITEM_LINK_PREFIX,
+  annotateItems,
+  buildNonItemLexicon,
+  guessSlot,
+  itemKey,
+} from './item-detection';
 
 const p = (html: string): Block => ({ kind: 'html', html: `<p>${html}</p>` });
 
@@ -82,5 +88,32 @@ describe('item-detection', () => {
     );
     expect(guessSlot('Bone Sword', 'You discover a Bone Sword.')).toBe('weapons');
     expect(guessSlot('Rope', 'You may take the Rope.')).toBe('backpack');
+  });
+
+  it('« N Crowns » sans « Gold » est de l’or', () => {
+    expect(annotateItems([p('His purse holds 12 Crowns. You may take them.')]).items).toEqual([
+      { kind: 'gold', amount: 12, label: '12 Crowns' },
+    ]);
+  });
+
+  it('les termes classés : objet connu sans article, non-objet jamais lié', () => {
+    const { items } = annotateItems([
+      p(
+        'You may keep the Torches and some Alether, but the Durncrag is too far. Take them if you wish.',
+      ),
+    ]);
+    expect(items.map((i) => (i.kind === 'item' ? i.name : i.label))).toEqual([
+      'Torches',
+      'Alether',
+    ]);
+  });
+
+  it('un objet écarté (« Pas ramassable ici ») n’est plus lié, ni ses formes plus courtes', () => {
+    const blocks = [
+      p('You discover a Moon Amulet and a Rusty Spear. You may keep them if you wish.'),
+    ];
+    const { items } = annotateItems(blocks, [], new Set(['Moon Amulet']));
+    expect(items).toEqual([{ kind: 'item', name: 'Rusty Spear', slot: 'weapons' }]);
+    expect(itemKey({ kind: 'gold', amount: 3, label: '3 Gold Crowns' })).toBe('3 Gold Crowns');
   });
 });

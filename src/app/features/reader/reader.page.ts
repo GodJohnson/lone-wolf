@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   resource,
   signal,
 } from '@angular/core';
@@ -13,7 +14,7 @@ import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
 import { MealChoice, requiresMeal } from '../../core/game/equipment';
 import { evaluateChoices } from '../../core/game/choice-conditions';
-import { FoundItem, annotateItems } from '../../core/game/item-detection';
+import { FoundItem, annotateItems, itemKey } from '../../core/game/item-detection';
 import { rulesFor } from '../../core/game/rules';
 import { ItemSheetComponent } from './item-sheet.component';
 import { GameService } from '../../core/game/game.service';
@@ -88,15 +89,38 @@ export class ReaderPage {
   });
 
   /** Blocs de la section avec les objets ramassables transformés en liens. */
-  protected readonly annotated = computed(() =>
-    annotateItems(this.section.value()?.blocks ?? [], this.nonItemWords.value() ?? []),
-  );
+  /** Liens écartés par le joueur (« Pas ramassable ici »), mis à jour sans recharger le livre. */
+  private readonly dismissedItems = linkedSignal(() => this.book.value()?.dismissedItems ?? []);
+  protected readonly annotated = computed(() => {
+    const section = this.sectionNumber();
+    const prefix = `${section}|`;
+    const ignored = new Set(
+      this.dismissedItems()
+        .filter((k) => k.startsWith(prefix))
+        .map((k) => k.slice(prefix.length)),
+    );
+    return annotateItems(
+      this.section.value()?.blocks ?? [],
+      this.nonItemWords.value() ?? [],
+      ignored,
+    );
+  });
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
   protected readonly selectedItem = signal<FoundItem | null>(null);
 
   protected openItem(index: number): void {
     const item = this.annotated().items[index];
     if (item && !this.game.isDead()) this.selectedItem.set(item);
+  }
+
+  protected async dismissItem(): Promise<void> {
+    const item = this.selectedItem();
+    const section = this.sectionNumber();
+    this.selectedItem.set(null);
+    if (!item || section === null) return;
+    this.dismissedItems.set(
+      await this.books.dismissItem(this.bookId(), `${section}|${itemKey(item)}`),
+    );
   }
 
   protected itemAdded(label: string): void {

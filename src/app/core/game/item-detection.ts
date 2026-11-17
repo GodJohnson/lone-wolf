@@ -1,5 +1,6 @@
 import { Block } from '../book/book.models';
 import { ItemSlot } from './equipment';
+import { ITEM_TERMS, NON_ITEM_TERMS } from './known-terms';
 
 /**
  * Repérage des objets ramassables dans le texte d'une section, pour les rendre cliquables.
@@ -126,6 +127,18 @@ const CAPITALIZED = String.raw`([A-Z][a-z’'-]+(?:\s+(?:of\s+)?[A-Z][a-z’'-]+
 const ITEM_PATTERN = new RegExp(ARTICLE + CAPITALIZED, 'g');
 const GOLD_PATTERN =
   /\b(\d+|a|one|two|three|four|five|six|seven|eight|nine|ten)\s+Gold\s+Crowns?\b/gi;
+/** « 10 Crowns » sans « Gold » : seulement avec un nombre (« the Crown » peut être un objet). */
+const CROWNS_PATTERN = /\b(\d+|two|three|four|five|six|seven|eight|nine|ten)\s+Crowns\b/gi;
+
+const NON_ITEMS = new Set(NON_ITEM_TERMS.map((t) => t.toLowerCase()));
+const KNOWN_ITEM_PATTERNS = ITEM_TERMS.map(
+  (term) => new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'),
+);
+
+/** Clé d'un objet détecté, pour mémoriser « Pas ramassable ici » (avec le numéro de section). */
+export function itemKey(item: FoundItem): string {
+  return item.kind === 'item' ? item.name : item.label;
+}
 const MEALS_PATTERN = /\b(?:enough food for\s+)?(\d+|a|one|two|three|four|five)\s+Meals?\b/gi;
 
 /**
@@ -136,18 +149,26 @@ const MEALS_PATTERN = /\b(?:enough food for\s+)?(\d+|a|one|two|three|four|five)\
 export function annotateItems(
   blocks: readonly Block[],
   nonItemWords: readonly string[] = [],
+  /** Objets écartés par le joueur dans cette section (clés `itemKey`). */
+  ignored: ReadonlySet<string> = new Set(),
 ): AnnotatedBlocks {
   const items: FoundItem[] = [];
   const lexicon = new Set(nonItemWords);
+  for (const term of NON_ITEMS) if (!term.includes(' ')) lexicon.add(term);
   const annotated = blocks.map((block) => {
     if (block.kind !== 'html' || !/^<p[\s>]/.test(block.html)) return block;
-    const html = annotateParagraph(block.html, items, lexicon);
+    const html = annotateParagraph(block.html, items, lexicon, ignored);
     return html === block.html ? block : { ...block, html };
   });
   return { blocks: annotated, items };
 }
 
-function annotateParagraph(html: string, items: FoundItem[], lexicon: Set<string>): string {
+function annotateParagraph(
+  html: string,
+  items: FoundItem[],
+  lexicon: Set<string>,
+  ignored: ReadonlySet<string>,
+): string {
   const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
   const paragraph = doc.body.firstElementChild;
   if (!paragraph) return html;
@@ -170,6 +191,23 @@ function annotateParagraph(html: string, items: FoundItem[], lexicon: Set<string
       matches,
     );
     collect(
+      CROWNS_PATTERN,
+      sentence,
+      (m) => {
+        const amount = toNumber(m[1]);
+        return amount ? { kind: 'gold', amount, label: m[0] } : null;
+      },
+      matches,
+    );
+    for (const pattern of KNOWN_ITEM_PATTERNS) {
+      collect(
+        pattern,
+        sentence,
+        (m) => ({ kind: 'item', name: m[0], slot: guessSlot(m[0], context) }),
+        matches,
+      );
+    }
+    collect(
       MEALS_PATTERN,
       sentence,
       (m) => {
@@ -190,11 +228,17 @@ function annotateParagraph(html: string, items: FoundItem[], lexicon: Set<string
       (m) => m[0].length - m[2].length,
     );
   }
-  if (!matches.length) return html;
-
-  // Pas de chevauchement (ex. « 6 Gold Crowns » déjà pris) : on garde le premier trouvé.
-  matches.sort((a, b) => a.start - b.start);
-  const kept = matches.filter((m, i) => i === 0 || m.start >= matches[i - 1].end);
+  // Pas de chevauchement : au même endroit, la forme la plus longue l'emporte
+  // (« Silver Key » plutôt que « Key », « 6 Gold Crowns » plutôt que « Gold »).
+  matches.sort((a, b) => a.start - b.start || b.end - a.end);
+  const kept: typeof matches = [];
+  let end = -1;
+  for (const m of matches) {
+    if (m.start < end) continue;
+    end = m.end; // un objet écarté masque aussi ses formes plus courtes au même endroit
+    if (!ignored.has(itemKey(m.item))) kept.push(m);
+  }
+  if (!kept.length) return html;
   wrapRanges(
     paragraph,
     kept.map((m) => ({ ...m, index: items.push(m.item) - 1 })),
@@ -222,6 +266,7 @@ function collect(
 
 function isItemName(name: string, lexicon: Set<string>): boolean {
   if (/[’']s?$/.test(name)) return false; // possessif : « the Giak’s pouch »
+  if (NON_ITEMS.has(name.toLowerCase())) return false;
   const words = name.toLowerCase().split(' ');
   const head = words[0];
   const last = words[words.length - 1];

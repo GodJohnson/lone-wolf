@@ -125,6 +125,7 @@
     [item]="found"
     [rules]="rules()"
     (closed)="selectedItem.set(null)"
+    (dismissed)="dismissItem()"
     (added)="itemAdded($event)"
   />
 }

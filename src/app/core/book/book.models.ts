@@ -24,6 +24,8 @@ export interface BookMeta {
    * ramassables. Absent pour les livres importés avant cette fonctionnalité (calculé à la volée).
    */
   nonItemWords?: string[];
+  /** Liens d'objets écartés par le joueur (« Pas ramassable ici ») : `<section>|<clé de l'objet>`. */
+  dismissedItems?: string[];
   /** Pages hors sections disponibles (règles, carte, équipement...), dans l'ordre de la table des matières. */
   pages: PageRef[];
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */

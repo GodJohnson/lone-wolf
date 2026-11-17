@@ -57,6 +57,13 @@ import { MessageKey } from '../../core/i18n/messages';
       @if (error(); as message) {
         <p class="notice notice--error" role="alert">{{ message }}</p>
       }
+      <button
+        type="button"
+        class="button button--ghost button--small item-sheet__dismiss"
+        (click)="dismissed.emit()"
+      >
+        {{ i18n.t('item.dismiss') }}
+      </button>
       <div class="sheet__actions">
         <button type="button" class="button" (click)="closed.emit()">
           {{ i18n.t('common.cancel') }}
@@ -75,6 +82,8 @@ export class ItemSheetComponent {
   readonly item = input.required<FoundItem>();
   readonly rules = input.required<SeriesRules>();
   readonly closed = output<void>();
+  /** « Pas ramassable ici » : retirer ce lien dans cette section. */
+  readonly dismissed = output<void>();
   /** Libellé de l'objet ajouté, pour le message de confirmation. */
   readonly added = output<string>();
 

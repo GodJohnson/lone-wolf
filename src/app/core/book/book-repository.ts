@@ -32,6 +32,16 @@ export class BookRepository {
     return nonItemWords;
   }
 
+  /** Mémorise qu'un lien d'objet n'est pas ramassable à cet endroit ; retourne la liste à jour. */
+  async dismissItem(bookId: string, key: string): Promise<string[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    const dismissedItems = [...new Set([...(book.dismissedItems ?? []), key])];
+    await db.put('books', { ...book, dismissedItems });
+    return dismissedItems;
+  }
+
   async page(bookId: string, pageId: string): Promise<PageRecord | undefined> {
     return (await database()).get('pages', [bookId, pageId]);
   }
@@ -51,6 +61,10 @@ export class BookRepository {
 
   /** Remplace intégralement un livre déjà importé (ré-import d'une version corrigée). */
   async save(book: ParsedBook): Promise<void> {
+    // Les corrections du joueur survivent à un réimport.
+    const previous = await this.get(book.meta.id);
+    if (previous?.dismissedItems)
+      book = { ...book, meta: { ...book.meta, dismissedItems: previous.dismissedItems } };
     await this.removeContent(book.meta.id);
     const db = await database();
     const tx = db.transaction(['books', 'sections', 'pages', 'images'], 'readwrite');
