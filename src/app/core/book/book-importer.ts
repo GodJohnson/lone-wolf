@@ -11,6 +11,7 @@ import {
   sectionNumberFromFile,
 } from './section-parser';
 import { normalizedText } from './html-cleaner';
+import { buildNonItemLexicon } from '../game/item-detection';
 
 /** Garde-fous contre un zip malveillant ou erroné (zip bomb, fichier sans rapport). */
 const MAX_ZIP_BYTES = 50 * 1024 * 1024;
@@ -151,6 +152,7 @@ export function parseBookEntries(entries: Unzipped): ParsedBook {
       series: seriesOf(number),
       sectionCount: sections.length,
       disciplines: discplnz ? parseDisciplines(discplnz) : [],
+      nonItemWords: buildNonItemLexicon(sections, discplnz ? parseDisciplines(discplnz) : []),
       pages: pageRefs,
       copyright: normalizedText(sect1.querySelector('#license p') ?? sect1.createElement('span')),
       importedAt: new Date().toISOString(),

@@ -1,6 +1,8 @@
 <lw-top-bar [title]="i18n.t('app.title')" [subtitle]="i18n.t('library.title')" />
 
 <main class="page">
+  <img class="app-logo" src="icons/icon-192x192.png" width="112" height="112" alt="" />
+
   <label class="button button--primary button--block import-button" [class.is-busy]="importing()">
     <input
       type="file"

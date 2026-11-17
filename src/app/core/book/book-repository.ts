@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { database } from '../storage/database';
+import { buildNonItemLexicon } from '../game/item-detection';
 import { BookMeta, PageRecord, ParsedBook, SectionRecord } from './book.models';
+
+const USER_NON_ITEMS_KEY = 'lone-wolf.nonItems';
 
 @Injectable({ providedIn: 'root' })
 export class BookRepository {
@@ -17,6 +20,66 @@ export class BookRepository {
 
   async section(bookId: string, number: number): Promise<SectionRecord | undefined> {
     return (await database()).get('sections', [bookId, number]);
+  }
+
+  /** Lexique des mots non-objets du livre ; calculé et mémorisé s'il manque (anciens imports). */
+  async nonItemWords(bookId: string): Promise<string[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    if (book.nonItemWords) return book.nonItemWords;
+    const sections = await db.getAllFromIndex('sections', 'byBook', bookId);
+    const nonItemWords = buildNonItemLexicon(sections, book.disciplines);
+    await db.put('books', { ...book, nonItemWords });
+    return nonItemWords;
+  }
+
+  /** Termes marqués « Pas un objet » par le joueur, valables pour tous les livres. */
+  userNonItems(): string[] {
+    try {
+      const value = JSON.parse(localStorage.getItem(USER_NON_ITEMS_KEY) ?? '[]');
+      return Array.isArray(value) ? value.filter((v) => typeof v === 'string') : [];
+    } catch {
+      return [];
+    }
+  }
+
+  addUserNonItem(term: string): string[] {
+    return this.saveUserNonItems([...new Set([...this.userNonItems(), term])]);
+  }
+
+  /** Annule un « Pas un objet » : le terme redevient détectable. */
+  removeUserNonItem(term: string): string[] {
+    return this.saveUserNonItems(this.userNonItems().filter((t) => t !== term));
+  }
+
+  private saveUserNonItems(list: string[]): string[] {
+    try {
+      localStorage.setItem(USER_NON_ITEMS_KEY, JSON.stringify(list));
+    } catch {
+      // Stockage indisponible : le choix vaut pour cette visite seulement.
+    }
+    return list;
+  }
+
+  /** Mémorise qu'un lien d'objet n'est pas ramassable à cet endroit ; retourne la liste à jour. */
+  async dismissItem(bookId: string, key: string): Promise<string[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    const dismissedItems = [...new Set([...(book.dismissedItems ?? []), key])];
+    await db.put('books', { ...book, dismissedItems });
+    return dismissedItems;
+  }
+
+  /** Annule un « Pas ici » ; retourne la liste à jour. */
+  async restoreItem(bookId: string, key: string): Promise<string[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    const dismissedItems = (book.dismissedItems ?? []).filter((k) => k !== key);
+    await db.put('books', { ...book, dismissedItems });
+    return dismissedItems;
   }
 
   async page(bookId: string, pageId: string): Promise<PageRecord | undefined> {
@@ -38,6 +101,10 @@ export class BookRepository {
 
   /** Remplace intégralement un livre déjà importé (ré-import d'une version corrigée). */
   async save(book: ParsedBook): Promise<void> {
+    // Les corrections du joueur survivent à un réimport.
+    const previous = await this.get(book.meta.id);
+    if (previous?.dismissedItems)
+      book = { ...book, meta: { ...book.meta, dismissedItems: previous.dismissedItems } };
     await this.removeContent(book.meta.id);
     const db = await database();
     const tx = db.transaction(['books', 'sections', 'pages', 'images'], 'readwrite');

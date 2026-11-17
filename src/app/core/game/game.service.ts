@@ -4,7 +4,9 @@ import { database } from '../storage/database';
 import { Character, CombatState, GameState } from './game.models';
 import { randomNumber } from './random';
 import {
+  Grant,
   InventoryError,
+  applyGrants,
   ItemSlot,
   MealChoice,
   addItem,
@@ -100,6 +102,16 @@ export class GameService {
     const result = addItem(state.character, slot, name, rules);
     if (result.error) return result.error;
     await this.commit({ ...state, character: result.character });
+    return null;
+  }
+
+  /** Ajoute un objet, de l'or ou des Repas trouvés ; retourne l'erreur éventuelle (capacité). */
+  async grant(grant: Grant, rules: SeriesRules): Promise<InventoryError | null> {
+    const state = this._state();
+    if (!state) return null;
+    const { character, errors } = applyGrants(state.character, [grant], rules);
+    if (errors.length) return errors[0];
+    await this.commit({ ...state, character });
     return null;
   }
 

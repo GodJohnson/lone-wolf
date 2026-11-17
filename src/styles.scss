@@ -734,3 +734,111 @@ figure {
   margin: 0;
   flex: 1;
 }
+
+/* ---------- Choix conditionnés par une discipline ---------- */
+
+.choice__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.choice__condition {
+  align-self: flex-start;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.choice--met {
+  border-color: var(--success);
+  border-left-color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+}
+.choice--met .choice__condition {
+  background: var(--success);
+  color: #fff;
+}
+.choice--met .choice__target {
+  background: var(--success);
+  color: #fff;
+}
+.choice--unmet:disabled {
+  opacity: 0.45;
+  border-left-color: var(--border);
+  background: var(--surface-2);
+  cursor: not-allowed;
+}
+.choice--unmet .choice__condition {
+  background: var(--border);
+  color: var(--text);
+}
+.choice--unmet .choice__target {
+  background: var(--muted);
+}
+
+/* ---------- Objets ramassables dans le texte ---------- */
+
+.item-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.item-link::after {
+  content: ' ＋';
+  font-family: var(--font-ui);
+  font-size: 0.8em;
+}
+.item-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+}
+.item-sheet h2 {
+  text-align: center;
+}
+.item-sheet__label {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.app-logo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  margin: 0 auto;
+  border-radius: 24px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
+}
+.item-sheet__dismiss {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.item-sheet__dismiss .button {
+  color: var(--muted);
+}
+.item-sheet__hint {
+  margin: -0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.removed-links h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.removed-links .item-list li {
+  padding: 0.35rem 0;
+}

@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   resource,
   signal,
 } from '@angular/core';
@@ -12,6 +13,10 @@ import { Router, RouterLink } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
 import { MealChoice, requiresMeal } from '../../core/game/equipment';
+import { evaluateChoices } from '../../core/game/choice-conditions';
+import { FoundItem, annotateItems, itemKey } from '../../core/game/item-detection';
+import { rulesFor } from '../../core/game/rules';
+import { ItemSheetComponent } from './item-sheet.component';
 import { GameService } from '../../core/game/game.service';
 import { DISCIPLINE, hasDiscipline } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -29,6 +34,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     BlocksComponent,
     RandomNumberComponent,
     CombatPanelComponent,
+    ItemSheetComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reader.page.html',
@@ -76,6 +82,70 @@ export class ReaderPage {
     const text = blocks.map((b) => ('html' in b ? b.html.replace(/<[^>]+>/g, '') : '')).join(' ');
     return requiresMeal(text) && !this.game.state()?.mealResolved && !this.game.isDead();
   });
+  /** Mots non-objets du livre (créatures, lieux…) pour la détection des objets ramassables. */
+  private readonly nonItemWords = resource({
+    params: () => this.bookId(),
+    loader: ({ params }) => this.books.nonItemWords(params),
+  });
+
+  /** Blocs de la section avec les objets ramassables transformés en liens. */
+  /** Termes marqués « Pas un objet » (tous livres). */
+  private readonly userNonItems = signal(this.books.userNonItems());
+  /** Liens écartés par le joueur (« Pas ramassable ici »), mis à jour sans recharger le livre. */
+  private readonly dismissedItems = linkedSignal(() => this.book.value()?.dismissedItems ?? []);
+  protected readonly annotated = computed(() => {
+    const section = this.sectionNumber();
+    const prefix = `${section}|`;
+    const ignored = new Set(
+      this.dismissedItems()
+        .filter((k) => k.startsWith(prefix))
+        .map((k) => k.slice(prefix.length)),
+    );
+    return annotateItems(
+      this.section.value()?.blocks ?? [],
+      this.nonItemWords.value() ?? [],
+      ignored,
+      this.userNonItems(),
+    );
+  });
+  protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
+  protected readonly selectedItem = signal<FoundItem | null>(null);
+
+  protected openItem(index: number): void {
+    const item = this.annotated().items[index];
+    if (item && !this.game.isDead()) this.selectedItem.set(item);
+  }
+
+  protected async dismissItem(): Promise<void> {
+    const item = this.selectedItem();
+    const section = this.sectionNumber();
+    this.selectedItem.set(null);
+    if (!item || section === null) return;
+    this.dismissedItems.set(
+      await this.books.dismissItem(this.bookId(), `${section}|${itemKey(item)}`),
+    );
+  }
+
+  protected markNotAnItem(): void {
+    const item = this.selectedItem();
+    this.selectedItem.set(null);
+    if (item?.kind === 'item') this.userNonItems.set(this.books.addUserNonItem(item.name));
+  }
+
+  protected itemAdded(label: string): void {
+    this.selectedItem.set(null);
+    this.flash(this.i18n.t('item.added', { item: label }));
+  }
+
+  /** Choix accessibles selon les disciplines du personnage. */
+  protected readonly choiceConditions = computed(() =>
+    evaluateChoices(
+      this.section.value()?.blocks ?? [],
+      this.game.character()?.disciplines ?? [],
+      this.book.value()?.disciplines ?? [],
+    ),
+  );
+
   protected readonly canHunt = computed(() => {
     const c = this.game.character();
     return !!c && hasDiscipline(c, DISCIPLINE.hunting);
