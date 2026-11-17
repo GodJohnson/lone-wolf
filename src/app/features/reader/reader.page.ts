@@ -89,6 +89,8 @@ export class ReaderPage {
   });
 
   /** Blocs de la section avec les objets ramassables transformés en liens. */
+  /** Termes marqués « Pas un objet » (tous livres). */
+  private readonly userNonItems = signal(this.books.userNonItems());
   /** Liens écartés par le joueur (« Pas ramassable ici »), mis à jour sans recharger le livre. */
   private readonly dismissedItems = linkedSignal(() => this.book.value()?.dismissedItems ?? []);
   protected readonly annotated = computed(() => {
@@ -103,6 +105,7 @@ export class ReaderPage {
       this.section.value()?.blocks ?? [],
       this.nonItemWords.value() ?? [],
       ignored,
+      this.userNonItems(),
     );
   });
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
@@ -121,6 +124,12 @@ export class ReaderPage {
     this.dismissedItems.set(
       await this.books.dismissItem(this.bookId(), `${section}|${itemKey(item)}`),
     );
+  }
+
+  protected markNotAnItem(): void {
+    const item = this.selectedItem();
+    this.selectedItem.set(null);
+    if (item?.kind === 'item') this.userNonItems.set(this.books.addUserNonItem(item.name));
   }
 
   protected itemAdded(label: string): void {

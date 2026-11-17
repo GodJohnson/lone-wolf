@@ -151,13 +151,16 @@ export function annotateItems(
   nonItemWords: readonly string[] = [],
   /** Objets écartés par le joueur dans cette section (clés `itemKey`). */
   ignored: ReadonlySet<string> = new Set(),
+  /** Termes marqués « Pas un objet » par le joueur (expressions exactes, tous livres). */
+  excludedTerms: readonly string[] = [],
 ): AnnotatedBlocks {
+  const excluded = new Set([...NON_ITEMS, ...excludedTerms.map((t) => t.toLowerCase())]);
   const items: FoundItem[] = [];
   const lexicon = new Set(nonItemWords);
   for (const term of NON_ITEMS) if (!term.includes(' ')) lexicon.add(term);
   const annotated = blocks.map((block) => {
     if (block.kind !== 'html' || !/^<p[\s>]/.test(block.html)) return block;
-    const html = annotateParagraph(block.html, items, lexicon, ignored);
+    const html = annotateParagraph(block.html, items, lexicon, ignored, excluded);
     return html === block.html ? block : { ...block, html };
   });
   return { blocks: annotated, items };
@@ -168,6 +171,7 @@ function annotateParagraph(
   items: FoundItem[],
   lexicon: Set<string>,
   ignored: ReadonlySet<string>,
+  excluded: ReadonlySet<string>,
 ): string {
   const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
   const paragraph = doc.body.firstElementChild;
@@ -203,7 +207,10 @@ function annotateParagraph(
       collect(
         pattern,
         sentence,
-        (m) => ({ kind: 'item', name: m[0], slot: guessSlot(m[0], context) }),
+        (m) =>
+          excluded.has(m[0].toLowerCase())
+            ? null
+            : { kind: 'item', name: m[0], slot: guessSlot(m[0], context) },
         matches,
       );
     }
@@ -221,7 +228,7 @@ function annotateParagraph(
       sentence,
       (m) => {
         const name = m[2].replace(/\s+/g, ' ');
-        if (!isItemName(name, lexicon)) return null;
+        if (!isItemName(name, lexicon, excluded)) return null;
         return { kind: 'item', name, slot: guessSlot(name, context) };
       },
       matches,
@@ -264,9 +271,9 @@ function collect(
   }
 }
 
-function isItemName(name: string, lexicon: Set<string>): boolean {
+function isItemName(name: string, lexicon: Set<string>, excluded: ReadonlySet<string>): boolean {
   if (/[’']s?$/.test(name)) return false; // possessif : « the Giak’s pouch »
-  if (NON_ITEMS.has(name.toLowerCase())) return false;
+  if (excluded.has(name.toLowerCase())) return false;
   const words = name.toLowerCase().split(' ');
   const head = words[0];
   const last = words[words.length - 1];

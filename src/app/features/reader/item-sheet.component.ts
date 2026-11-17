@@ -57,13 +57,21 @@ import { MessageKey } from '../../core/i18n/messages';
       @if (error(); as message) {
         <p class="notice notice--error" role="alert">{{ message }}</p>
       }
-      <button
-        type="button"
-        class="button button--ghost button--small item-sheet__dismiss"
-        (click)="dismissed.emit()"
-      >
-        {{ i18n.t('item.dismiss') }}
-      </button>
+      <div class="item-sheet__dismiss">
+        <button type="button" class="button button--ghost button--small" (click)="dismissed.emit()">
+          {{ i18n.t('item.dismiss') }}
+        </button>
+        @if (item().kind === 'item') {
+          <button
+            type="button"
+            class="button button--ghost button--small"
+            (click)="notAnItem.emit()"
+          >
+            {{ i18n.t('item.notAnItem') }}
+          </button>
+        }
+      </div>
+      <p class="item-sheet__hint">{{ i18n.t('item.dismissHint') }}</p>
       <div class="sheet__actions">
         <button type="button" class="button" (click)="closed.emit()">
           {{ i18n.t('common.cancel') }}
@@ -84,6 +92,8 @@ export class ItemSheetComponent {
   readonly closed = output<void>();
   /** « Pas ramassable ici » : retirer ce lien dans cette section. */
   readonly dismissed = output<void>();
+  /** « Pas un objet » : ce terme ne sera plus jamais un lien, dans aucun livre. */
+  readonly notAnItem = output<void>();
   /** Libellé de l'objet ajouté, pour le message de confirmation. */
   readonly added = output<string>();
 

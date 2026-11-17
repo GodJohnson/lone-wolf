@@ -126,6 +126,7 @@
     [rules]="rules()"
     (closed)="selectedItem.set(null)"
     (dismissed)="dismissItem()"
+    (notAnItem)="markNotAnItem()"
     (added)="itemAdded($event)"
   />
 }

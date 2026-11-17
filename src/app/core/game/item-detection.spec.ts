@@ -116,4 +116,9 @@ describe('item-detection', () => {
     expect(items).toEqual([{ kind: 'item', name: 'Rusty Spear', slot: 'weapons' }]);
     expect(itemKey({ kind: 'gold', amount: 3, label: '3 Gold Crowns' })).toBe('3 Gold Crowns');
   });
+
+  it('« Pas un objet » : le terme n’est plus jamais lié, même s’il est connu', () => {
+    const blocks = [p('You find a Grey Lantern and some Torches. You may take them if you wish.')];
+    expect(annotateItems(blocks, [], new Set(), ['grey lantern', 'Torches']).items).toEqual([]);
+  });
 });

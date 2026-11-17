@@ -78,7 +78,10 @@ export const fr = {
   'choice.requires': 'Requiert {disciplines}',
   'item.title': 'Ajouter à la Feuille d’aventure',
   'item.name': 'Nom de l’objet',
-  'item.dismiss': 'Pas ramassable ici (retirer ce lien)',
+  'item.dismiss': 'Pas ici',
+  'item.notAnItem': 'Pas un objet',
+  'item.dismissHint':
+    '« Pas ici » retire ce lien dans cette section ; « Pas un objet » ne fera plus jamais de ce mot un lien.',
   'item.added': '« {item} » ajouté',
   'item.slot.weapons': 'Armes',
   'item.slot.backpack': 'Sac à dos',
@@ -222,7 +225,10 @@ export const en: Record<MessageKey, string> = {
   'choice.requires': 'Requires {disciplines}',
   'item.title': 'Add to Action Chart',
   'item.name': 'Item name',
-  'item.dismiss': 'Not pickable here (remove this link)',
+  'item.dismiss': 'Not here',
+  'item.notAnItem': 'Not an item',
+  'item.dismissHint':
+    '“Not here” removes this link in this section; “Not an item” never links this word again.',
   'item.added': '“{item}” added',
   'item.slot.weapons': 'Weapons',
   'item.slot.backpack': 'Backpack',

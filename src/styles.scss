@@ -818,6 +818,16 @@ figure {
   box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
 }
 .item-sheet__dismiss {
-  align-self: center;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.item-sheet__dismiss .button {
   color: var(--muted);
+}
+.item-sheet__hint {
+  margin: -0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
 }

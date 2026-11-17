@@ -3,6 +3,8 @@ import { database } from '../storage/database';
 import { buildNonItemLexicon } from '../game/item-detection';
 import { BookMeta, PageRecord, ParsedBook, SectionRecord } from './book.models';
 
+const USER_NON_ITEMS_KEY = 'lone-wolf.nonItems';
+
 @Injectable({ providedIn: 'root' })
 export class BookRepository {
   private readonly imageUrls = new Map<string, Promise<string | null>>();
@@ -30,6 +32,26 @@ export class BookRepository {
     const nonItemWords = buildNonItemLexicon(sections, book.disciplines);
     await db.put('books', { ...book, nonItemWords });
     return nonItemWords;
+  }
+
+  /** Termes marqués « Pas un objet » par le joueur, valables pour tous les livres. */
+  userNonItems(): string[] {
+    try {
+      const value = JSON.parse(localStorage.getItem(USER_NON_ITEMS_KEY) ?? '[]');
+      return Array.isArray(value) ? value.filter((v) => typeof v === 'string') : [];
+    } catch {
+      return [];
+    }
+  }
+
+  addUserNonItem(term: string): string[] {
+    const list = [...new Set([...this.userNonItems(), term])];
+    try {
+      localStorage.setItem(USER_NON_ITEMS_KEY, JSON.stringify(list));
+    } catch {
+      // Stockage indisponible : le choix vaut pour cette visite seulement.
+    }
+    return list;
   }
 
   /** Mémorise qu'un lien d'objet n'est pas ramassable à cet endroit ; retourne la liste à jour. */
