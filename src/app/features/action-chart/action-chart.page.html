@@ -6,6 +6,11 @@
 
 <main class="page">
   @if (character(); as c) {
+    @if (game.canUndo()) {
+      <button type="button" class="button button--small" (click)="game.undo()">
+        ↶ {{ i18n.t('common.undo') }}
+      </button>
+    }
     <section class="card">
       <div class="stat-grid">
         <div class="stat">
@@ -32,25 +37,11 @@
         </div>
         <div class="stat">
           <span class="stat__label">{{ i18n.t('chart.endurance') }}</span>
-          <div class="stepper">
-            <button
-              type="button"
-              class="icon-button"
-              (click)="adjust('endurance', -1)"
-              aria-label="-1"
-            >
-              −
-            </button>
-            <span class="stat__value" [class.danger]="c.endurance <= 5">{{ c.endurance }}</span>
-            <button
-              type="button"
-              class="icon-button"
-              (click)="adjust('endurance', 1)"
-              aria-label="+1"
-            >
-              +
-            </button>
-          </div>
+          <lw-counter
+            [value]="c.endurance"
+            [danger]="c.endurance <= 5"
+            (delta)="adjust('endurance', $event)"
+          />
           <div class="stepper stepper--small">
             <span>{{ i18n.t('chart.max') }}</span>
             <button
@@ -74,28 +65,12 @@
         </div>
         <div class="stat">
           <span class="stat__label">{{ i18n.t('chart.gold') }}</span>
-          <div class="stepper">
-            <button type="button" class="icon-button" (click)="adjust('gold', -1)" aria-label="-1">
-              −
-            </button>
-            <span class="stat__value">{{ c.gold }}</span>
-            <button type="button" class="icon-button" (click)="adjust('gold', 1)" aria-label="+1">
-              +
-            </button>
-          </div>
+          <lw-counter [value]="c.gold" (delta)="adjust('gold', $event)" />
           <span class="stat__hint">max {{ rules().maxGold }}</span>
         </div>
         <div class="stat">
           <span class="stat__label">{{ i18n.t('chart.meals') }}</span>
-          <div class="stepper">
-            <button type="button" class="icon-button" (click)="adjust('meals', -1)" aria-label="-1">
-              −
-            </button>
-            <span class="stat__value">{{ c.meals }}</span>
-            <button type="button" class="icon-button" (click)="adjust('meals', 1)" aria-label="+1">
-              +
-            </button>
-          </div>
+          <lw-counter [value]="c.meals" (delta)="adjust('meals', $event)" />
           <button
             type="button"
             class="button button--small"

@@ -14,6 +14,7 @@ import { Character } from '../../core/game/game.models';
 import { GameService } from '../../core/game/game.service';
 import { isSkilledWeapon, rulesFor } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
 import { ItemSlot, backpackLoad } from '../../core/game/equipment';
@@ -22,7 +23,7 @@ type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'mea
 
 @Component({
   selector: 'lw-action-chart-page',
-  imports: [TopBarComponent, ItemListComponent],
+  imports: [TopBarComponent, ItemListComponent, CounterComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './action-chart.page.html',
 })
@@ -82,9 +83,14 @@ export class ActionChartPage {
   protected adjust(field: NumericField, delta: number): void {
     const maxGold = this.rules().maxGold;
     this.error.set(null);
-    if (field === 'meals' && delta > 0 && this.backpackLoad() >= this.rules().maxBackpackItems) {
-      this.error.set(this.i18n.t('chart.error.backpackFull'));
-      return;
+    if (field === 'meals' && delta > 0) {
+      // +10 Repas dans un sac presque plein : on remplit jusqu'à la capacité.
+      const room = this.rules().maxBackpackItems - this.backpackLoad();
+      if (room <= 0) {
+        this.error.set(this.i18n.t('chart.error.backpackFull'));
+        return;
+      }
+      delta = Math.min(delta, room);
     }
     this.game.updateCharacter((c) => {
       const next = { ...c, [field]: Math.max(0, c[field] + delta) };
@@ -92,7 +98,7 @@ export class ActionChartPage {
       if (field === 'endurance') next.endurance = Math.min(next.endurance, next.enduranceMax);
       if (field === 'enduranceMax') next.endurance = Math.min(next.endurance, next.enduranceMax);
       return next;
-    });
+    }, field);
   }
 
   protected eatMeal(): void {

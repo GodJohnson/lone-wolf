@@ -39,6 +39,7 @@ export class GameService {
   async load(bookId: string): Promise<GameState | null> {
     if (this._state()?.bookId === bookId) return this._state();
     const game = (await (await database()).get('games', bookId)) ?? null;
+    this.undoStack.set([]);
     this._state.set(game);
     return game;
   }
@@ -54,6 +55,7 @@ export class GameService {
 
   /** Remplace la partie du livre par une partie reçue d'un autre appareil (déjà validée). */
   async importGame(state: GameState): Promise<void> {
+    this.undoStack.set([]);
     await this.commit({ ...state, combat: null });
   }
 
@@ -65,6 +67,7 @@ export class GameService {
   }
 
   async newGame(bookId: string, character: Character): Promise<void> {
+    this.undoStack.set([]);
     const now = new Date().toISOString();
     await this.commit({
       bookId,
@@ -106,10 +109,41 @@ export class GameService {
     });
   }
 
-  async updateCharacter(update: (c: Character) => Character): Promise<void> {
+  /**
+   * Modifie le personnage. `group` regroupe une rafale de modifications du même champ (ex. 43 clics sur
+   * « − ») : un seul « Annuler » les défait toutes.
+   */
+  async updateCharacter(update: (c: Character) => Character, group?: string): Promise<void> {
     const state = this._state();
     if (!state) return;
+    this.remember(state.character, group);
     await this.commit({ ...state, character: update(state.character) });
+  }
+
+  // ---- Annuler (modifications du personnage, en mémoire pour la session) ----
+  private readonly undoStack = signal<Character[]>([]);
+  private lastGroup: { key: string; at: number } | null = null;
+  readonly canUndo = computed(() => this.undoStack().length > 0);
+
+  private remember(character: Character, group?: string): void {
+    const now = Date.now();
+    const sameBurst = !!group && this.lastGroup?.key === group && now - this.lastGroup.at < 3000;
+    this.lastGroup = group ? { key: group, at: now } : null;
+    if (sameBurst) {
+      if (this.lastGroup) this.lastGroup.at = now;
+      return;
+    }
+    this.undoStack.update((stack) => [...stack.slice(-29), character]);
+  }
+
+  /** Revient à l'état du personnage avant la dernière modification (ou la dernière rafale). */
+  async undo(): Promise<void> {
+    const state = this._state();
+    const stack = this.undoStack();
+    if (!state || !stack.length) return;
+    this.undoStack.set(stack.slice(0, -1));
+    this.lastGroup = null;
+    await this.commit({ ...state, character: stack[stack.length - 1] });
   }
 
   /** Ajoute un objet en respectant les capacités ; retourne l'erreur éventuelle. */
@@ -118,6 +152,7 @@ export class GameService {
     if (!state) return null;
     const result = addItem(state.character, slot, name, rules);
     if (result.error) return result.error;
+    this.remember(state.character);
     await this.commit({ ...state, character: result.character });
     return null;
   }
@@ -128,6 +163,7 @@ export class GameService {
     if (!state) return null;
     const { character, errors } = applyGrants(state.character, [grant], rules);
     if (errors.length) return errors[0];
+    this.remember(state.character);
     await this.commit({ ...state, character });
     return null;
   }
@@ -143,6 +179,7 @@ export class GameService {
   async resolveMeal(choice: MealChoice): Promise<void> {
     const state = this._state();
     if (!state) return;
+    this.remember(state.character);
     await this.commit({
       ...state,
       character: resolveMeal(state.character, choice),

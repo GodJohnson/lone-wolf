@@ -1084,3 +1084,96 @@ figure {
   margin: 0.25rem 0 0.5rem;
   font-weight: 600;
 }
+
+/* Panneaux et enseignes du livre */
+.signpost {
+  margin: 0.75rem auto 1rem;
+  padding: 0.5rem 1rem;
+  max-width: 30rem;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* Les panneaux latéraux sont des éléments personnalisés : ils empilent leurs cartes avec un espace. */
+lw-character-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+lw-character-panel > * {
+  flex-shrink: 0;
+}
+
+
+
+
+/* ---------- Compteurs : −10 −1 [valeur] +1 +10, en lignes pleine largeur ---------- */
+
+.char-stats,
+.stat-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.char-stats > .stat,
+.stat-grid > .stat {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.counter__btn {
+  min-width: 2.6rem;
+  min-height: 40px;
+  padding: 0 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: 600 0.85rem var(--font-ui);
+  cursor: pointer;
+}
+.counter__btn--big {
+  background: var(--surface-2);
+}
+.counter__btn:active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.counter__value {
+  width: 3.4rem;
+  min-height: 40px;
+  padding: 0 0.25rem;
+  border: 0;
+  border-bottom: 2px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  font: 800 1.4rem var(--font-ui);
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.counter__value::-webkit-outer-spin-button,
+.counter__value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.counter__value:focus-visible {
+  outline: 2px solid var(--accent);
+  border-bottom-color: transparent;
+}
+.counter {
+  margin-left: auto;
+}

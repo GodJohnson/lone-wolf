@@ -8,6 +8,7 @@ describe('section-parser', () => {
     expect(blocks.map((b) => b.kind)).toEqual([
       'html',
       'figure',
+      'html',
       'combat',
       'html',
       'choice',
@@ -34,7 +35,7 @@ describe('section-parser', () => {
       kind: 'html',
       html: '<p>The fog lies <span class="smallcaps">thick</span> on the école road.</p>',
     });
-    expect(blocks[3].kind === 'html' && blocks[3].html).toContain('<a href="random.htm">');
+    expect(blocks[4].kind === 'html' && blocks[4].html).toContain('<a href="random.htm">');
   });
 
   it('référence l’illustration par son nom de fichier', () => {
@@ -53,5 +54,12 @@ describe('section-parser', () => {
       endurance: 10,
     });
     expect(parseEnemy('No stats here')).toBeNull();
+  });
+
+  it('garde le texte des panneaux (div.signpost), jusque-là perdu', () => {
+    expect(blocks[2]).toEqual({
+      kind: 'html',
+      html: '<div class="signpost">Fog Inn—Harbour Street</div>',
+    });
   });
 });

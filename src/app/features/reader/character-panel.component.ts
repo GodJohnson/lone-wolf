@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { CounterComponent } from '../../shared/counter.component';
 import { RouterLink } from '@angular/router';
 import { ItemListComponent } from '../action-chart/item-list.component';
 import { ItemSlot, backpackLoad } from '../../core/game/equipment';
@@ -17,7 +18,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 /** Fiche du personnage en colonne latérale (bureau) : toujours visible pendant la lecture. */
 @Component({
   selector: 'lw-character-panel',
-  imports: [RouterLink, ItemListComponent],
+  imports: [RouterLink, ItemListComponent, CounterComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (character(); as c) {
@@ -35,65 +36,20 @@ import { I18nService } from '../../core/i18n/i18n.service';
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.endurance') }}</span>
-            <div class="stepper">
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('endurance', -1)"
-                aria-label="-1"
-              >
-                −
-              </button>
-              <span class="stat__value" [class.danger]="c.endurance <= 5">{{ c.endurance }}</span>
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('endurance', 1)"
-                aria-label="+1"
-              >
-                +
-              </button>
-            </div>
+            <lw-counter
+              [value]="c.endurance"
+              [danger]="c.endurance <= 5"
+              (delta)="adjust('endurance', $event)"
+            />
             <span class="stat__hint">/ {{ c.enduranceMax }}</span>
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.gold') }}</span>
-            <div class="stepper">
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('gold', -1)"
-                aria-label="-1"
-              >
-                −
-              </button>
-              <span class="stat__value">{{ c.gold }}</span>
-              <button type="button" class="icon-button" (click)="adjust('gold', 1)" aria-label="+1">
-                +
-              </button>
-            </div>
+            <lw-counter [value]="c.gold" (delta)="adjust('gold', $event)" />
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.meals') }}</span>
-            <div class="stepper">
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('meals', -1)"
-                aria-label="-1"
-              >
-                −
-              </button>
-              <span class="stat__value">{{ c.meals }}</span>
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('meals', 1)"
-                aria-label="+1"
-              >
-                +
-              </button>
-            </div>
+            <lw-counter [value]="c.meals" (delta)="adjust('meals', $event)" />
           </div>
         </div>
         <div class="chips">
@@ -101,6 +57,11 @@ import { I18nService } from '../../core/i18n/i18n.service';
             <span class="chip chip--on">{{ d }}</span>
           }
         </div>
+        @if (game.canUndo()) {
+          <button type="button" class="button button--small button--block" (click)="game.undo()">
+            ↶ {{ i18n.t('common.undo') }}
+          </button>
+        }
         @if (c.weaponskill) {
           <p class="small weaponskill-line">
             ⚔ {{ i18n.t('chart.weaponskill', { weapon: c.weaponskill }) }}
@@ -179,16 +140,21 @@ export class CharacterPanelComponent {
   protected adjust(field: 'endurance' | 'gold' | 'meals', delta: number): void {
     this.error.set(null);
     const rules = this.rules();
-    if (field === 'meals' && delta > 0 && this.load() >= rules.maxBackpackItems) {
-      this.error.set(this.i18n.t('chart.error.backpackFull'));
-      return;
+    if (field === 'meals' && delta > 0) {
+      // +10 Repas dans un sac presque plein : on remplit jusqu'à la capacité.
+      const room = rules.maxBackpackItems - this.load();
+      if (room <= 0) {
+        this.error.set(this.i18n.t('chart.error.backpackFull'));
+        return;
+      }
+      delta = Math.min(delta, room);
     }
     this.game.updateCharacter((c) => {
       const next = { ...c, [field]: Math.max(0, c[field] + delta) };
       if (field === 'gold') next.gold = Math.min(next.gold, rules.maxGold);
       if (field === 'endurance') next.endurance = Math.min(next.endurance, next.enduranceMax);
       return next;
-    });
+    }, field);
   }
 
   protected async add(slot: ItemSlot, name: string): Promise<void> {

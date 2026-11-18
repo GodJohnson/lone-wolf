@@ -1,5 +1,12 @@
 import { unzip, Unzipped } from 'fflate';
-import { BookLanguage, ImageRecord, PageRecord, ParsedBook, SectionRecord } from './book.models';
+import {
+  BookLanguage,
+  PARSER_VERSION,
+  ImageRecord,
+  PageRecord,
+  ParsedBook,
+  SectionRecord,
+} from './book.models';
 import { seriesOf } from './catalog';
 import {
   mainText,
@@ -156,6 +163,7 @@ export function parseBookEntries(entries: Unzipped): ParsedBook {
       pages: pageRefs,
       copyright: normalizedText(sect1.querySelector('#license p') ?? sect1.createElement('span')),
       importedAt: new Date().toISOString(),
+      parserVersion: PARSER_VERSION,
     },
     sections,
     pages: [...pagesByName.values()],

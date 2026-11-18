@@ -10,6 +10,8 @@ export const fr = {
   'common.cancel': 'Annuler',
   'common.confirm': 'Confirmer',
   'common.close': 'Fermer',
+  'common.undo': 'Annuler la dernière modification',
+  'counter.amount': 'Saisir un montant',
   'common.delete': 'Supprimer',
   'common.add': 'Ajouter',
   'common.loading': 'Chargement…',
@@ -142,6 +144,8 @@ export const fr = {
   'reader.finishBook': 'Terminer le livre',
   'reader.library': 'Retour à la bibliothèque',
   'library.finished': 'Terminé',
+  'library.outdated':
+    'Ce livre a été importé avec une ancienne version : certains passages (panneaux, enseignes) manquent. Réimportez son zip pour les retrouver ; votre partie est conservée.',
   'lexicon.title': 'Lexique du livre',
   'lexicon.hint':
     'Touchez une page pour la consulter ici : disciplines, équipement, règles de combat…',
@@ -249,6 +253,8 @@ export const en: Record<MessageKey, string> = {
   'common.cancel': 'Cancel',
   'common.confirm': 'Confirm',
   'common.close': 'Close',
+  'common.undo': 'Undo last change',
+  'counter.amount': 'Enter an amount',
   'common.delete': 'Delete',
   'common.add': 'Add',
   'common.loading': 'Loading…',
@@ -377,6 +383,8 @@ export const en: Record<MessageKey, string> = {
   'reader.finishBook': 'Finish the book',
   'reader.library': 'Back to the library',
   'library.finished': 'Finished',
+  'library.outdated':
+    'This book was imported with an older version: some passages (signs) are missing. Re-import its zip to get them back; your game is kept.',
   'lexicon.title': 'Book lexicon',
   'lexicon.hint': 'Tap a page to read it here: disciplines, equipment, combat rules…',
   'desktop.reference': 'Items and lexicon',

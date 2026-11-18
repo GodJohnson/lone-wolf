@@ -19,6 +19,7 @@ export const FAKE_SECTION_1 = fakePage(`
   <h3>1</h3>
   <p>The fog lies <span class="smallcaps">thick</span> on the &eacute;cole road.</p>
   <figure><a href="ill1.htm"><img alt="illustration" src="ill1.png"/></a></figure>
+  <div class="signpost">Fog Inn&mdash;Harbour Street</div>
   <p class="combat">Fog Beast: <span class="smallcaps">COMBAT&nbsp;SKILL</span>&nbsp;14 &nbsp;&nbsp;<span class="smallcaps">ENDURANCE</span>&nbsp;20</p>
   <p>Pick a number from the <a href="random.htm">Random Number Table</a>.</p>
   <p class="choice">If you pick 0&ndash;4, <a href="sect2.htm">turn to 2</a>.</p>
