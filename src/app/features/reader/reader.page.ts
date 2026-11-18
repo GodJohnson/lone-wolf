@@ -34,6 +34,8 @@ import { useBookLanguage } from '../../shared/book-language';
 import { CartwheelComponent } from './cartwheel.component';
 import { PORTHOLES } from '../../core/game/portholes';
 import { PortholesComponent } from './portholes.component';
+import { SamorComponent } from './samor.component';
+import { SAMOR } from '../../core/game/samor';
 import { CARTWHEEL_SECTION } from '../../core/game/cartwheel';
 import { CombatPanelComponent } from './combat-panel.component';
 
@@ -47,6 +49,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     CombatPanelComponent,
     CartwheelComponent,
     PortholesComponent,
+    SamorComponent,
     ItemSheetComponent,
     PaymentSheetComponent,
     SelectionBarComponent,
@@ -286,6 +289,7 @@ export class ReaderPage {
       this.bookId() === game.book && this.sectionNumber() === game.section;
     if (at(CARTWHEEL_SECTION)) return 'cartwheel' as const;
     if (at(PORTHOLES)) return 'portholes' as const;
+    if (at(SAMOR)) return 'samor' as const;
     return null;
   });
 

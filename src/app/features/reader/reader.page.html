@@ -57,6 +57,9 @@
           @if (minigame() === 'portholes') {
             <lw-portholes lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
           }
+          @if (minigame() === 'samor') {
+            <lw-samor lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
+          }
           @if (minigame() === 'cartwheel') {
             <lw-cartwheel lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
           }

@@ -102,10 +102,7 @@ describe('item-detection', () => {
         'You may keep the Torches and some Alether, but the Durncrag is too far. Take them if you wish.',
       ),
     ]);
-    expect(items.map((i) => (itemKey(i)))).toEqual([
-      'Torches',
-      'Alether',
-    ]);
+    expect(items.map((i) => itemKey(i))).toEqual(['Torches', 'Alether']);
   });
 
   it('un objet écarté (« Pas ramassable ici ») n’est plus lié, ni ses formes plus courtes', () => {
