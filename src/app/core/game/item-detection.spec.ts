@@ -213,4 +213,22 @@ describe('item-detection', () => {
       ).toEqual([]);
     });
   });
+
+  it('lie une perte d’ENDURANCE déclarée à la main et respecte « Pas ici »', () => {
+    const text = p('The poison burns your veins and you feel weaker.');
+    const { items } = annotateItems(
+      [text],
+      [],
+      new Set(),
+      [],
+      [],
+      [],
+      [{ text: 'you feel weaker', amount: -3 }],
+    );
+    expect(items).toEqual([
+      { kind: 'endurance', amount: -3, label: 'you feel weaker', declared: true },
+    ]);
+    const lose = p('You lose 2 ENDURANCE points.');
+    expect(annotateItems([lose], [], new Set(['lose 2 ENDURANCE points'])).items).toEqual([]);
+  });
 });

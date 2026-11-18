@@ -61,6 +61,19 @@ import { MessageKey } from '../../core/i18n/messages';
           </p>
         }
       }
+      @if (isEndurance()) {
+        <label class="item-sheet__price">
+          {{ i18n.t('endurance.amount') }}
+          <input
+            type="number"
+            inputmode="numeric"
+            min="-99"
+            max="99"
+            [value]="amount()"
+            (input)="amount.set(+$any($event.target).value)"
+          />
+        </label>
+      }
       @switch (hasItemFields() ? 'fields' : item().kind) {
         @case ('fields') {
           <input
@@ -181,10 +194,15 @@ export class ItemSheetComponent {
   protected readonly slots: ItemSlot[] = ['weapons', 'backpack', 'specialItems'];
   protected readonly isDeclared = computed(() => {
     const item = this.item();
-    return (item.kind === 'item' || item.kind === 'purchase') && !!item.declared;
+    return (
+      (item.kind === 'item' || item.kind === 'purchase' || item.kind === 'endurance') &&
+      !!item.declared
+    );
   });
   protected readonly isPurchase = computed(() => this.item().kind === 'purchase');
   protected readonly isEndurance = computed(() => this.item().kind === 'endurance');
+  /** Montant signé d'ENDURANCE (négatif = perte), modifiable avant d'appliquer. */
+  protected readonly amount = signal(0);
   protected readonly price = signal(0);
   /** Achat d'un service (chambre, boisson…) : seul l'or est débité. */
   protected readonly justPay = signal(false);
@@ -201,13 +219,15 @@ export class ItemSheetComponent {
   protected readonly summary = computed(() => {
     const item = this.item();
     if (item.kind === 'endurance') {
-      return this.i18n.t(item.amount < 0 ? 'endurance.lose' : 'endurance.gain', {
-        n: Math.abs(item.amount),
+      const amount = this.amount();
+      return this.i18n.t(amount < 0 ? 'endurance.lose' : 'endurance.gain', {
+        n: Math.abs(amount),
       });
     }
     return item.kind === 'item' || item.kind === 'purchase' ? item.name : item.label;
   });
   protected readonly canAdd = computed(() => {
+    if (this.isEndurance()) return this.amount() !== 0;
     if (this.isPurchase()) {
       const price = this.price();
       if (!(price >= 1) || !this.enoughGold()) return false;
@@ -255,6 +275,7 @@ export class ItemSheetComponent {
         this.slot.set(item.slot);
       }
       if (item.kind === 'purchase') this.price.set(item.price);
+      if (item.kind === 'endurance') this.amount.set(item.amount);
       this.justPay.set(false);
       this.error.set(null);
     });
@@ -273,7 +294,7 @@ export class ItemSheetComponent {
   protected async add(): Promise<void> {
     const item = this.item();
     if (item.kind === 'purchase') return this.buy();
-    if (item.kind === 'endurance') return this.applyEndurance(item.amount);
+    if (item.kind === 'endurance') return this.applyEndurance(this.amount());
     const grant: Grant =
       item.kind === 'gold'
         ? { slot: 'gold', amount: item.amount }
@@ -294,7 +315,7 @@ export class ItemSheetComponent {
       ...c,
       endurance: Math.min(c.enduranceMax, Math.max(0, c.endurance + amount)),
     }));
-    this.bought.emit({ message: this.summary(), name: this.summary(), price: 0 });
+    this.bought.emit({ message: this.summary(), name: this.summary(), price: amount });
   }
 
   private async buy(): Promise<void> {

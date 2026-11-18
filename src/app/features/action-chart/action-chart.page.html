@@ -201,6 +201,30 @@
       </section>
     }
 
+    @if (enduranceHere().length) {
+      <section class="card removed-links">
+        <h2>{{ i18n.t('chart.declaredEndurance') }}</h2>
+        <ul class="item-list">
+          @for (entry of enduranceHere(); track entry.key) {
+            <li>
+              <span
+                ><span class="muted">§{{ entry.section }}</span> · {{ entry.text }} ({{
+                  entry.amount > 0 ? '+' : ''
+                }}{{ entry.amount }})</span
+              >
+              <button
+                type="button"
+                class="button button--small"
+                (click)="undeclareEndurance(entry.key)"
+              >
+                {{ i18n.t('chart.undeclare') }}
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
     @if (userNonItems().length || dismissedHere().length) {
       <section class="card removed-links">
         <h2>{{ i18n.t('chart.removedLinks') }}</h2>

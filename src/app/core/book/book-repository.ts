@@ -90,9 +90,18 @@ export class BookRepository {
     return this.updateList(bookId, 'declaredPurchases', (list) => list.filter((k) => k !== key));
   }
 
+  /** Mémorise un lien d'ENDURANCE déclaré (`<section>|<montant>|<texte>`) ; retourne la liste à jour. */
+  async declareEndurance(bookId: string, key: string): Promise<string[]> {
+    return this.updateList(bookId, 'declaredEndurance', (list) => [...new Set([...list, key])]);
+  }
+
+  async undeclareEndurance(bookId: string, key: string): Promise<string[]> {
+    return this.updateList(bookId, 'declaredEndurance', (list) => list.filter((k) => k !== key));
+  }
+
   private async updateList(
     bookId: string,
-    field: 'declaredItems' | 'declaredPurchases',
+    field: 'declaredItems' | 'declaredPurchases' | 'declaredEndurance',
     update: (list: string[]) => string[],
   ): Promise<string[]> {
     const db = await database();
@@ -134,7 +143,12 @@ export class BookRepository {
   async save(book: ParsedBook): Promise<void> {
     // Les corrections du joueur survivent à un réimport.
     const previous = await this.get(book.meta.id);
-    if (previous?.dismissedItems || previous?.declaredItems || previous?.declaredPurchases) {
+    if (
+      previous?.dismissedItems ||
+      previous?.declaredItems ||
+      previous?.declaredPurchases ||
+      previous?.declaredEndurance
+    ) {
       book = {
         ...book,
         meta: {
@@ -142,6 +156,7 @@ export class BookRepository {
           dismissedItems: previous.dismissedItems,
           declaredItems: previous.declaredItems,
           declaredPurchases: previous.declaredPurchases,
+          declaredEndurance: previous.declaredEndurance,
         },
       };
     }

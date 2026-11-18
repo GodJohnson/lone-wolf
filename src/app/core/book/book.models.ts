@@ -37,6 +37,8 @@ export interface BookMeta {
   declaredItems?: string[];
   /** Achats déclarés à la main (ligne de prix non détectée) : `<section>|<prix>|<nom>`. */
   declaredPurchases?: string[];
+  /** Liens d'ENDURANCE déclarés à la main : `<section>|<montant signé>|<texte>`. */
+  declaredEndurance?: string[];
   /** Pages hors sections disponibles (règles, carte, équipement...), dans l'ordre de la table des matières. */
   pages: PageRef[];
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */
