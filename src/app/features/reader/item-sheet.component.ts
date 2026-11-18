@@ -20,11 +20,15 @@ import { MessageKey } from '../../core/i18n/messages';
   selector: 'lw-item-sheet',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="sheet-backdrop" (click)="closed.emit()"></div>
+    @if (!inline()) {
+      <div class="sheet-backdrop" (click)="closed.emit()"></div>
+    }
     <section
-      class="sheet item-sheet"
-      role="dialog"
-      aria-modal="true"
+      class="item-sheet"
+      [class.sheet]="!inline()"
+      [class.card]="inline()"
+      [attr.role]="inline() ? null : 'dialog'"
+      [attr.aria-modal]="inline() ? null : true"
       [attr.aria-label]="i18n.t('item.title')"
     >
       <h2>{{ i18n.t('item.title') }}</h2>
@@ -106,6 +110,8 @@ export class ItemSheetComponent {
 
   readonly item = input.required<FoundItem>();
   readonly rules = input.required<SeriesRules>();
+  /** Mode bureau : intégré à la colonne latérale, sans voile ni feuille flottante. */
+  readonly inline = input(false);
   readonly closed = output<void>();
   /** « Pas ramassable ici » : retirer ce lien dans cette section. */
   readonly dismissed = output<void>();

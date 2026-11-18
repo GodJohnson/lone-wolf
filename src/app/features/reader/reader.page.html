@@ -4,131 +4,183 @@
   [backLink]="['/']"
 />
 
-<main class="page page--reader">
-  @if (game.character(); as c) {
-    <div class="status-strip">
-      <span
-        >{{ i18n.t('combat.cs') }} <strong>{{ c.combatSkill }}</strong></span
-      >
-      <span [class.danger]="c.endurance <= 5">
-        {{ i18n.t('combat.ep') }} <strong>{{ c.endurance }}</strong>/{{ c.enduranceMax }}
-      </span>
-      <span>🪙 {{ c.gold }}</span>
-      <span>🍖 {{ c.meals }}</span>
-    </div>
+<div class="reader-layout" [class.reader-layout--desktop]="viewport.desktop()">
+  @if (viewport.desktop()) {
+    <aside class="side side--left" [attr.aria-label]="i18n.t('chart.title')">
+      <lw-character-panel [bookId]="bookId()" [rules]="rules()" (random)="showRandom.set(true)" />
+    </aside>
   }
 
-  @if (section.value(); as s) {
-    @if (translateTipVisible()) {
-      <aside class="notice translate-tip">
-        <p>{{ i18n.t('reader.translateTip') }}</p>
-        <button type="button" class="button button--small" (click)="dismissTranslateTip()">
-          {{ i18n.t('reader.translateTipOk') }}
-        </button>
-      </aside>
-    }
-
-    <article class="section-text">
-      <lw-blocks
-        [lang]="book.value()?.lang ?? 'en'"
-        [bookId]="bookId()"
-        [blocks]="annotated().blocks"
-        [interactive]="true"
-        [choicesDisabled]="game.isDead()"
-        (section)="goTo($event)"
-        (page)="openPage($event)"
-        (fight)="fight($event)"
-        (item)="openItem($event)"
-        [activeCombat]="game.combat()?.blockIndex ?? null"
-        [conditions]="choiceConditions()"
-      >
-        <lw-combat-panel />
-        @if (mealDue() && game.character(); as c) {
-          <section
-            lwBeforeChoices
-            class="card meal-card"
-            role="region"
-            [attr.aria-label]="i18n.t('meal.title')"
+  <main class="page page--reader">
+    @if (game.character(); as c) {
+      @if (!viewport.desktop()) {
+        <div class="status-strip">
+          <span
+            >{{ i18n.t('combat.cs') }} <strong>{{ c.combatSkill }}</strong></span
           >
-            <h2>🍖 {{ i18n.t('meal.title') }}</h2>
-            <div class="meal-card__actions">
-              <button
-                type="button"
-                class="button button--primary"
-                [disabled]="!c.meals"
-                (click)="eat('meal')"
-              >
-                {{ i18n.t('meal.eat', { count: c.meals }) }}
-              </button>
-              @if (canHunt()) {
-                <button type="button" class="button" (click)="eat('hunting')">
-                  {{ i18n.t('meal.hunt') }}
+          <span [class.danger]="c.endurance <= 5">
+            {{ i18n.t('combat.ep') }} <strong>{{ c.endurance }}</strong>/{{ c.enduranceMax }}
+          </span>
+          <span>🪙 {{ c.gold }}</span>
+          <span>🍖 {{ c.meals }}</span>
+        </div>
+      }
+    }
+
+    @if (section.value(); as s) {
+      @if (translateTipVisible()) {
+        <aside class="notice translate-tip">
+          <p>{{ i18n.t('reader.translateTip') }}</p>
+          <button type="button" class="button button--small" (click)="dismissTranslateTip()">
+            {{ i18n.t('reader.translateTipOk') }}
+          </button>
+        </aside>
+      }
+
+      <article class="section-text">
+        <lw-blocks
+          [lang]="book.value()?.lang ?? 'en'"
+          [bookId]="bookId()"
+          [blocks]="annotated().blocks"
+          [interactive]="true"
+          [choicesDisabled]="game.isDead()"
+          (section)="goTo($event)"
+          (page)="openPage($event)"
+          (fight)="fight($event)"
+          (item)="openItem($event)"
+          [activeCombat]="game.combat()?.blockIndex ?? null"
+          [conditions]="choiceConditions()"
+        >
+          <lw-combat-panel />
+          @if (mealDue() && game.character(); as c) {
+            <section
+              lwBeforeChoices
+              class="card meal-card"
+              role="region"
+              [attr.aria-label]="i18n.t('meal.title')"
+            >
+              <h2>🍖 {{ i18n.t('meal.title') }}</h2>
+              <div class="meal-card__actions">
+                <button
+                  type="button"
+                  class="button button--primary"
+                  [disabled]="!c.meals"
+                  (click)="eat('meal')"
+                >
+                  {{ i18n.t('meal.eat', { count: c.meals }) }}
                 </button>
+                @if (canHunt()) {
+                  <button type="button" class="button" (click)="eat('hunting')">
+                    {{ i18n.t('meal.hunt') }}
+                  </button>
+                }
+                <button type="button" class="button button--ghost danger" (click)="eat('starve')">
+                  {{ i18n.t('meal.starve') }}
+                </button>
+              </div>
+              @if (canHunt()) {
+                <p class="small muted">{{ i18n.t('meal.huntHint') }}</p>
               }
-              <button type="button" class="button button--ghost danger" (click)="eat('starve')">
-                {{ i18n.t('meal.starve') }}
-              </button>
-            </div>
-            @if (canHunt()) {
-              <p class="small muted">{{ i18n.t('meal.huntHint') }}</p>
+            </section>
+          }
+        </lw-blocks>
+      </article>
+
+      @if (game.isDead() || isDeadEnd()) {
+        <section class="card notice--error end-card">
+          <p>{{ game.isDead() ? i18n.t('reader.dead') : i18n.t('reader.deadend') }}</p>
+          <a class="button button--primary" [routerLink]="['/book', bookId(), 'new']">{{
+            i18n.t('reader.restart')
+          }}</a>
+        </section>
+      }
+
+      @if (game.state()?.history?.length) {
+        <button type="button" class="button button--ghost button--block" (click)="game.back()">
+          ↶ {{ i18n.t('reader.previous') }}
+        </button>
+      }
+
+      @if (book.value()?.copyright; as copyright) {
+        <footer class="license-footer small muted">
+          {{ copyright }} {{ i18n.t('footer.license') }}
+        </footer>
+      }
+    } @else if (section.isLoading() || !loaded.hasValue()) {
+      <p class="muted center">{{ i18n.t('common.loading') }}</p>
+    } @else if (sectionNumber() !== null) {
+      <p class="notice notice--error">
+        {{ i18n.t('reader.missing', { number: sectionNumber()! }) }}
+      </p>
+    }
+  </main>
+
+  @if (viewport.desktop()) {
+    <aside class="side side--right" [attr.aria-label]="i18n.t('desktop.reference')">
+      @if (selectedItem(); as found) {
+        <lw-item-sheet
+          [item]="found"
+          [rules]="rules()"
+          [inline]="true"
+          (closed)="selectedItem.set(null)"
+          (dismissed)="dismissItem()"
+          (notAnItem)="markNotAnItem()"
+          (added)="itemAdded($event)"
+        />
+      }
+      <section class="card">
+        <h2>{{ i18n.t('desktop.found') }}</h2>
+        @if (annotated().items.length) {
+          <ul class="found-list">
+            @for (found of annotated().items; track $index) {
+              <li>
+                <span>{{ foundLabel(found) }}</span>
+                <button type="button" class="button button--small" (click)="openItem($index)">
+                  ＋ {{ i18n.t('common.add') }}
+                </button>
+              </li>
             }
-          </section>
+          </ul>
+        } @else {
+          <p class="small muted">{{ i18n.t('desktop.foundEmpty') }}</p>
         }
-      </lw-blocks>
-    </article>
-
-    @if (game.isDead() || isDeadEnd()) {
-      <section class="card notice--error end-card">
-        <p>{{ game.isDead() ? i18n.t('reader.dead') : i18n.t('reader.deadend') }}</p>
-        <a class="button button--primary" [routerLink]="['/book', bookId(), 'new']">{{
-          i18n.t('reader.restart')
-        }}</a>
       </section>
-    }
-
-    @if (game.state()?.history?.length) {
-      <button type="button" class="button button--ghost button--block" (click)="game.back()">
-        ↶ {{ i18n.t('reader.previous') }}
-      </button>
-    }
-
-    @if (book.value()?.copyright; as copyright) {
-      <footer class="license-footer small muted">
-        {{ copyright }} {{ i18n.t('footer.license') }}
-      </footer>
-    }
-  } @else if (section.isLoading() || !loaded.hasValue()) {
-    <p class="muted center">{{ i18n.t('common.loading') }}</p>
-  } @else if (sectionNumber() !== null) {
-    <p class="notice notice--error">{{ i18n.t('reader.missing', { number: sectionNumber()! }) }}</p>
+      @if (book.value(); as b) {
+        <lw-lexicon-panel [bookId]="b.id" [pages]="b.pages" [lang]="b.lang" />
+      }
+    </aside>
   }
-</main>
+</div>
 
 @if (toast(); as text) {
   <div class="toast" role="status">{{ text }}</div>
 }
 
-<nav class="bottom-nav">
-  <a [routerLink]="['/book', bookId(), 'chart']">
-    <span aria-hidden="true">📜</span>{{ i18n.t('reader.chart') }}
-  </a>
-  <button type="button" (click)="showRandom.set(true)">
-    <span aria-hidden="true">🎲</span>{{ i18n.t('reader.random') }}
-  </button>
-  <a [routerLink]="['/book', bookId(), 'page', book.value()?.pages?.[0]?.id ?? 'title']">
-    <span aria-hidden="true">📖</span>{{ i18n.t('reader.rules') }}
-  </a>
-</nav>
+@if (!viewport.desktop()) {
+  <nav class="bottom-nav">
+    <a [routerLink]="['/book', bookId(), 'chart']">
+      <span aria-hidden="true">📜</span>{{ i18n.t('reader.chart') }}
+    </a>
+    <button type="button" (click)="showRandom.set(true)">
+      <span aria-hidden="true">🎲</span>{{ i18n.t('reader.random') }}
+    </button>
+    <a [routerLink]="['/book', bookId(), 'page', book.value()?.pages?.[0]?.id ?? 'title']">
+      <span aria-hidden="true">📖</span>{{ i18n.t('reader.rules') }}
+    </a>
+  </nav>
+}
 
 @if (selectedItem(); as found) {
-  <lw-item-sheet
-    [item]="found"
-    [rules]="rules()"
-    (closed)="selectedItem.set(null)"
-    (dismissed)="dismissItem()"
-    (notAnItem)="markNotAnItem()"
-    (added)="itemAdded($event)"
-  />
+  @if (!viewport.desktop()) {
+    <lw-item-sheet
+      [item]="found"
+      [rules]="rules()"
+      (closed)="selectedItem.set(null)"
+      (dismissed)="dismissItem()"
+      (notAnItem)="markNotAnItem()"
+      (added)="itemAdded($event)"
+    />
+  }
 }
 
 @if (showRandom()) {

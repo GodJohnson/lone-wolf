@@ -47,6 +47,11 @@ export class GameService {
     return !!(await (await database()).get('games', bookId));
   }
 
+  /** Remplace la partie du livre par une partie reçue d'un autre appareil (déjà validée). */
+  async importGame(state: GameState): Promise<void> {
+    await this.commit({ ...state, combat: null });
+  }
+
   async newGame(bookId: string, character: Character): Promise<void> {
     const now = new Date().toISOString();
     await this.commit({

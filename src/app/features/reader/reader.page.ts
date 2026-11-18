@@ -17,6 +17,9 @@ import { evaluateChoices } from '../../core/game/choice-conditions';
 import { FoundItem, annotateItems, itemKey } from '../../core/game/item-detection';
 import { rulesFor } from '../../core/game/rules';
 import { ItemSheetComponent } from './item-sheet.component';
+import { CharacterPanelComponent } from './character-panel.component';
+import { LexiconPanelComponent } from './lexicon-panel.component';
+import { ViewportService } from '../../core/viewport.service';
 import { GameService } from '../../core/game/game.service';
 import { DISCIPLINE, hasDiscipline } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -35,6 +38,8 @@ import { CombatPanelComponent } from './combat-panel.component';
     RandomNumberComponent,
     CombatPanelComponent,
     ItemSheetComponent,
+    CharacterPanelComponent,
+    LexiconPanelComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reader.page.html',
@@ -47,6 +52,7 @@ export class ReaderPage {
 
   readonly bookId = input.required<string>();
 
+  protected readonly viewport = inject(ViewportService);
   protected readonly showRandom = signal(false);
   protected readonly toast = signal<string | null>(null);
 
@@ -114,6 +120,10 @@ export class ReaderPage {
   protected openItem(index: number): void {
     const item = this.annotated().items[index];
     if (item && !this.game.isDead()) this.selectedItem.set(item);
+  }
+
+  protected foundLabel(item: FoundItem): string {
+    return item.kind === 'item' ? item.name : item.label;
   }
 
   protected async dismissItem(): Promise<void> {

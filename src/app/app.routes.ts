@@ -22,5 +22,17 @@ export const routes: Routes = [
     path: 'book/:bookId/page/:pageId',
     loadComponent: () => import('./features/page/book-page.page').then((m) => m.BookPagePage),
   },
+  {
+    path: 'book/:bookId/transfer',
+    loadComponent: () => import('./features/transfer/transfer.page').then((m) => m.TransferPage),
+  },
+  {
+    path: 'import',
+    loadComponent: () => import('./features/transfer/import.page').then((m) => m.ImportPage),
+  },
+  {
+    path: 'transfer/:payload',
+    loadComponent: () => import('./features/transfer/import.page').then((m) => m.ImportPage),
+  },
   { path: '**', redirectTo: '' },
 ];

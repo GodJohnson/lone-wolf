@@ -1,6 +1,6 @@
 # Lone Wolf Reader
 
-Application web **mobile-first** (Angular 22, PWA) pour jouer aux livres-jeux *Loup Solitaire* (*Lone Wolf*) de Joe Dever, à partir des éditions gratuites publiées par [Project Aon](https://www.projectaon.org/).
+Application web **mobile-first** (Angular 22, PWA) pour jouer aux livres-jeux _Loup Solitaire_ (_Lone Wolf_) de Joe Dever, à partir des éditions gratuites publiées par [Project Aon](https://www.projectaon.org/).
 
 ## Principe : le joueur importe ses livres
 
@@ -23,6 +23,8 @@ Seuls l'anglais et l'espagnol sont publiés par Project Aon. L'interface est bil
 - Feuille d'aventure : caractéristiques, disciplines, inventaire avec capacités (2 armes, 8 places de sac à dos Repas compris, 50 couronnes), effets des objets (Helmet, Chainmail, Shield), potions à boire, notes.
 - Objets ramassables : dans les paragraphes où l'on peut prendre quelque chose, les objets (« a Giak Spear »), l'or (« 6 Gold Crowns ») et les Repas deviennent des liens. Un toucher ouvre une confirmation : nom modifiable, emplacement deviné d'après le texte (arme, sac à dos, objet spécial), capacités respectées. Un lexique propre à chaque livre (ennemis, lieux, disciplines), complété par des termes classés à la main (`core/game/known-terms.ts`), écarte la plupart des faux positifs ; un lien erroné se retire d'un geste : « Pas ici » (cette section seulement, conservé en cas de réimport) ou « Pas un objet » (ce mot n'est plus jamais un lien, dans tous les livres). Les deux s'annulent depuis la Feuille d'aventure (« Liens d'objets retirés »).
 - Armes : la fenêtre d'ajout indique l'effet pour votre personnage (arme ordinaire, ou arme maîtrisée +2 HAB, variantes comprises comme « Giak Spear » pour Spear) et propose « Laisser [arme] » quand vous en portez déjà deux ; la Feuille d'aventure rappelle la règle.
+- Transfert de partie : « Transférer » sur la carte du livre affiche un QR code (et un lien à copier ou partager) qui contient la partie, compressée, sans le livre ; « Importer une partie » la reprend par scan caméra, lien collé ou lien ouvert, après validation stricte et confirmation. Fonctionne sans serveur, par exemple du téléphone vers le PC. Les notes sont limitées à 400 caractères dans le transfert, et le livre doit être importé sur l'autre appareil. Sur iPhone, scanner avec le bouton de l'appli plutôt que l'appareil photo (stockage séparé de Safari).
+- Version bureau (≥ 1024 px) : trois colonnes pendant la lecture. À gauche, la fiche du personnage (caractéristiques, disciplines, armes, sac, objets, avec ajout et suppression). Au centre, le texte. À droite, les objets de la section (ajout avec effet et remplacement d'arme, sans fenêtre flottante) et le lexique du livre (disciplines, équipement, règles, tables), consultable sans quitter la section.
 - Repas : quand le texte l'impose, l'appli propose de manger un Repas, de chasser ou de perdre 3 END.
 - Combat : quotient d'attaque calculé (Weaponskill +2, Mindblast +2, sans arme −4, modificateur de section), table des résultats, fuite, journal des assauts.
 - Table de hasard (tirage cryptographique 0-9), Guérison automatique (+1 END par section sans combat).
@@ -44,7 +46,7 @@ Pour tester, téléchargez par exemple <https://www.projectaon.org/en/xhtml/lw/0
 
 Le workflow `.github/workflows/deploy.yml` lance les tests et le build sur chaque PR, puis déploie sur GitHub Pages à chaque push sur `main`.
 
-Prérequis, une seule fois : *Settings → Pages → Build and deployment → Source : GitHub Actions*.
+Prérequis, une seule fois : _Settings → Pages → Build and deployment → Source : GitHub Actions_.
 
 Le routage utilise le hash (`/#/book/...`), car GitHub Pages ne sait pas réécrire les URL profondes.
 
@@ -80,4 +82,3 @@ src/app/
 - Pas de transfert de personnage d'un livre à l'autre.
 - Les effets spécifiques à une section (perte d'END, objets gagnés, ennemis insensibles à Mindblast…) sont appliqués par le joueur.
 - Pas encore de tests de composants ni de tests e2e versionnés.
-
