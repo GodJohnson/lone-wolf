@@ -48,12 +48,17 @@
           (page)="openPage($event)"
           (fight)="fight($event)"
           (item)="openItem($event)"
+          (pay)="pendingPayment.set($event)"
+          [payments]="payments()"
           [activeCombat]="game.combat()?.blockIndex ?? null"
           [conditions]="choiceConditions()"
         >
           <lw-combat-panel />
           @if (minigame() === 'portholes') {
             <lw-portholes lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
+          }
+          @if (minigame() === 'samor') {
+            <lw-samor lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
           }
           @if (minigame() === 'cartwheel') {
             <lw-cartwheel lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
@@ -145,6 +150,7 @@
           (dismissed)="dismissItem()"
           (notAnItem)="markNotAnItem()"
           (added)="itemAdded($event)"
+          (bought)="itemBought($event)"
         />
       }
       <section class="card">
@@ -171,7 +177,10 @@
   }
 </div>
 
-<lw-selection-bar (declare)="declareSelection($event)" />
+<lw-selection-bar
+  (declare)="declareSelection($event)"
+  (declarePurchase)="declarePurchaseSelection($event)"
+/>
 
 @if (toast(); as text) {
   <div class="toast" role="status">{{ text }}</div>
@@ -201,8 +210,18 @@
       (dismissed)="dismissItem()"
       (notAnItem)="markNotAnItem()"
       (added)="itemAdded($event)"
+      (bought)="itemBought($event)"
     />
   }
+}
+
+@if (pendingPayment(); as payment) {
+  <lw-payment-sheet
+    [price]="payment.price"
+    [target]="payment.target"
+    (closed)="pendingPayment.set(null)"
+    (confirmed)="confirmPayment()"
+  />
 }
 
 @if (showRandom()) {

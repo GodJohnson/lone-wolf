@@ -35,6 +35,8 @@ export interface BookMeta {
   dismissedItems?: string[];
   /** Objets déclarés à la main par le joueur (texte non détecté) : `<section>|<nom>`. */
   declaredItems?: string[];
+  /** Achats déclarés à la main (ligne de prix non détectée) : `<section>|<prix>|<nom>`. */
+  declaredPurchases?: string[];
   /** Pages hors sections disponibles (règles, carte, équipement...), dans l'ordre de la table des matières. */
   pages: PageRef[];
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */

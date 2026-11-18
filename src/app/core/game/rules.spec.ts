@@ -28,6 +28,21 @@ describe('rules', () => {
     ).toBe(15 - 4);
   });
 
+  it('compte un objet spécial qui est une arme (Magic Spear) comme une arme portée', () => {
+    const c = hero({
+      disciplines: ['Weaponskill'],
+      weaponskill: 'Spear',
+      weapons: [],
+      specialItems: ['Magic Spear'],
+    });
+    expect(effectiveCombatSkill(c, { modifier: 0, useMindblast: false })).toMatchObject({
+      noWeapon: 0,
+      weaponskill: 2,
+    });
+    const other = hero({ weapons: [], specialItems: ['Silver Helm'] });
+    expect(effectiveCombatSkill(other, { modifier: 0, useMindblast: false }).noWeapon).toBe(-4);
+  });
+
   it('joue un assaut et détecte la victoire', () => {
     const c = hero();
     const combat = startCombat(1, 0, { name: 'Rat', combatSkill: 15, endurance: 3 }, c);

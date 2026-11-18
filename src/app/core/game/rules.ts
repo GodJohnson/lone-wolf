@@ -129,12 +129,23 @@ export interface CombatSkillBreakdown {
   total: number;
 }
 
+/** Un objet spécial qui est une arme (« Magic Spear ») : il sert en combat comme une arme portée. */
+const WEAPON_LIKE = /\b(?:spear|sword|broadsword|axe|mace|dagger|warhammer|quarterstaff|bow)$/i;
+
+/** Armes utilisables en combat : armes portées et objets spéciaux qui en sont (voir `WEAPON_LIKE`). */
+export function combatWeapons(character: Character): string[] {
+  return [
+    ...character.weapons,
+    ...character.specialItems.filter((i) => WEAPON_LIKE.test(i.trim())),
+  ];
+}
+
 export function effectiveCombatSkill(
   character: Character,
   combat: Pick<CombatState, 'modifier' | 'useMindblast'>,
 ): CombatSkillBreakdown {
-  const weapons = character.weapons.map((w) => w.trim().toLowerCase());
-  const weaponskill = character.weapons.some((w) => isSkilledWeapon(character, w)) ? 2 : 0;
+  const weapons = combatWeapons(character);
+  const weaponskill = weapons.some((w) => isSkilledWeapon(character, w)) ? 2 : 0;
   const noWeapon = weapons.length === 0 ? -4 : 0;
   const mindblast = combat.useMindblast && hasDiscipline(character, DISCIPLINE.mindblast) ? 2 : 0;
   const items = itemsCombatBonus(character);

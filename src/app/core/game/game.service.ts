@@ -186,6 +186,41 @@ export class GameService {
     return null;
   }
 
+  /**
+   * Achat atomique : débite le prix puis ajoute l'objet (un seul « Annuler » défait tout). Rien n'est
+   * modifié si l'or manque ou si l'objet ne rentre pas.
+   */
+  async buy(
+    price: number,
+    grant: Grant | null,
+    rules: SeriesRules,
+  ): Promise<InventoryError | 'noGold' | null> {
+    const state = this._state();
+    if (!state) return null;
+    if (state.character.gold < price) return 'noGold';
+    let character = { ...state.character, gold: state.character.gold - price };
+    if (grant) {
+      const result = applyGrants(character, [grant], rules);
+      if (result.errors.length) return result.errors[0];
+      character = result.character;
+    }
+    this.remember(state.character);
+    await this.commit({ ...state, character });
+    return null;
+  }
+
+  /** Paie un prix (choix « pay N Gold Crowns ») ; faux si l'or ne suffit pas. */
+  async pay(price: number): Promise<boolean> {
+    const state = this._state();
+    if (!state || state.character.gold < price) return false;
+    this.remember(state.character);
+    await this.commit({
+      ...state,
+      character: { ...state.character, gold: state.character.gold - price },
+    });
+    return true;
+  }
+
   async removeItem(slot: ItemSlot, index: number): Promise<void> {
     await this.updateCharacter((c) => removeItem(c, slot, index));
   }

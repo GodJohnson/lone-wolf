@@ -102,10 +102,7 @@ describe('item-detection', () => {
         'You may keep the Torches and some Alether, but the Durncrag is too far. Take them if you wish.',
       ),
     ]);
-    expect(items.map((i) => (i.kind === 'item' ? i.name : i.label))).toEqual([
-      'Torches',
-      'Alether',
-    ]);
+    expect(items.map((i) => itemKey(i))).toEqual(['Torches', 'Alether']);
   });
 
   it('un objet écarté (« Pas ramassable ici ») n’est plus lié, ni ses formes plus courtes', () => {
@@ -138,5 +135,63 @@ describe('item-detection', () => {
     const blocks = [p('You find a Moon Amulet here. You may keep it if you wish.')];
     const { items } = annotateItems(blocks, [], new Set(), [], ['Moon Amulet']);
     expect(items).toHaveLength(1);
+  });
+
+  describe('achats', () => {
+    const list: Block = {
+      kind: 'html',
+      html: '<ul><li>Sword&mdash;4 Gold Crowns</li><li>Backpack&mdash;1 Gold Crown</li></ul>',
+    };
+
+    it('lie chaque ligne de prix d’une boutique', () => {
+      const { blocks, items } = annotateItems([list]);
+      expect(items).toEqual([
+        { kind: 'purchase', name: 'Sword', price: 4, slot: 'weapons' },
+        { kind: 'purchase', name: 'Backpack', price: 1, slot: 'backpack' },
+      ]);
+      expect((blocks[0] as { html: string }).html).toContain(
+        `<li><a href="${ITEM_LINK_PREFIX}0" class="item-link">Sword</a>`,
+      );
+    });
+
+    it('détecte une phrase « si vous voulez acheter … payez N »', () => {
+      const { items } = annotateItems([
+        p('If you wish to buy the Bottle of Kourshah, pay the man 5 Gold Crowns and read on.'),
+      ]);
+      expect(items).toEqual([
+        { kind: 'purchase', name: 'Bottle of Kourshah', price: 5, slot: 'backpack' },
+      ]);
+    });
+
+    it('respecte « Pas ici » et lie les achats déclarés à la main', () => {
+      expect(annotateItems([list], [], new Set(['buy:Sword'])).items).toHaveLength(1);
+      const text = p('A peddler sells lanterns for a fair price.');
+      const { items } = annotateItems(
+        [text],
+        [],
+        new Set(),
+        [],
+        [],
+        [{ name: 'lanterns', price: 3 }],
+      );
+      expect(items).toEqual([
+        { kind: 'purchase', name: 'lanterns', price: 3, slot: 'backpack', declared: true },
+      ]);
+    });
+
+    it('la clé « Pas ici » d’un achat ne heurte pas celle d’un objet', () => {
+      expect(itemKey({ kind: 'purchase', name: 'Sword', price: 4, slot: 'weapons' })).toBe(
+        'buy:Sword',
+      );
+    });
+  });
+
+  it('lit le nom entre guillemets à inscrire sur la Feuille (Magic Spear)', () => {
+    const { items } = annotateItems([
+      p(
+        'If you win the combat, you can keep the Spear. Mark it on your <a href="action.htm">Action Chart</a> under the Special Items section as a &lsquo;Magic Spear.&rsquo;',
+      ),
+    ]);
+    expect(items).toEqual([{ kind: 'item', name: 'Magic Spear', slot: 'specialItems' }]);
   });
 });

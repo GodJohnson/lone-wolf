@@ -31,9 +31,36 @@ import { MessageKey } from '../../core/i18n/messages';
       [attr.aria-modal]="inline() ? null : true"
       [attr.aria-label]="i18n.t('item.title')"
     >
-      <h2>{{ i18n.t('item.title') }}</h2>
-      @switch (item().kind) {
-        @case ('item') {
+      <h2>{{ i18n.t(isPurchase() ? 'buy.title' : 'item.title') }}</h2>
+      @if (isPurchase()) {
+        <label class="item-sheet__price">
+          {{ i18n.t('buy.price') }}
+          <input
+            type="number"
+            inputmode="numeric"
+            min="1"
+            max="999"
+            [value]="price()"
+            (input)="price.set(+$any($event.target).value)"
+          />
+        </label>
+        <p class="small muted">{{ i18n.t('buy.gold', { gold: character()?.gold ?? 0 }) }}</p>
+        <label class="item-sheet__just-pay">
+          <input
+            type="checkbox"
+            [checked]="justPay()"
+            (change)="justPay.set($any($event.target).checked)"
+          />
+          {{ i18n.t('buy.justPay') }}
+        </label>
+        @if (!enoughGold()) {
+          <p class="notice notice--error" role="alert">
+            {{ i18n.t('buy.noGold', { gold: character()?.gold ?? 0, price: price() }) }}
+          </p>
+        }
+      }
+      @switch (hasItemFields() ? 'fields' : item().kind) {
+        @case ('fields') {
           <input
             type="text"
             [value]="name()"
@@ -71,6 +98,7 @@ import { MessageKey } from '../../core/i18n/messages';
             </div>
           }
         }
+        @case ('purchase') {}
         @default {
           <p class="item-sheet__label">{{ summary() }}</p>
         }
@@ -100,7 +128,15 @@ import { MessageKey } from '../../core/i18n/messages';
         <p class="item-sheet__hint">{{ i18n.t('item.dismissHint') }}</p>
       } @else {
         <p class="item-sheet__hint">
-          {{ i18n.t(declareLinkable() ? 'declare.hint' : 'declare.hintTranslated') }}
+          {{
+            i18n.t(
+              !declareLinkable()
+                ? 'declare.hintTranslated'
+                : isPurchase()
+                  ? 'buy.declareHint'
+                  : 'declare.hint'
+            )
+          }}
         </p>
       }
       <div class="sheet__actions">
@@ -108,7 +144,11 @@ import { MessageKey } from '../../core/i18n/messages';
           {{ i18n.t('common.cancel') }}
         </button>
         <button type="button" class="button button--primary" [disabled]="!canAdd()" (click)="add()">
-          ＋ {{ i18n.t('common.add') }}
+          @if (isPurchase()) {
+            {{ i18n.t(justPay() ? 'buy.payAction' : 'buy.action', { price: price() }) }}
+          } @else {
+            ＋ {{ i18n.t('common.add') }}
+          }
         </button>
       </div>
     </section>
@@ -131,11 +171,23 @@ export class ItemSheetComponent {
   readonly notAnItem = output<void>();
   /** Libellé de l'objet ajouté, pour le message de confirmation. */
   readonly added = output<string>();
+  /** Achat effectué : message de confirmation, nom et prix (pour mémoriser un achat déclaré). */
+  readonly bought = output<{ message: string; name: string; price: number }>();
 
   protected readonly slots: ItemSlot[] = ['weapons', 'backpack', 'specialItems'];
   protected readonly isDeclared = computed(() => {
     const item = this.item();
-    return item.kind === 'item' && !!item.declared;
+    return (item.kind === 'item' || item.kind === 'purchase') && !!item.declared;
+  });
+  protected readonly isPurchase = computed(() => this.item().kind === 'purchase');
+  protected readonly price = signal(0);
+  /** Achat d'un service (chambre, boisson…) : seul l'or est débité. */
+  protected readonly justPay = signal(false);
+  protected readonly enoughGold = computed(() => (this.character()?.gold ?? 0) >= this.price());
+  /** Nom et emplacement modifiables : objets trouvés et achats d'objet. */
+  protected readonly hasItemFields = computed(() => {
+    const kind = this.item().kind;
+    return kind === 'item' || (kind === 'purchase' && !this.justPay());
   });
   protected readonly name = signal('');
   protected readonly slot = signal<ItemSlot>('backpack');
@@ -143,13 +195,19 @@ export class ItemSheetComponent {
 
   protected readonly summary = computed(() => {
     const item = this.item();
-    return item.kind === 'item' ? item.name : item.label;
+    return item.kind === 'item' || item.kind === 'purchase' ? item.name : item.label;
   });
-  protected readonly canAdd = computed(
-    () =>
-      (this.item().kind !== 'item' || !!this.name().trim()) &&
-      !(this.item().kind === 'item' && this.slot() === 'weapons' && this.weaponsFull()),
-  );
+  protected readonly canAdd = computed(() => {
+    if (this.isPurchase()) {
+      const price = this.price();
+      if (!(price >= 1) || !this.enoughGold()) return false;
+      if (this.justPay()) return true;
+    }
+    return (
+      (!this.hasItemFields() || !!this.name().trim()) &&
+      !(this.hasItemFields() && this.slot() === 'weapons' && this.weaponsFull())
+    );
+  });
 
   protected readonly character = this.game.character;
   protected readonly weaponsFull = computed(
@@ -182,10 +240,12 @@ export class ItemSheetComponent {
   constructor() {
     effect(() => {
       const item = this.item();
-      if (item.kind === 'item') {
+      if (item.kind === 'item' || item.kind === 'purchase') {
         this.name.set(item.name);
         this.slot.set(item.slot);
       }
+      if (item.kind === 'purchase') this.price.set(item.price);
+      this.justPay.set(false);
       this.error.set(null);
     });
   }
@@ -202,6 +262,7 @@ export class ItemSheetComponent {
 
   protected async add(): Promise<void> {
     const item = this.item();
+    if (item.kind === 'purchase') return this.buy();
     const grant: Grant =
       item.kind === 'gold'
         ? { slot: 'gold', amount: item.amount }
@@ -214,5 +275,24 @@ export class ItemSheetComponent {
       return;
     }
     this.added.emit(item.kind === 'item' ? this.name().trim() : item.label);
+  }
+
+  private async buy(): Promise<void> {
+    const price = this.price();
+    const name = this.name().trim();
+    const grant: Grant | null = this.justPay() ? null : { slot: this.slot(), name };
+    const error = await this.game.buy(price, grant, this.rules());
+    if (error === 'noGold') return;
+    if (error) {
+      this.error.set(this.i18n.t(`chart.error.${error}`));
+      return;
+    }
+    this.bought.emit({
+      message: this.justPay()
+        ? this.i18n.t('buy.paid', { price })
+        : this.i18n.t('buy.done', { item: name, price }),
+      name: this.justPay() ? this.summary() : name,
+      price,
+    });
   }
 }

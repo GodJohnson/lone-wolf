@@ -178,6 +178,29 @@
       </section>
     }
 
+    @if (purchasesHere().length) {
+      <section class="card removed-links">
+        <h2>{{ i18n.t('chart.declaredPurchases') }}</h2>
+        <ul class="item-list">
+          @for (entry of purchasesHere(); track entry.key) {
+            <li>
+              <span
+                ><span class="muted">§{{ entry.section }}</span> ·
+                {{ i18n.t('buy.label', { name: entry.name, price: entry.price }) }}</span
+              >
+              <button
+                type="button"
+                class="button button--small"
+                (click)="undeclarePurchase(entry.key)"
+              >
+                {{ i18n.t('chart.undeclare') }}
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
     @if (userNonItems().length || dismissedHere().length) {
       <section class="card removed-links">
         <h2>{{ i18n.t('chart.removedLinks') }}</h2>

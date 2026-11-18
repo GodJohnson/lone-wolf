@@ -32,7 +32,7 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
               [class.choice--met]="cond?.status === 'met' && !cond?.negated"
               [class.choice--unmet]="cond?.status === 'unmet'"
               [disabled]="choicesDisabled() || cond?.status === 'unmet'"
-              (click)="section.emit(block.target)"
+              (click)="choose(block.target, i)"
             >
               <span class="choice__body">
                 <span
@@ -41,6 +41,11 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
                   [attr.lang]="lang()"
                   [innerHTML]="block.html"
                 ></span>
+                @if (payments()[i]; as price) {
+                  <span class="choice__condition">{{
+                    i18n.t('buy.choiceHint', { price: price })
+                  }}</span>
+                }
                 @if (
                   cond && cond.status !== 'unknown' && !(cond.status === 'met' && cond.negated)
                 ) {
@@ -117,6 +122,8 @@ export class BlocksComponent {
   readonly activeCombat = input<number | null>(null);
   /** Conditions des choix, par index de bloc (voir `evaluateChoices`). */
   readonly conditions = input<readonly (ChoiceCondition | null)[]>([]);
+  /** Prix des choix payants par index de bloc (voir `paymentsOf`) : le choix demande confirmation. */
+  readonly payments = input<readonly (number | null)[]>([]);
   /** Position du premier choix : le contenu marqué `lwBeforeChoices` s'affiche juste avant. */
   protected readonly firstChoice = computed(() =>
     this.blocks().findIndex((b) => b.kind === 'choice'),
@@ -124,9 +131,17 @@ export class BlocksComponent {
 
   readonly section = output<number>();
   readonly page = output<string>();
+  /** Choix payant touché : la confirmation et le débit sont gérés par le lecteur. */
+  readonly pay = output<{ target: number; price: number }>();
   readonly fight = output<{ index: number; enemy: Enemy }>();
   /** Lien d'objet ramassable (`#item-N`) touché : N = index dans la liste des objets détectés. */
   readonly item = output<number>();
+
+  protected choose(target: number, index: number): void {
+    const price = this.payments()[index];
+    if (price) this.pay.emit({ target, price });
+    else this.section.emit(target);
+  }
 
   protected onClick(event: MouseEvent): void {
     const anchor = (event.target as HTMLElement | null)?.closest('a');
