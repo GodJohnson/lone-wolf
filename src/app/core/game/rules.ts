@@ -86,6 +86,20 @@ export function hasDiscipline(character: Character, name: string): boolean {
   return character.disciplines.some((d) => d.toLowerCase() === name.toLowerCase());
 }
 
+/**
+ * L'arme profite-t-elle de Weaponskill (+2 HAB) ? Correspondance exacte, ou variante nommée d'après
+ * le même type d'arme (« Giak Spear » pour Spear), mais pas un autre type de la table
+ * (« Short Sword » n'est pas un Sword).
+ */
+export function isSkilledWeapon(character: Character, weapon: string): boolean {
+  const skill = character.weaponskill?.trim().toLowerCase();
+  if (!skill || !hasDiscipline(character, DISCIPLINE.weaponskill)) return false;
+  const name = weapon.trim().toLowerCase();
+  if (name === skill) return true;
+  const otherTableWeapon = KAI_WEAPONSKILL_TABLE.some((t) => t.toLowerCase() === name);
+  return name.endsWith(' ' + skill) && !otherTableWeapon;
+}
+
 export function newCharacter(series: Series | null, csRoll: number, epRoll: number): Character {
   const rules = rulesFor(series);
   const endurance = rules.enduranceBase + epRoll;
@@ -120,11 +134,7 @@ export function effectiveCombatSkill(
   combat: Pick<CombatState, 'modifier' | 'useMindblast'>,
 ): CombatSkillBreakdown {
   const weapons = character.weapons.map((w) => w.trim().toLowerCase());
-  const skilled = character.weaponskill?.trim().toLowerCase();
-  const weaponskill =
-    hasDiscipline(character, DISCIPLINE.weaponskill) && !!skilled && weapons.includes(skilled)
-      ? 2
-      : 0;
+  const weaponskill = character.weapons.some((w) => isSkilledWeapon(character, w)) ? 2 : 0;
   const noWeapon = weapons.length === 0 ? -4 : 0;
   const mindblast = combat.useMindblast && hasDiscipline(character, DISCIPLINE.mindblast) ? 2 : 0;
   const items = itemsCombatBonus(character);

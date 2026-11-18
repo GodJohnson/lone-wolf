@@ -151,9 +151,16 @@
         [title]="i18n.t('chart.weapons', { count: c.weapons.length, max: rules().maxWeapons })"
         [items]="c.weapons"
         [full]="c.weapons.length >= rules().maxWeapons"
+        [extraHint]="weaponHint"
         (added)="addItem('weapons', $event)"
         (removed)="removeItem('weapons', $event)"
       />
+      <p class="small muted weapons-rule">
+        {{ i18n.t('chart.weaponsRule') }}
+        @if (c.weaponskill) {
+          {{ i18n.t('chart.weaponsRuleSkill', { weapon: c.weaponskill }) }}
+        }
+      </p>
     </section>
     <section class="card">
       <lw-item-list

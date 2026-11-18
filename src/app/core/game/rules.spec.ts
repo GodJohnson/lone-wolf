@@ -2,6 +2,7 @@ import { Character } from './game.models';
 import {
   effectiveCombatSkill,
   healingOnLeave,
+  isSkilledWeapon,
   newCharacter,
   playRound,
   startCombat,
@@ -57,5 +58,25 @@ describe('rules', () => {
     expect(healingOnLeave(c, 4, [4]).endurance).toBe(20);
     expect(healingOnLeave({ ...c, endurance: 25 }, 4, []).endurance).toBe(25);
     expect(healingOnLeave({ ...c, disciplines: [] }, 4, []).endurance).toBe(20);
+  });
+});
+
+describe('isSkilledWeapon', () => {
+  const c = (skill: string) =>
+    ({
+      ...newCharacter('kai', 0, 0),
+      disciplines: ['Weaponskill'],
+      weaponskill: skill,
+    }) as Character;
+  it('reconnaît l’arme maîtrisée et ses variantes nommées, pas un autre type de la table', () => {
+    expect(isSkilledWeapon(c('Spear'), 'Spear')).toBe(true);
+    expect(isSkilledWeapon(c('Spear'), 'Giak Spear')).toBe(true);
+    expect(isSkilledWeapon(c('Sword'), 'Short Sword')).toBe(false);
+    expect(isSkilledWeapon(c('Sword'), 'Broadsword')).toBe(false);
+    expect(isSkilledWeapon({ ...c('Spear'), disciplines: [] }, 'Spear')).toBe(false);
+  });
+  it('donne +2 en combat avec une variante (« Giak Spear »)', () => {
+    const hero = { ...c('Spear'), weapons: ['Giak Spear'] };
+    expect(effectiveCombatSkill(hero, { modifier: 0, useMindblast: false }).weaponskill).toBe(2);
   });
 });

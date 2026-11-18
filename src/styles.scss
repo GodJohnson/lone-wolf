@@ -842,3 +842,24 @@ figure {
 .removed-links .item-list li {
   padding: 0.35rem 0;
 }
+
+.item-sheet__effect {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 0.875rem;
+}
+.item-sheet__effect--good {
+  background: color-mix(in srgb, var(--success) 15%, var(--surface));
+  color: var(--success);
+  font-weight: 600;
+}
+.item-sheet__replace p {
+  margin: 0 0 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.weapons-rule {
+  margin: 0.5rem 0 0;
+}

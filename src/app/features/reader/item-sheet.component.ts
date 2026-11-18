@@ -8,10 +8,10 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { Grant, ItemSlot } from '../../core/game/equipment';
+import { Grant, ItemSlot, itemEffect } from '../../core/game/equipment';
 import { GameService } from '../../core/game/game.service';
 import { FoundItem } from '../../core/game/item-detection';
-import { SeriesRules } from '../../core/game/rules';
+import { DISCIPLINE, SeriesRules, hasDiscipline, isSkilledWeapon } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { MessageKey } from '../../core/i18n/messages';
 
@@ -49,6 +49,23 @@ import { MessageKey } from '../../core/i18n/messages';
               </button>
             }
           </div>
+          @if (effectText(); as text) {
+            <p class="item-sheet__effect" [class.item-sheet__effect--good]="skilled()">
+              {{ text }}
+            </p>
+          }
+          @if (slot() === 'weapons' && weaponsFull()) {
+            <div class="item-sheet__replace">
+              <p>{{ i18n.t('item.weaponsFull', { max: rules().maxWeapons }) }}</p>
+              <div class="chips">
+                @for (w of character()?.weapons ?? []; track $index) {
+                  <button type="button" class="chip" (click)="replace($index)">
+                    {{ i18n.t('item.replace', { weapon: w }) }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
         }
         @default {
           <p class="item-sheet__label">{{ summary() }}</p>
@@ -106,7 +123,39 @@ export class ItemSheetComponent {
     const item = this.item();
     return item.kind === 'item' ? item.name : item.label;
   });
-  protected readonly canAdd = computed(() => this.item().kind !== 'item' || !!this.name().trim());
+  protected readonly canAdd = computed(
+    () =>
+      (this.item().kind !== 'item' || !!this.name().trim()) &&
+      !(this.item().kind === 'item' && this.slot() === 'weapons' && this.weaponsFull()),
+  );
+
+  protected readonly character = this.game.character;
+  protected readonly weaponsFull = computed(
+    () => (this.character()?.weapons.length ?? 0) >= this.rules().maxWeapons,
+  );
+  protected readonly skilled = computed(() => {
+    const c = this.character();
+    return this.slot() === 'weapons' && !!c && isSkilledWeapon(c, this.name());
+  });
+  /** Effet de l'objet pour ce personnage : bonus d'arme maîtrisée, protection, potion… */
+  protected readonly effectText = computed(() => {
+    const name = this.name().trim();
+    if (!name) return '';
+    const c = this.character();
+    if (this.slot() === 'weapons') {
+      if (this.skilled()) return this.i18n.t('item.effect.skilled');
+      const own = c && hasDiscipline(c, DISCIPLINE.weaponskill) ? c.weaponskill : null;
+      return own
+        ? this.i18n.t('item.effect.plainSkill', { weapon: own })
+        : this.i18n.t('item.effect.plain');
+    }
+    const effect = itemEffect(name);
+    if (effect?.endurance) return this.i18n.t('item.effect.endurance', { value: effect.endurance });
+    if (effect?.combatSkill)
+      return this.i18n.t('item.effect.combatSkill', { value: effect.combatSkill });
+    if (effect?.heal) return this.i18n.t('item.effect.heal', { value: effect.heal });
+    return '';
+  });
 
   constructor() {
     effect(() => {
@@ -121,6 +170,12 @@ export class ItemSheetComponent {
 
   protected slotLabel(slot: ItemSlot): MessageKey {
     return `item.slot.${slot}` as MessageKey;
+  }
+
+  /** Abandonne une arme portée pour prendre celle-ci. */
+  protected async replace(index: number): Promise<void> {
+    await this.game.removeItem('weapons', index);
+    await this.add();
   }
 
   protected async add(): Promise<void> {
