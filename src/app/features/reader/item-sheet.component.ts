@@ -31,7 +31,9 @@ import { MessageKey } from '../../core/i18n/messages';
       [attr.aria-modal]="inline() ? null : true"
       [attr.aria-label]="i18n.t('item.title')"
     >
-      <h2>{{ i18n.t(isPurchase() ? 'buy.title' : 'item.title') }}</h2>
+      <h2>
+        {{ i18n.t(isPurchase() ? 'buy.title' : isEndurance() ? 'endurance.title' : 'item.title') }}
+      </h2>
       @if (isPurchase()) {
         <label class="item-sheet__price">
           {{ i18n.t('buy.price') }}
@@ -146,6 +148,8 @@ import { MessageKey } from '../../core/i18n/messages';
         <button type="button" class="button button--primary" [disabled]="!canAdd()" (click)="add()">
           @if (isPurchase()) {
             {{ i18n.t(justPay() ? 'buy.payAction' : 'buy.action', { price: price() }) }}
+          } @else if (isEndurance()) {
+            {{ i18n.t('endurance.apply') }}
           } @else {
             ＋ {{ i18n.t('common.add') }}
           }
@@ -180,6 +184,7 @@ export class ItemSheetComponent {
     return (item.kind === 'item' || item.kind === 'purchase') && !!item.declared;
   });
   protected readonly isPurchase = computed(() => this.item().kind === 'purchase');
+  protected readonly isEndurance = computed(() => this.item().kind === 'endurance');
   protected readonly price = signal(0);
   /** Achat d'un service (chambre, boisson…) : seul l'or est débité. */
   protected readonly justPay = signal(false);
@@ -195,6 +200,11 @@ export class ItemSheetComponent {
 
   protected readonly summary = computed(() => {
     const item = this.item();
+    if (item.kind === 'endurance') {
+      return this.i18n.t(item.amount < 0 ? 'endurance.lose' : 'endurance.gain', {
+        n: Math.abs(item.amount),
+      });
+    }
     return item.kind === 'item' || item.kind === 'purchase' ? item.name : item.label;
   });
   protected readonly canAdd = computed(() => {
@@ -263,6 +273,7 @@ export class ItemSheetComponent {
   protected async add(): Promise<void> {
     const item = this.item();
     if (item.kind === 'purchase') return this.buy();
+    if (item.kind === 'endurance') return this.applyEndurance(item.amount);
     const grant: Grant =
       item.kind === 'gold'
         ? { slot: 'gold', amount: item.amount }
@@ -275,6 +286,15 @@ export class ItemSheetComponent {
       return;
     }
     this.added.emit(item.kind === 'item' ? this.name().trim() : item.label);
+  }
+
+  /** Perte ou gain d'ENDURANCE du récit, borné entre 0 et le total. */
+  private async applyEndurance(amount: number): Promise<void> {
+    await this.game.updateCharacter((c) => ({
+      ...c,
+      endurance: Math.min(c.enduranceMax, Math.max(0, c.endurance + amount)),
+    }));
+    this.bought.emit({ message: this.summary(), name: this.summary(), price: 0 });
   }
 
   private async buy(): Promise<void> {

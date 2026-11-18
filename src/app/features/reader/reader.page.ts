@@ -166,6 +166,11 @@ export class ReaderPage {
   }
 
   protected foundLabel(item: FoundItem): string {
+    if (item.kind === 'endurance') {
+      return this.i18n.t(item.amount < 0 ? 'endurance.lose' : 'endurance.gain', {
+        n: Math.abs(item.amount),
+      });
+    }
     if (item.kind === 'purchase') {
       return this.i18n.t('buy.label', { name: item.name, price: item.price });
     }
