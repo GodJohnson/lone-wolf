@@ -59,6 +59,24 @@ export class GameService {
     await this.commit({ ...state, combat: null });
   }
 
+  /** Un événement du récit est-il déjà survenu dans cette partie ? */
+  hasFlag(flag: string): boolean {
+    return !!this._state()?.flags?.includes(flag);
+  }
+
+  /** Effectue un changement du personnage une seule fois par partie (ex. jeton remis à l'entrée). */
+  async doOnce(flag: string, update: (c: Character) => Character): Promise<boolean> {
+    const state = this._state();
+    if (!state || state.flags?.includes(flag)) return false;
+    this.remember(state.character);
+    await this.commit({
+      ...state,
+      character: update(state.character),
+      flags: [...(state.flags ?? []), flag],
+    });
+    return true;
+  }
+
   /** Marque le livre comme terminé (la partie est conservée pour pouvoir la reprendre au livre suivant). */
   async finishBook(): Promise<void> {
     const state = this._state();

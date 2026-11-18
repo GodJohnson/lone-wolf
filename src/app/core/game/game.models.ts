@@ -51,6 +51,8 @@ export interface GameState {
   mealResolved?: boolean;
   /** Le joueur a terminé ce livre (bouton « Terminer le livre » en fin de livre). */
   finished?: boolean;
+  /** Événements du récit déjà survenus (ex. le jeton de la salle de jeu, remis une seule fois). */
+  flags?: string[];
   createdAt: string;
   updatedAt: string;
 }

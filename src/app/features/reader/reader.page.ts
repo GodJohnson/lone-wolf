@@ -29,6 +29,8 @@ import { BlocksComponent } from '../../shared/blocks.component';
 import { RandomNumberComponent } from '../../shared/random-number.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { useBookLanguage } from '../../shared/book-language';
+import { CartwheelComponent } from './cartwheel.component';
+import { CARTWHEEL_SECTION } from '../../core/game/cartwheel';
 import { CombatPanelComponent } from './combat-panel.component';
 
 @Component({
@@ -39,6 +41,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     BlocksComponent,
     RandomNumberComponent,
     CombatPanelComponent,
+    CartwheelComponent,
     ItemSheetComponent,
     SelectionBarComponent,
     CharacterPanelComponent,
@@ -215,6 +218,13 @@ export class ReaderPage {
     await this.game.finishBook();
     await this.router.navigate(['/']);
   }
+
+  /** Mini-jeu propre à la section affichée (ex. le Cartwheel du livre 2, section 238). */
+  protected readonly minigame = computed(() =>
+    this.bookId() === CARTWHEEL_SECTION.book && this.sectionNumber() === CARTWHEEL_SECTION.section
+      ? ('cartwheel' as const)
+      : null,
+  );
 
   protected readonly isDeadEnd = computed(
     () => !!this.section.value()?.blocks.some((b) => b.kind === 'deadend'),
