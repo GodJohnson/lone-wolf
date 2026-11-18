@@ -14,6 +14,8 @@
     {{ importing() ? i18n.t('library.importing') : '＋ ' + i18n.t('library.import') }}
   </label>
 
+  <a class="button button--block" routerLink="/import"> ⇄ {{ i18n.t('library.importGame') }} </a>
+
   @if (message(); as msg) {
     <p class="notice" [class.notice--error]="msg.error" role="status">{{ msg.text }}</p>
   }
@@ -36,6 +38,11 @@
               @if (entry.savedSection !== null) {
                 <a class="button button--primary" [routerLink]="['/book', entry.book.id, 'play']">
                   ▶ {{ i18n.t('library.continue', { section: entry.savedSection }) }}
+                </a>
+              }
+              @if (entry.savedSection !== null) {
+                <a class="button" [routerLink]="['/book', entry.book.id, 'transfer']">
+                  ⇄ {{ i18n.t('library.transfer') }}
                 </a>
               }
               <a

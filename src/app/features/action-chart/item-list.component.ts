@@ -84,6 +84,8 @@ export class ItemListComponent {
   readonly full = input(false);
   /** Les potions ne se boivent pas pendant un combat. */
   readonly canUse = input(true);
+  /** Indication supplémentaire par objet (ex. « +2 HAB » pour l'arme maîtrisée). */
+  readonly extraHint = input<(name: string) => string>(() => '');
 
   readonly added = output<string>();
   readonly removed = output<number>();
@@ -95,6 +97,7 @@ export class ItemListComponent {
     this.items().map((name) => {
       const effect = itemEffect(name);
       const hints = [
+        this.extraHint()(name),
         effect?.endurance ? `+${effect.endurance} ${this.i18n.t('combat.ep')}` : '',
         effect?.combatSkill ? `+${effect.combatSkill} ${this.i18n.t('combat.cs')}` : '',
         effect?.heal ? `+${effect.heal} ${this.i18n.t('combat.ep')}` : '',

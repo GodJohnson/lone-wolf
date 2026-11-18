@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Character } from '../../core/game/game.models';
 import { GameService } from '../../core/game/game.service';
-import { rulesFor } from '../../core/game/rules';
+import { isSkilledWeapon, rulesFor } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
@@ -43,6 +43,12 @@ export class ActionChartPage {
     },
   });
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
+
+  /** Bonus affiché à côté d'une arme : seule l'arme maîtrisée en donne un. */
+  protected readonly weaponHint = (name: string): string => {
+    const c = this.character();
+    return c && isSkilledWeapon(c, name) ? `+2 ${this.i18n.t('combat.cs')} ✓` : '';
+  };
 
   /** Liens d'objets retirés par le joueur, pour pouvoir les rétablir. */
   protected readonly userNonItems = signal(this.books.userNonItems());
