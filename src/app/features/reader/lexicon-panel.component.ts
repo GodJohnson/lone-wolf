@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, resource, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, model, resource } from '@angular/core';
 import { BookRepository } from '../../core/book/book-repository';
 import { PageRef } from '../../core/book/book.models';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -54,7 +54,8 @@ export class LexiconPanelComponent {
   readonly bookId = input.required<string>();
   readonly pages = input.required<readonly PageRef[]>();
   readonly lang = input('en');
-  protected readonly selected = signal<string | null>(null);
+  /** Page consultée ; modifiable de l'extérieur (ex. lien « disciplines » du formulaire). */
+  readonly selected = model<string | null>(null);
 
   protected readonly page = resource({
     params: () => {

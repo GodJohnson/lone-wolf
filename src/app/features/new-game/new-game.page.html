@@ -4,196 +4,235 @@
   [backLink]="['/']"
 />
 
-<main class="page">
-  @if (book.value(); as b) {
-    @if (!rules().verified) {
-      <p class="notice notice--warning">{{ i18n.t('newGame.unverifiedRules') }}</p>
-    }
-
-    @if (carried(); as c) {
-      <section class="card">
-        <h2>{{ i18n.t('carry.title', { book: previousTitle() }) }}</h2>
-        <div class="stat-row">
-          <div class="stat">
-            <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
-            <span class="stat__value">{{ c.character.combatSkill }}</span>
-          </div>
-          <div class="stat">
-            <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
-            <span class="stat__value">{{ c.character.enduranceMax }}</span>
-          </div>
-        </div>
-        <p class="small muted">
-          {{
-            i18n.t('carry.summary', {
-              gold: c.character.gold,
-              items: c.character.specialItems.length,
-            })
-          }}
-        </p>
-        @if (c.character.weapons.length) {
-          <h3 class="small">{{ i18n.t('carry.weapons', { max: rules().maxWeapons }) }}</h3>
-          <div class="chips">
-            @for (w of c.character.weapons; track w) {
-              <button
-                type="button"
-                class="chip"
-                [class.chip--on]="isKept(w)"
-                [attr.aria-pressed]="isKept(w)"
-                (click)="toggleKept(w)"
-              >
-                {{ w }}
-              </button>
-            }
-          </div>
-        }
-        <p class="small muted">{{ i18n.t('carry.notCarried') }}</p>
-      </section>
-    } @else if (from()) {
-      <p class="notice notice--error">{{ i18n.t('carry.missing') }}</p>
-    } @else {
-      <section class="card">
-        <div class="stat-row">
-          <div class="stat">
-            <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
-            <span class="stat__value">{{
-              csRoll() === null ? '–' : rules().combatSkillBase + csRoll()!
-            }}</span>
-            <span class="stat__hint">{{
-              i18n.t('newGame.formula', { base: rules().combatSkillBase })
-            }}</span>
-          </div>
-          <div class="stat">
-            <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
-            <span class="stat__value">{{
-              epRoll() === null ? '–' : rules().enduranceBase + epRoll()!
-            }}</span>
-            <span class="stat__hint">{{
-              i18n.t('newGame.formula', { base: rules().enduranceBase })
-            }}</span>
-          </div>
-        </div>
-        <button type="button" class="button button--block" (click)="rollStats()">
-          🎲 {{ csRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
-        </button>
-      </section>
-    }
-
-    <section class="card">
-      <h2>
-        {{
-          i18n.t('newGame.disciplines', {
-            count: selected().length,
-            max: disciplinesToChoose(),
-          })
-        }}
-      </h2>
-      <div class="chips">
-        @for (d of b.disciplines; track d) {
-          <button
-            type="button"
-            class="chip"
-            [class.chip--on]="isSelected(d)"
-            [attr.aria-pressed]="isSelected(d)"
-            [disabled]="isLocked(d)"
-            (click)="toggle(d)"
-          >
-            {{ d }}
-          </button>
-        }
-      </div>
-      <a class="small" [routerLink]="['/book', b.id, 'page', 'discplnz']"
-        >{{ i18n.t('newGame.readDisciplines') }} ›</a
-      >
-
-      @if (needsWeapon()) {
-        <div class="weapon-roll">
-          <span
-            >{{ i18n.t('newGame.weaponskill') }} : <strong>{{ weapon() ?? '–' }}</strong></span
-          >
-          <button type="button" class="button button--small" (click)="rollWeapon()">
-            🎲 {{ weapon() ? i18n.t('newGame.reroll') : i18n.t('newGame.roll') }}
-          </button>
-        </div>
+<div class="new-layout" [class.new-layout--desktop]="viewport.desktop()">
+  <main class="page">
+    @if (book.value(); as b) {
+      @if (!rules().verified) {
+        <p class="notice notice--warning">{{ i18n.t('newGame.unverifiedRules') }}</p>
       }
-    </section>
 
-    @if (equipment(); as eq) {
-      <section class="card">
-        <h2>{{ i18n.t('newGame.equipment') }}</h2>
-        <ul class="equipment-fixed">
-          @for (label of fixedLabels(); track $index) {
-            <li>{{ label }}</li>
-          }
-        </ul>
-
-        <div class="weapon-roll">
-          <span>
-            {{ i18n.t('chart.gold') }} :
-            <strong>{{ goldRoll() === null ? '–' : eq.goldBase + goldRoll()! }}</strong>
-            <span class="muted small"
-              >({{ i18n.t('newGame.formula', { base: eq.goldBase }) }})</span
-            >
-          </span>
-          <button type="button" class="button button--small" (click)="rollGold()">
-            🎲 {{ goldRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
-          </button>
-        </div>
-
-        @switch (eq.pick.mode) {
-          @case ('random') {
-            <div class="weapon-roll">
-              <span>
-                {{ i18n.t('newGame.randomItem') }} :
-                <strong>{{ randomItem()?.label ?? '–' }}</strong>
-              </span>
-              <button type="button" class="button button--small" (click)="rollItem()">
-                🎲 {{ itemRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
-              </button>
+      @if (carried(); as c) {
+        <section class="card">
+          <h2>{{ i18n.t('carry.title', { book: previousTitle() }) }}</h2>
+          <div class="stat-row">
+            <div class="stat">
+              <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
+              <span class="stat__value">{{ c.character.combatSkill }}</span>
+            </div>
+            <div class="stat">
+              <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
+              <span class="stat__value">{{ c.character.enduranceMax }}</span>
+            </div>
+          </div>
+          <p class="small muted">
+            {{
+              i18n.t('carry.summary', {
+                gold: c.character.gold,
+                items: c.character.specialItems.length,
+              })
+            }}
+          </p>
+          @if (c.character.weapons.length) {
+            <h3 class="small">{{ i18n.t('carry.weapons', { max: rules().maxWeapons }) }}</h3>
+            <div class="chips">
+              @for (w of c.character.weapons; track w) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip--on]="isKept(w)"
+                  [attr.aria-pressed]="isKept(w)"
+                  (click)="toggleKept(w)"
+                >
+                  {{ w }}
+                </button>
+              }
             </div>
           }
-          @case ('choose') {
-            @if (eq.pick.mode === 'choose') {
-              <h3 class="small">
-                {{ i18n.t('newGame.chooseItems', { count: chosen().length, max: eq.pick.count }) }}
-              </h3>
-              <div class="chips">
-                @for (option of eq.pick.options; track $index) {
-                  <button
-                    type="button"
-                    class="chip"
-                    [class.chip--on]="isChosen($index)"
-                    [attr.aria-pressed]="isChosen($index)"
-                    [disabled]="!canChoose($index)"
-                    (click)="toggleOption($index)"
-                  >
-                    {{ option.label }}
-                  </button>
-                }
-              </div>
-            }
+          <p class="small muted">{{ i18n.t('carry.notCarried') }}</p>
+        </section>
+      } @else if (from()) {
+        <p class="notice notice--error">{{ i18n.t('carry.missing') }}</p>
+      } @else {
+        <section class="card">
+          <div class="stat-row">
+            <div class="stat">
+              <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
+              <span class="stat__value">{{
+                csRoll() === null ? '–' : rules().combatSkillBase + csRoll()!
+              }}</span>
+              <span class="stat__hint">{{
+                i18n.t('newGame.formula', { base: rules().combatSkillBase })
+              }}</span>
+            </div>
+            <div class="stat">
+              <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
+              <span class="stat__value">{{
+                epRoll() === null ? '–' : rules().enduranceBase + epRoll()!
+              }}</span>
+              <span class="stat__hint">{{
+                i18n.t('newGame.formula', { base: rules().enduranceBase })
+              }}</span>
+            </div>
+          </div>
+          <button type="button" class="button button--block" (click)="rollStats()">
+            🎲 {{ csRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
+          </button>
+        </section>
+      }
+
+      <section class="card">
+        <h2>
+          {{
+            i18n.t('newGame.disciplines', {
+              count: selected().length,
+              max: disciplinesToChoose(),
+            })
+          }}
+        </h2>
+        <div class="chips">
+          @for (d of b.disciplines; track d) {
+            <button
+              type="button"
+              class="chip"
+              [class.chip--on]="isSelected(d)"
+              [attr.aria-pressed]="isSelected(d)"
+              [disabled]="isLocked(d)"
+              (click)="toggle(d)"
+            >
+              {{ d }}
+            </button>
           }
-        }
-        @if (equipmentPage(); as page) {
-          <a class="small" [routerLink]="['/book', b.id, 'page', page.id]">{{ page.title }} ›</a>
+        </div>
+        <button type="button" class="link-button small" (click)="openLexicon('discplnz')">
+          {{ i18n.t('newGame.readDisciplines') }} ›
+        </button>
+
+        @if (needsWeapon()) {
+          <div class="weapon-roll">
+            <span
+              >{{ i18n.t('newGame.weaponskill') }} : <strong>{{ weapon() ?? '–' }}</strong></span
+            >
+            <button type="button" class="button button--small" (click)="rollWeapon()">
+              🎲 {{ weapon() ? i18n.t('newGame.reroll') : i18n.t('newGame.roll') }}
+            </button>
+          </div>
         }
       </section>
-    } @else if (equipmentPage(); as page) {
-      <p class="notice">
-        {{ i18n.t('newGame.equipmentHint', { page: page.title }) }}
-        <a [routerLink]="['/book', b.id, 'page', page.id]">{{ page.title }} ›</a>
-      </p>
-    }
 
-    <button
-      type="button"
-      class="button button--primary button--block"
-      [disabled]="!canStart()"
-      (click)="start()"
-    >
-      {{ i18n.t('newGame.start') }}
-    </button>
-  } @else {
-    <p class="muted center">{{ i18n.t('common.loading') }}</p>
+      @if (equipment(); as eq) {
+        <section class="card">
+          <h2>{{ i18n.t('newGame.equipment') }}</h2>
+          <ul class="equipment-fixed">
+            @for (label of fixedLabels(); track $index) {
+              <li>{{ label }}</li>
+            }
+          </ul>
+
+          <div class="weapon-roll">
+            <span>
+              {{ i18n.t('chart.gold') }} :
+              <strong>{{ goldRoll() === null ? '–' : eq.goldBase + goldRoll()! }}</strong>
+              <span class="muted small"
+                >({{ i18n.t('newGame.formula', { base: eq.goldBase }) }})</span
+              >
+            </span>
+            <button type="button" class="button button--small" (click)="rollGold()">
+              🎲 {{ goldRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
+            </button>
+          </div>
+
+          @switch (eq.pick.mode) {
+            @case ('random') {
+              <div class="weapon-roll">
+                <span>
+                  {{ i18n.t('newGame.randomItem') }} :
+                  <strong>{{ randomItem()?.label ?? '–' }}</strong>
+                </span>
+                <button type="button" class="button button--small" (click)="rollItem()">
+                  🎲 {{ itemRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
+                </button>
+              </div>
+            }
+            @case ('choose') {
+              @if (eq.pick.mode === 'choose') {
+                <h3 class="small">
+                  {{
+                    i18n.t('newGame.chooseItems', { count: chosen().length, max: eq.pick.count })
+                  }}
+                </h3>
+                <div class="chips">
+                  @for (option of eq.pick.options; track $index) {
+                    <button
+                      type="button"
+                      class="chip"
+                      [class.chip--on]="isChosen($index)"
+                      [attr.aria-pressed]="isChosen($index)"
+                      [disabled]="!canChoose($index)"
+                      (click)="toggleOption($index)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  }
+                </div>
+              }
+            }
+          }
+          @if (equipmentPage(); as page) {
+            <button type="button" class="link-button small" (click)="openLexicon(page.id)">
+              {{ page.title }} ›
+            </button>
+          }
+        </section>
+      } @else if (equipmentPage(); as page) {
+        <p class="notice">
+          {{ i18n.t('newGame.equipmentHint', { page: page.title }) }}
+          <button type="button" class="link-button" (click)="openLexicon(page.id)">
+            {{ page.title }} ›
+          </button>
+        </p>
+      }
+
+      <button
+        type="button"
+        class="button button--primary button--block"
+        [disabled]="!canStart()"
+        (click)="start()"
+      >
+        {{ i18n.t('newGame.start') }}
+      </button>
+    } @else {
+      <p class="muted center">{{ i18n.t('common.loading') }}</p>
+    }
+  </main>
+
+  @if (viewport.desktop() && book.value(); as b) {
+    <aside class="side" [attr.aria-label]="i18n.t('lexicon.title')">
+      <lw-lexicon-panel
+        [bookId]="b.id"
+        [pages]="b.pages"
+        [lang]="b.lang"
+        [(selected)]="lexiconPage"
+      />
+    </aside>
   }
-</main>
+</div>
+
+@if (!viewport.desktop() && lexiconOpen() && book.value(); as b) {
+  <div class="sheet-backdrop" (click)="lexiconOpen.set(false)"></div>
+  <div
+    class="sheet lexicon-sheet"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="i18n.t('lexicon.title')"
+  >
+    <lw-lexicon-panel
+      [bookId]="b.id"
+      [pages]="b.pages"
+      [lang]="b.lang"
+      [(selected)]="lexiconPage"
+    />
+    <button type="button" class="button button--block" (click)="lexiconOpen.set(false)">
+      {{ i18n.t('common.close') }}
+    </button>
+  </div>
+}

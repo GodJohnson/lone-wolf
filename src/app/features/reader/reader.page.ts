@@ -165,6 +165,21 @@ export class ReaderPage {
     this.game.resolveMeal(choice);
   }
 
+  /** Fin de livre : aucune suite proposée (ni choix cliquable, ni lien vers une autre section). */
+  protected readonly isBookEnd = computed(() => {
+    const blocks = this.section.value()?.blocks;
+    if (!blocks) return false;
+    const hasExit = blocks.some(
+      (b) => b.kind === 'choice' || (b.kind === 'html' && /href="sect\d+\.htm"/.test(b.html)),
+    );
+    return !hasExit && !blocks.some((b) => b.kind === 'deadend');
+  });
+
+  protected async finishBook(): Promise<void> {
+    await this.game.finishBook();
+    await this.router.navigate(['/']);
+  }
+
   protected readonly isDeadEnd = computed(
     () => !!this.section.value()?.blocks.some((b) => b.kind === 'deadend'),
   );

@@ -8,7 +8,7 @@ import {
   resource,
   signal,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import {
   EquipmentOption,
@@ -22,11 +22,13 @@ import { GameService } from '../../core/game/game.service';
 import { randomNumber } from '../../core/game/random';
 import { DISCIPLINE, KAI_WEAPONSKILL_TABLE, newCharacter, rulesFor } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { ViewportService } from '../../core/viewport.service';
+import { LexiconPanelComponent } from '../reader/lexicon-panel.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 
 @Component({
   selector: 'lw-new-game-page',
-  imports: [RouterLink, TopBarComponent],
+  imports: [TopBarComponent, LexiconPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './new-game.page.html',
 })
@@ -35,6 +37,16 @@ export class NewGamePage {
   private readonly books = inject(BookRepository);
   private readonly game = inject(GameService);
   private readonly router = inject(Router);
+
+  protected readonly viewport = inject(ViewportService);
+  /** Lexique consulté sans quitter le formulaire : colonne latérale (bureau) ou feuille (mobile). */
+  protected readonly lexiconPage = signal<string | null>('discplnz');
+  protected readonly lexiconOpen = signal(false);
+
+  protected openLexicon(page: string): void {
+    this.lexiconPage.set(page);
+    this.lexiconOpen.set(true);
+  }
 
   readonly bookId = input.required<string>();
   /** Livre précédent dont on reprend le héros (`?from=01fftd`). */

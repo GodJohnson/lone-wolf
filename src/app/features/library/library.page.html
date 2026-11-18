@@ -29,6 +29,9 @@
               <span class="book-card__number">{{ entry.book.number }}</span>
               <div>
                 <h2>{{ entry.book.title }}</h2>
+                @if (entry.finished) {
+                  <p class="finished-badge">✓ {{ i18n.t('library.finished') }}</p>
+                }
                 <p class="muted">
                   {{ seriesLabel(entry.book) }} · {{ entry.book.lang.toUpperCase() }}
                 </p>
@@ -44,6 +47,7 @@
                 @if (next.imported) {
                   <a
                     class="button"
+                    [class.button--primary]="entry.finished"
                     [routerLink]="['/book', next.code, 'new']"
                     [queryParams]="{ from: entry.book.id }"
                   >

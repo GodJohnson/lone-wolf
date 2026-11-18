@@ -57,6 +57,13 @@ export class GameService {
     await this.commit({ ...state, combat: null });
   }
 
+  /** Marque le livre comme terminé (la partie est conservée pour pouvoir la reprendre au livre suivant). */
+  async finishBook(): Promise<void> {
+    const state = this._state();
+    if (!state) return;
+    await this.commit({ ...state, finished: true, combat: null });
+  }
+
   async newGame(bookId: string, character: Character): Promise<void> {
     const now = new Date().toISOString();
     await this.commit({
