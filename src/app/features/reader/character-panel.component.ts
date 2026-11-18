@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { CounterComponent } from '../../shared/counter.component';
 import { RouterLink } from '@angular/router';
 import { ItemListComponent } from '../action-chart/item-list.component';
 import { ItemSlot, backpackLoad } from '../../core/game/equipment';
@@ -17,7 +18,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 /** Fiche du personnage en colonne latérale (bureau) : toujours visible pendant la lecture. */
 @Component({
   selector: 'lw-character-panel',
-  imports: [RouterLink, ItemListComponent],
+  imports: [RouterLink, ItemListComponent, CounterComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (character(); as c) {
@@ -35,65 +36,25 @@ import { I18nService } from '../../core/i18n/i18n.service';
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.endurance') }}</span>
-            <div class="stepper">
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('endurance', -1)"
-                aria-label="-1"
-              >
-                −
-              </button>
-              <span class="stat__value" [class.danger]="c.endurance <= 5">{{ c.endurance }}</span>
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('endurance', 1)"
-                aria-label="+1"
-              >
-                +
-              </button>
-            </div>
+            <lw-counter
+              [value]="c.endurance"
+              [danger]="c.endurance <= 5"
+              (delta)="adjust('endurance', $event)"
+            />
             <span class="stat__hint">/ {{ c.enduranceMax }}</span>
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.gold') }}</span>
-            <div class="stepper">
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('gold', -1)"
-                aria-label="-1"
-              >
-                −
-              </button>
-              <span class="stat__value">{{ c.gold }}</span>
-              <button type="button" class="icon-button" (click)="adjust('gold', 1)" aria-label="+1">
-                +
-              </button>
-            </div>
+            <lw-counter
+              [value]="c.gold"
+              [clearable]="true"
+              (delta)="adjust('gold', $event)"
+              (clear)="adjust('gold', -c.gold)"
+            />
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.meals') }}</span>
-            <div class="stepper">
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('meals', -1)"
-                aria-label="-1"
-              >
-                −
-              </button>
-              <span class="stat__value">{{ c.meals }}</span>
-              <button
-                type="button"
-                class="icon-button"
-                (click)="adjust('meals', 1)"
-                aria-label="+1"
-              >
-                +
-              </button>
-            </div>
+            <lw-counter [value]="c.meals" (delta)="adjust('meals', $event)" />
           </div>
         </div>
         <div class="chips">
@@ -184,7 +145,7 @@ export class CharacterPanelComponent {
   protected adjust(field: 'endurance' | 'gold' | 'meals', delta: number): void {
     this.error.set(null);
     const rules = this.rules();
-    if (field === 'meals' && delta > 0 && this.load() >= rules.maxBackpackItems) {
+    if (field === 'meals' && delta > 0 && this.load() + delta > rules.maxBackpackItems) {
       this.error.set(this.i18n.t('chart.error.backpackFull'));
       return;
     }

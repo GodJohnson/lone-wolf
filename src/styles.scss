@@ -1109,3 +1109,66 @@ lw-character-panel {
 lw-character-panel > * {
   flex-shrink: 0;
 }
+
+/* Montant libre des compteurs */
+.amount-toggle {
+  min-width: 32px;
+  min-height: 32px;
+  font-size: 1rem;
+  color: var(--muted);
+}
+.amount-toggle--on {
+  background: var(--surface);
+  color: var(--accent);
+}
+.amount-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  width: 100%;
+}
+.amount-row input {
+  width: 5.5rem;
+  min-height: 36px;
+  text-align: center;
+}
+
+.char-stats {
+  align-items: start;
+}
+.char-stats .stepper {
+  gap: 0;
+}
+.char-stats .icon-button {
+  min-width: 28px;
+  min-height: 32px;
+}
+.char-stats .stat__value {
+  min-width: 2ch;
+}
+.amount-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.amount-row input {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+.amount-row .button {
+  padding-inline: 0.4rem;
+  white-space: nowrap;
+}
+.amount-row .button:last-child:nth-child(even) {
+  grid-column: auto;
+}
+
+.amount-row {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.amount-row > * {
+  min-width: 0;
+  width: 100%;
+}
