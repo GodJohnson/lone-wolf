@@ -157,6 +157,13 @@ export const fr = {
   'item.title': 'Ajouter à la Feuille d’aventure',
   'item.name': 'Nom de l’objet',
   'item.dismiss': 'Pas ici',
+  'declare.add': 'Ajouter « {text} » à l’inventaire',
+  'declare.hint':
+    'Objet déclaré à la main : il devient un lien dans cette section. Vous pourrez le retirer depuis la Feuille d’aventure.',
+  'declare.hintTranslated':
+    'Texte traduit par le navigateur : l’objet est ajouté à l’inventaire, mais aucun lien ne peut être mémorisé dans le texte du livre (désactivez la traduction pour cela).',
+  'chart.declared': 'Objets déclarés à la main',
+  'chart.undeclare': 'Retirer le lien',
   'item.weaponsFull': 'Vous portez déjà {max} armes. Remplacer :',
   'item.replace': 'Laisser {weapon}',
   'item.effect.skilled': '✓ Votre arme maîtrisée : +2 HAB tant que vous la portez.',
@@ -395,6 +402,13 @@ export const en: Record<MessageKey, string> = {
   'item.title': 'Add to Action Chart',
   'item.name': 'Item name',
   'item.dismiss': 'Not here',
+  'declare.add': 'Add “{text}” to inventory',
+  'declare.hint':
+    'Item declared by hand: it becomes a link in this section. You can remove it from the Action Chart.',
+  'declare.hintTranslated':
+    'Text translated by the browser: the item is added to the inventory, but no link can be saved in the book text (turn translation off for that).',
+  'chart.declared': 'Items declared by hand',
+  'chart.undeclare': 'Remove the link',
   'item.weaponsFull': 'You already carry {max} weapons. Replace:',
   'item.replace': 'Drop {weapon}',
   'item.effect.skilled': '✓ Your Weaponskill weapon: +2 CS while you carry it.',

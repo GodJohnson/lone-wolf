@@ -1177,3 +1177,26 @@ lw-character-panel > * {
 .counter {
   margin-left: auto;
 }
+
+/* Déclarer un objet non détecté : barre au-dessus de la navigation */
+.selection-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--bottom-nav) + 0.75rem + env(safe-area-inset-bottom));
+  z-index: 15;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+.selection-bar .button {
+  pointer-events: auto;
+  max-width: 100%;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 30%);
+}
+@media (min-width: 1024px) {
+  .selection-bar {
+    bottom: 1.5rem;
+  }
+}

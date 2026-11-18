@@ -63,6 +63,21 @@ export class ActionChartPage {
       .sort((a, b) => a.section - b.section || a.name.localeCompare(b.name)),
   );
 
+  /** Objets déclarés à la main dans le texte, pour pouvoir retirer leur lien. */
+  private readonly declaredItems = linkedSignal(() => this.book.value()?.declaredItems ?? []);
+  protected readonly declaredHere = computed(() =>
+    this.declaredItems()
+      .map((key) => {
+        const [section, ...rest] = key.split('|');
+        return { key, section: Number(section), name: rest.join('|') };
+      })
+      .sort((a, b) => a.section - b.section || a.name.localeCompare(b.name)),
+  );
+
+  protected async undeclare(key: string): Promise<void> {
+    this.declaredItems.set(await this.books.undeclareItem(this.bookId(), key));
+  }
+
   protected restoreNonItem(term: string): void {
     this.userNonItems.set(this.books.removeUserNonItem(term));
   }

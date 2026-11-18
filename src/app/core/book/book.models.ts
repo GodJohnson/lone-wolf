@@ -33,6 +33,8 @@ export interface BookMeta {
   nonItemWords?: string[];
   /** Liens d'objets écartés par le joueur (« Pas ramassable ici ») : `<section>|<clé de l'objet>`. */
   dismissedItems?: string[];
+  /** Objets déclarés à la main par le joueur (texte non détecté) : `<section>|<nom>`. */
+  declaredItems?: string[];
   /** Pages hors sections disponibles (règles, carte, équipement...), dans l'ordre de la table des matières. */
   pages: PageRef[];
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */

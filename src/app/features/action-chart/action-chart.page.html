@@ -160,6 +160,24 @@
       />
     </section>
 
+    @if (declaredHere().length) {
+      <section class="card removed-links">
+        <h2>{{ i18n.t('chart.declared') }}</h2>
+        <ul class="item-list">
+          @for (entry of declaredHere(); track entry.key) {
+            <li>
+              <span
+                ><span class="muted">§{{ entry.section }}</span> · {{ entry.name }}</span
+              >
+              <button type="button" class="button button--small" (click)="undeclare(entry.key)">
+                {{ i18n.t('chart.undeclare') }}
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
     @if (userNonItems().length || dismissedHere().length) {
       <section class="card removed-links">
         <h2>{{ i18n.t('chart.removedLinks') }}</h2>

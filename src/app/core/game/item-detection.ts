@@ -12,7 +12,7 @@ import { ITEM_TERMS, NON_ITEM_TERMS } from './known-terms';
  * fausse détection ne coûte qu'un lien en trop.
  */
 export type FoundItem =
-  | { kind: 'item'; name: string; slot: ItemSlot }
+  | { kind: 'item'; name: string; slot: ItemSlot; declared?: boolean }
   | { kind: 'gold'; amount: number; label: string }
   | { kind: 'meals'; count: number; label: string };
 
@@ -153,6 +153,8 @@ export function annotateItems(
   ignored: ReadonlySet<string> = new Set(),
   /** Termes marqués « Pas un objet » par le joueur (expressions exactes, tous livres). */
   excludedTerms: readonly string[] = [],
+  /** Objets déclarés à la main par le joueur dans cette section (noms exacts) : toujours liés. */
+  declared: readonly string[] = [],
 ): AnnotatedBlocks {
   const excluded = new Set([...NON_ITEMS, ...excludedTerms.map((t) => t.toLowerCase())]);
   const items: FoundItem[] = [];
@@ -160,7 +162,7 @@ export function annotateItems(
   for (const term of NON_ITEMS) if (!term.includes(' ')) lexicon.add(term);
   const annotated = blocks.map((block) => {
     if (block.kind !== 'html' || !/^<p[\s>]/.test(block.html)) return block;
-    const html = annotateParagraph(block.html, items, lexicon, ignored, excluded);
+    const html = annotateParagraph(block.html, items, lexicon, ignored, excluded, declared);
     return html === block.html ? block : { ...block, html };
   });
   return { blocks: annotated, items };
@@ -172,17 +174,34 @@ function annotateParagraph(
   lexicon: Set<string>,
   ignored: ReadonlySet<string>,
   excluded: ReadonlySet<string>,
+  declared: readonly string[],
 ): string {
   const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
   const paragraph = doc.body.firstElementChild;
   if (!paragraph) return html;
   const text = paragraph.textContent ?? '';
-  if (!TAKE_PARAGRAPH.test(text)) return html;
+  const declaredPatterns = declared.map(
+    (name) => new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+  );
+  const hasDeclared = declaredPatterns.some((p) => p.test(text));
+  if (!TAKE_PARAGRAPH.test(text) && !hasDeclared) return html;
 
   const sentences = splitSentences(text);
   const matches: { start: number; end: number; item: FoundItem }[] = [];
 
+  // Objets déclarés à la main : liés partout où ils apparaissent, sans condition sur le paragraphe.
   for (const sentence of sentences) {
+    for (const pattern of declaredPatterns) {
+      collect(
+        pattern,
+        sentence,
+        (m) => ({ kind: 'item', name: m[0], slot: guessSlot(m[0], sentence.text), declared: true }),
+        matches,
+      );
+    }
+  }
+
+  for (const sentence of TAKE_PARAGRAPH.test(text) ? sentences : []) {
     if (LOSS_SENTENCE.test(sentence.text)) continue;
     const context = sentence.text + ' ' + (sentences[sentence.index + 1]?.text ?? '');
     collect(

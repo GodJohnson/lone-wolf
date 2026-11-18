@@ -121,4 +121,22 @@ describe('item-detection', () => {
     const blocks = [p('You find a Grey Lantern and some Torches. You may take them if you wish.')];
     expect(annotateItems(blocks, [], new Set(), ['grey lantern', 'Torches']).items).toEqual([]);
   });
+
+  it('objet déclaré à la main : toujours lié, même hors paragraphe de trouvaille', () => {
+    const blocks = [
+      p('The old fisherman keeps a Silver Compass tucked in his belt. The sea is calm.'),
+    ];
+    expect(annotateItems(blocks).items).toEqual([]);
+    const { blocks: out, items } = annotateItems(blocks, [], new Set(), [], ['Silver Compass']);
+    expect(items).toEqual([
+      { kind: 'item', name: 'Silver Compass', slot: 'backpack', declared: true },
+    ]);
+    expect((out[0] as { html: string }).html).toContain('class="item-link">Silver Compass</a>');
+  });
+
+  it('un objet déclaré n’est pas dupliqué quand la détection le trouve aussi', () => {
+    const blocks = [p('You find a Moon Amulet here. You may keep it if you wish.')];
+    const { items } = annotateItems(blocks, [], new Set(), [], ['Moon Amulet']);
+    expect(items).toHaveLength(1);
+  });
 });

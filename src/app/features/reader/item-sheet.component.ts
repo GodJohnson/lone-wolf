@@ -78,21 +78,31 @@ import { MessageKey } from '../../core/i18n/messages';
       @if (error(); as message) {
         <p class="notice notice--error" role="alert">{{ message }}</p>
       }
-      <div class="item-sheet__dismiss">
-        <button type="button" class="button button--ghost button--small" (click)="dismissed.emit()">
-          {{ i18n.t('item.dismiss') }}
-        </button>
-        @if (item().kind === 'item') {
+      @if (!isDeclared()) {
+        <div class="item-sheet__dismiss">
           <button
             type="button"
             class="button button--ghost button--small"
-            (click)="notAnItem.emit()"
+            (click)="dismissed.emit()"
           >
-            {{ i18n.t('item.notAnItem') }}
+            {{ i18n.t('item.dismiss') }}
           </button>
-        }
-      </div>
-      <p class="item-sheet__hint">{{ i18n.t('item.dismissHint') }}</p>
+          @if (item().kind === 'item') {
+            <button
+              type="button"
+              class="button button--ghost button--small"
+              (click)="notAnItem.emit()"
+            >
+              {{ i18n.t('item.notAnItem') }}
+            </button>
+          }
+        </div>
+        <p class="item-sheet__hint">{{ i18n.t('item.dismissHint') }}</p>
+      } @else {
+        <p class="item-sheet__hint">
+          {{ i18n.t(declareLinkable() ? 'declare.hint' : 'declare.hintTranslated') }}
+        </p>
+      }
       <div class="sheet__actions">
         <button type="button" class="button" (click)="closed.emit()">
           {{ i18n.t('common.cancel') }}
@@ -112,6 +122,8 @@ export class ItemSheetComponent {
   readonly rules = input.required<SeriesRules>();
   /** Mode bureau : intégré à la colonne latérale, sans voile ni feuille flottante. */
   readonly inline = input(false);
+  /** Objet déclaré à la main : le lien peut être mémorisé (faux si le texte affiché est traduit). */
+  readonly declareLinkable = input(true);
   readonly closed = output<void>();
   /** « Pas ramassable ici » : retirer ce lien dans cette section. */
   readonly dismissed = output<void>();
@@ -121,6 +133,10 @@ export class ItemSheetComponent {
   readonly added = output<string>();
 
   protected readonly slots: ItemSlot[] = ['weapons', 'backpack', 'specialItems'];
+  protected readonly isDeclared = computed(() => {
+    const item = this.item();
+    return item.kind === 'item' && !!item.declared;
+  });
   protected readonly name = signal('');
   protected readonly slot = signal<ItemSlot>('backpack');
   protected readonly error = signal<string | null>(null);
