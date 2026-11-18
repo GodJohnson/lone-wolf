@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { Location } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { I18nService } from '../core/i18n/i18n.service';
 
@@ -8,7 +9,16 @@ import { I18nService } from '../core/i18n/i18n.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="top-bar">
-      @if (backLink(); as link) {
+      @if (useHistory() && canGoBack) {
+        <button
+          type="button"
+          class="icon-button"
+          (click)="location.back()"
+          [attr.aria-label]="i18n.t('common.back')"
+        >
+          ‹
+        </button>
+      } @else if (backLink(); as link) {
         <a class="icon-button" [routerLink]="link" [attr.aria-label]="i18n.t('common.back')">‹</a>
       }
       <div class="top-bar__title">
@@ -33,5 +43,9 @@ export class TopBarComponent {
   protected readonly i18n = inject(I18nService);
   readonly title = input.required<string>();
   readonly subtitle = input<string>('');
+  /** Revient à la page précédente de l'appli (au lieu d'un lien fixe) quand il y en a une. */
+  readonly useHistory = input(false);
+  protected readonly location = inject(Location);
+  protected readonly canGoBack = (history.state?.navigationId ?? 0) > 1;
   readonly backLink = input<string | readonly unknown[] | null>(null);
 }

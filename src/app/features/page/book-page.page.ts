@@ -27,6 +27,7 @@ import { useBookLanguage } from '../../shared/book-language';
       [title]="page.value()?.title ?? ''"
       [subtitle]="book.value()?.title ?? ''"
       [backLink]="backLink()"
+      [useHistory]="true"
     />
     <main class="page">
       @if (page.value(); as p) {
