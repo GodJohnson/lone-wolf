@@ -45,12 +45,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.gold') }}</span>
-            <lw-counter
-              [value]="c.gold"
-              [clearable]="true"
-              (delta)="adjust('gold', $event)"
-              (clear)="adjust('gold', -c.gold)"
-            />
+            <lw-counter [value]="c.gold" (delta)="adjust('gold', $event)" />
           </div>
           <div class="stat">
             <span class="stat__label">{{ i18n.t('chart.meals') }}</span>
@@ -145,9 +140,14 @@ export class CharacterPanelComponent {
   protected adjust(field: 'endurance' | 'gold' | 'meals', delta: number): void {
     this.error.set(null);
     const rules = this.rules();
-    if (field === 'meals' && delta > 0 && this.load() + delta > rules.maxBackpackItems) {
-      this.error.set(this.i18n.t('chart.error.backpackFull'));
-      return;
+    if (field === 'meals' && delta > 0) {
+      // +10 Repas dans un sac presque plein : on remplit jusqu'à la capacité.
+      const room = rules.maxBackpackItems - this.load();
+      if (room <= 0) {
+        this.error.set(this.i18n.t('chart.error.backpackFull'));
+        return;
+      }
+      delta = Math.min(delta, room);
     }
     this.game.updateCharacter((c) => {
       const next = { ...c, [field]: Math.max(0, c[field] + delta) };

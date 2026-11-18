@@ -65,12 +65,7 @@
         </div>
         <div class="stat">
           <span class="stat__label">{{ i18n.t('chart.gold') }}</span>
-          <lw-counter
-            [value]="c.gold"
-            [clearable]="true"
-            (delta)="adjust('gold', $event)"
-            (clear)="adjust('gold', -c.gold)"
-          />
+          <lw-counter [value]="c.gold" (delta)="adjust('gold', $event)" />
           <span class="stat__hint">max {{ rules().maxGold }}</span>
         </div>
         <div class="stat">

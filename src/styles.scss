@@ -1110,65 +1110,70 @@ lw-character-panel > * {
   flex-shrink: 0;
 }
 
-/* Montant libre des compteurs */
-.amount-toggle {
-  min-width: 32px;
-  min-height: 32px;
-  font-size: 1rem;
-  color: var(--muted);
-}
-.amount-toggle--on {
-  background: var(--surface);
-  color: var(--accent);
-}
-.amount-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.4rem;
-  margin-top: 0.4rem;
-  width: 100%;
-}
-.amount-row input {
-  width: 5.5rem;
-  min-height: 36px;
-  text-align: center;
-}
 
-.char-stats {
-  align-items: start;
-}
-.char-stats .stepper {
-  gap: 0;
-}
-.char-stats .icon-button {
-  min-width: 28px;
-  min-height: 32px;
-}
-.char-stats .stat__value {
-  min-width: 2ch;
-}
-.amount-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-}
-.amount-row input {
-  grid-column: 1 / -1;
-  width: 100%;
-}
-.amount-row .button {
-  padding-inline: 0.4rem;
-  white-space: nowrap;
-}
-.amount-row .button:last-child:nth-child(even) {
-  grid-column: auto;
-}
 
-.amount-row {
+
+/* ---------- Compteurs : −10 −1 [valeur] +1 +10, en lignes pleine largeur ---------- */
+
+.char-stats,
+.stat-grid {
   grid-template-columns: minmax(0, 1fr);
-  min-width: 0;
 }
-.amount-row > * {
-  min-width: 0;
-  width: 100%;
+.char-stats > .stat,
+.stat-grid > .stat {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.counter__btn {
+  min-width: 2.6rem;
+  min-height: 40px;
+  padding: 0 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: 600 0.85rem var(--font-ui);
+  cursor: pointer;
+}
+.counter__btn--big {
+  background: var(--surface-2);
+}
+.counter__btn:active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.counter__value {
+  width: 3.4rem;
+  min-height: 40px;
+  padding: 0 0.25rem;
+  border: 0;
+  border-bottom: 2px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  font: 800 1.4rem var(--font-ui);
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.counter__value::-webkit-outer-spin-button,
+.counter__value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.counter__value:focus-visible {
+  outline: 2px solid var(--accent);
+  border-bottom-color: transparent;
+}
+.counter {
+  margin-left: auto;
 }

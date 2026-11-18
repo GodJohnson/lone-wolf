@@ -83,13 +83,14 @@ export class ActionChartPage {
   protected adjust(field: NumericField, delta: number): void {
     const maxGold = this.rules().maxGold;
     this.error.set(null);
-    if (
-      field === 'meals' &&
-      delta > 0 &&
-      this.backpackLoad() + delta > this.rules().maxBackpackItems
-    ) {
-      this.error.set(this.i18n.t('chart.error.backpackFull'));
-      return;
+    if (field === 'meals' && delta > 0) {
+      // +10 Repas dans un sac presque plein : on remplit jusqu'à la capacité.
+      const room = this.rules().maxBackpackItems - this.backpackLoad();
+      if (room <= 0) {
+        this.error.set(this.i18n.t('chart.error.backpackFull'));
+        return;
+      }
+      delta = Math.min(delta, room);
     }
     this.game.updateCharacter((c) => {
       const next = { ...c, [field]: Math.max(0, c[field] + delta) };
