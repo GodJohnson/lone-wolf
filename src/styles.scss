@@ -1263,3 +1263,67 @@ lw-character-panel > * {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* ---------- Portholes (livre 2, section 308) ---------- */
+
+.portholes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.portholes__gold {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.portholes__table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.portholes__player {
+  display: grid;
+  grid-template-columns: 1fr auto 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.portholes__player--you {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  outline: 2px solid var(--accent);
+}
+.portholes__name {
+  font-weight: 700;
+}
+.portholes__dice {
+  display: flex;
+  gap: 0.4rem;
+}
+.portholes__die {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+.portholes__total {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: right;
+  color: var(--accent);
+}
+.portholes__result {
+  margin: 0;
+  font-weight: 700;
+}
+.portholes__result--win {
+  color: var(--success);
+}
