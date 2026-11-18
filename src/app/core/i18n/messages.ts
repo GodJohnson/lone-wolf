@@ -15,6 +15,16 @@ export const fr = {
   'common.loading': 'Chargement…',
 
   'library.title': 'Bibliothèque',
+  'library.continueTo': 'Continuer au livre {number}',
+  'library.importNext': 'Pour continuer : importez le livre {number} ({title}).',
+  'carry.title': 'Votre héros depuis « {book} »',
+  'carry.summary':
+    'Disciplines, armes et objets spéciaux reportés (objets spéciaux : {items}). Or reporté : {gold}. Vous choisissez une discipline de plus.',
+  'carry.weapons': 'Armes reportées (vous pouvez en laisser, maximum {max} au total) :',
+  'carry.notCarried':
+    'Le sac à dos et les Repas ne sont pas reportés. Votre ENDURANCE repart à son total.',
+  'carry.missing': 'La partie du livre précédent est introuvable sur cet appareil.',
+
   'library.transfer': 'Transférer',
   'library.importGame': 'Importer une partie (QR code ou lien)',
   'transfer.title': 'Transférer la partie',
@@ -240,6 +250,16 @@ export const en: Record<MessageKey, string> = {
   'common.loading': 'Loading…',
 
   'library.title': 'Library',
+  'library.continueTo': 'Continue to book {number}',
+  'library.importNext': 'To continue: import book {number} ({title}).',
+  'carry.title': 'Your hero from “{book}”',
+  'carry.summary':
+    'Disciplines, weapons and Special Items carried over (Special Items: {items}). Gold carried over: {gold}. You choose one extra discipline.',
+  'carry.weapons': 'Weapons carried over (you may leave some, {max} in total at most):',
+  'carry.notCarried':
+    'The Backpack and Meals are not carried over. Your ENDURANCE starts back at its total.',
+  'carry.missing': 'The previous book’s game could not be found on this device.',
+
   'library.transfer': 'Transfer',
   'library.importGame': 'Import a game (QR code or link)',
   'transfer.title': 'Transfer the game',

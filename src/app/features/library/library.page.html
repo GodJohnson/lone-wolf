@@ -40,6 +40,21 @@
                   ▶ {{ i18n.t('library.continue', { section: entry.savedSection }) }}
                 </a>
               }
+              @if (entry.savedSection !== null && entry.next; as next) {
+                @if (next.imported) {
+                  <a
+                    class="button"
+                    [routerLink]="['/book', next.code, 'new']"
+                    [queryParams]="{ from: entry.book.id }"
+                  >
+                    ➜ {{ i18n.t('library.continueTo', { number: next.number }) }}
+                  </a>
+                } @else {
+                  <span class="small muted">{{
+                    i18n.t('library.importNext', { number: next.number, title: next.title })
+                  }}</span>
+                }
+              }
               @if (entry.savedSection !== null) {
                 <a class="button" [routerLink]="['/book', entry.book.id, 'transfer']">
                   ⇄ {{ i18n.t('library.transfer') }}

@@ -11,6 +11,8 @@ import { BookImportError, importBookZip } from '../../core/book/book-importer';
 import { BookRepository } from '../../core/book/book-repository';
 import { BookMeta } from '../../core/book/book.models';
 import { CATALOG, PROJECT_AON_LICENSE_URL, downloadUrl } from '../../core/book/catalog';
+import { nextBookNumber } from '../../core/game/carry-over';
+import { SERIES_RULES } from '../../core/game/rules';
 import { database } from '../../core/storage/database';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { MessageKey } from '../../core/i18n/messages';
@@ -19,6 +21,8 @@ import { TopBarComponent } from '../../shared/top-bar.component';
 interface LibraryEntry {
   book: BookMeta;
   savedSection: number | null;
+  /** Livre suivant de la série Kaï (importé ou non), pour reprendre le héros. */
+  next: { number: number; title: string; code: string; imported: boolean } | null;
 }
 
 @Component({
@@ -41,10 +45,20 @@ export class LibraryPage {
         this.books.list(),
         database().then((db) => db.getAll('games')),
       ]);
-      return books.map((book) => ({
-        book,
-        savedSection: games.find((g) => g.bookId === book.id)?.section ?? null,
-      }));
+      return books.map((book) => {
+        const nextNumber = nextBookNumber(
+          book.number,
+          book.series === 'kai' ? SERIES_RULES.kai : null,
+        );
+        const nextEntry = CATALOG.find((c) => c.number === nextNumber);
+        return {
+          book,
+          savedSection: games.find((g) => g.bookId === book.id)?.section ?? null,
+          next: nextEntry
+            ? { ...nextEntry, imported: books.some((b) => b.id === nextEntry.code) }
+            : null,
+        };
+      });
     },
   });
 
