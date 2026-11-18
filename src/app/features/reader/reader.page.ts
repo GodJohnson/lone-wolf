@@ -30,6 +30,8 @@ import { RandomNumberComponent } from '../../shared/random-number.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { useBookLanguage } from '../../shared/book-language';
 import { CartwheelComponent } from './cartwheel.component';
+import { PORTHOLES } from '../../core/game/portholes';
+import { PortholesComponent } from './portholes.component';
 import { CARTWHEEL_SECTION } from '../../core/game/cartwheel';
 import { CombatPanelComponent } from './combat-panel.component';
 
@@ -42,6 +44,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     RandomNumberComponent,
     CombatPanelComponent,
     CartwheelComponent,
+    PortholesComponent,
     ItemSheetComponent,
     SelectionBarComponent,
     CharacterPanelComponent,
@@ -220,11 +223,13 @@ export class ReaderPage {
   }
 
   /** Mini-jeu propre à la section affichée (ex. le Cartwheel du livre 2, section 238). */
-  protected readonly minigame = computed(() =>
-    this.bookId() === CARTWHEEL_SECTION.book && this.sectionNumber() === CARTWHEEL_SECTION.section
-      ? ('cartwheel' as const)
-      : null,
-  );
+  protected readonly minigame = computed(() => {
+    const at = (game: { book: string; section: number }) =>
+      this.bookId() === game.book && this.sectionNumber() === game.section;
+    if (at(CARTWHEEL_SECTION)) return 'cartwheel' as const;
+    if (at(PORTHOLES)) return 'portholes' as const;
+    return null;
+  });
 
   protected readonly isDeadEnd = computed(
     () => !!this.section.value()?.blocks.some((b) => b.kind === 'deadend'),
