@@ -101,6 +101,11 @@ import { I18nService } from '../../core/i18n/i18n.service';
             <span class="chip chip--on">{{ d }}</span>
           }
         </div>
+        @if (game.canUndo()) {
+          <button type="button" class="button button--small button--block" (click)="game.undo()">
+            ↶ {{ i18n.t('common.undo') }}
+          </button>
+        }
         @if (c.weaponskill) {
           <p class="small weaponskill-line">
             ⚔ {{ i18n.t('chart.weaponskill', { weapon: c.weaponskill }) }}
@@ -188,7 +193,7 @@ export class CharacterPanelComponent {
       if (field === 'gold') next.gold = Math.min(next.gold, rules.maxGold);
       if (field === 'endurance') next.endurance = Math.min(next.endurance, next.enduranceMax);
       return next;
-    });
+    }, field);
   }
 
   protected async add(slot: ItemSlot, name: string): Promise<void> {

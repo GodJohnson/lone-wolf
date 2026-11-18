@@ -6,6 +6,11 @@
 
 <main class="page">
   @if (character(); as c) {
+    @if (game.canUndo()) {
+      <button type="button" class="button button--small" (click)="game.undo()">
+        ↶ {{ i18n.t('common.undo') }}
+      </button>
+    }
     <section class="card">
       <div class="stat-grid">
         <div class="stat">

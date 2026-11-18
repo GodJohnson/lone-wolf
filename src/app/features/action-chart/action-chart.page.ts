@@ -92,7 +92,7 @@ export class ActionChartPage {
       if (field === 'endurance') next.endurance = Math.min(next.endurance, next.enduranceMax);
       if (field === 'enduranceMax') next.endurance = Math.min(next.endurance, next.enduranceMax);
       return next;
-    });
+    }, field);
   }
 
   protected eatMeal(): void {
