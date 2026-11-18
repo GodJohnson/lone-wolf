@@ -89,9 +89,21 @@
       @if (game.isDead() || isDeadEnd()) {
         <section class="card notice--error end-card">
           <p>{{ game.isDead() ? i18n.t('reader.dead') : i18n.t('reader.deadend') }}</p>
-          <a class="button button--primary" [routerLink]="['/book', bookId(), 'new']">{{
-            i18n.t('reader.restart')
-          }}</a>
+          <div class="transfer-actions">
+            <a class="button button--primary" [routerLink]="['/book', bookId(), 'new']">{{
+              i18n.t('reader.restart')
+            }}</a>
+            <a class="button" routerLink="/">{{ i18n.t('reader.library') }}</a>
+          </div>
+        </section>
+      } @else if (isBookEnd()) {
+        <section class="card end-card">
+          <p>{{ i18n.t('reader.bookEnd') }}</p>
+          <div class="transfer-actions">
+            <button type="button" class="button button--primary" (click)="finishBook()">
+              ✓ {{ i18n.t('reader.finishBook') }}
+            </button>
+          </div>
         </section>
       }
 

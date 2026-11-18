@@ -49,6 +49,8 @@ export interface GameState {
   foughtIn: number[];
   /** Le Repas imposé par la section courante a été réglé (remis à faux à chaque changement de section). */
   mealResolved?: boolean;
+  /** Le joueur a terminé ce livre (bouton « Terminer le livre » en fin de livre). */
+  finished?: boolean;
   createdAt: string;
   updatedAt: string;
 }

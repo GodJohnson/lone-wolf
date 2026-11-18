@@ -1019,3 +1019,10 @@ figure {
 .reader-layout--desktop .side > * {
   flex-shrink: 0;
 }
+
+.finished-badge {
+  margin: 0 0 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--success);
+}

@@ -21,6 +21,7 @@ import { TopBarComponent } from '../../shared/top-bar.component';
 interface LibraryEntry {
   book: BookMeta;
   savedSection: number | null;
+  finished: boolean;
   /** Livre suivant de la série Kaï (importé ou non), pour reprendre le héros. */
   next: { number: number; title: string; code: string; imported: boolean } | null;
 }
@@ -54,6 +55,7 @@ export class LibraryPage {
         return {
           book,
           savedSection: games.find((g) => g.bookId === book.id)?.section ?? null,
+          finished: games.find((g) => g.bookId === book.id)?.finished ?? false,
           next: nextEntry
             ? { ...nextEntry, imported: books.some((b) => b.id === nextEntry.code) }
             : null,
