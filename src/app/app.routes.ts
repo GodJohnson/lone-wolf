@@ -34,5 +34,9 @@ export const routes: Routes = [
     path: 'transfer/:payload',
     loadComponent: () => import('./features/transfer/import.page').then((m) => m.ImportPage),
   },
+  {
+    path: 'send/:code',
+    loadComponent: () => import('./features/transfer/send.page').then((m) => m.SendPage),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -12,16 +12,18 @@ import { BookRepository } from '../../core/book/book-repository';
 import { CATALOG, downloadUrl } from '../../core/book/catalog';
 import { GameService } from '../../core/game/game.service';
 import { GameState } from '../../core/game/game.models';
+import { channelCode, parseChannelCode } from '../../core/game/relay';
 import { TransferError, decodeGame, extractPayload } from '../../core/game/transfer';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { MessageKey } from '../../core/i18n/messages';
+import { ReceivePanelComponent } from './receive-panel.component';
 import { QrScannerComponent } from '../../shared/qr-scanner.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 
 /** Import d'une partie : scan du QR code, lien collé, ou lien ouvert directement. */
 @Component({
   selector: 'lw-import-page',
-  imports: [RouterLink, TopBarComponent, QrScannerComponent],
+  imports: [RouterLink, TopBarComponent, QrScannerComponent, ReceivePanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <lw-top-bar [title]="i18n.t('transfer.importTitle')" [backLink]="['/']" />
@@ -67,6 +69,7 @@ import { TopBarComponent } from '../../shared/top-bar.component';
         </section>
       } @else {
         <lw-qr-scanner (scanned)="receive($event)" />
+        <lw-receive-panel (received)="receive($event)" />
         <section class="card">
           <h2>{{ i18n.t('transfer.paste') }}</h2>
           <input
@@ -139,6 +142,12 @@ export class ImportPage {
 
   protected receive(text: string): void {
     this.scanError.set(null);
+    // QR « réception » d'un autre appareil : on lui envoie notre partie au lieu d'en importer une.
+    const channel = parseChannelCode(text);
+    if (channel) {
+      this.router.navigate(['/send', channelCode(channel)]);
+      return;
+    }
     const payload = extractPayload(text);
     try {
       decodeGame(payload);
