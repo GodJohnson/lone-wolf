@@ -20,7 +20,13 @@ import {
 import { CarriedHero, alreadyOwned, carryOver } from '../../core/game/carry-over';
 import { GameService } from '../../core/game/game.service';
 import { randomNumber } from '../../core/game/random';
-import { DISCIPLINE, KAI_WEAPONSKILL_TABLE, newCharacter, rulesFor } from '../../core/game/rules';
+import {
+  DISCIPLINE,
+  KAI_WEAPONSKILL_TABLE,
+  isSkilledWeapon,
+  newCharacter,
+  rulesFor,
+} from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ViewportService } from '../../core/viewport.service';
 import { LexiconPanelComponent } from '../reader/lexicon-panel.component';
@@ -190,6 +196,12 @@ export class NewGamePage {
       if (list.includes(discipline)) return list.filter((d) => d !== discipline);
       return list.length < this.disciplinesToChoose() ? [...list, discipline] : list;
     });
+  }
+
+  /** L'arme reportée est l'arme maîtrisée (+2 HAB) : mise en évidence dans la liste. */
+  protected isSkilled(weapon: string): boolean {
+    const carried = this.carried();
+    return !!carried && isSkilledWeapon(carried.character, weapon);
   }
 
   protected isKept(weapon: string): boolean {

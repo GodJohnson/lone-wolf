@@ -101,6 +101,11 @@ import { I18nService } from '../../core/i18n/i18n.service';
             <span class="chip chip--on">{{ d }}</span>
           }
         </div>
+        @if (c.weaponskill) {
+          <p class="small weaponskill-line">
+            ⚔ {{ i18n.t('chart.weaponskill', { weapon: c.weaponskill }) }}
+          </p>
+        }
         @if (error(); as message) {
           <p class="notice notice--error" role="alert">{{ message }}</p>
         }
