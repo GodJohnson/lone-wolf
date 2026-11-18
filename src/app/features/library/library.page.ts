@@ -9,7 +9,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { BookImportError, importBookZip } from '../../core/book/book-importer';
 import { BookRepository } from '../../core/book/book-repository';
-import { BookMeta } from '../../core/book/book.models';
+import { BookMeta, PARSER_VERSION } from '../../core/book/book.models';
 import { CATALOG, PROJECT_AON_LICENSE_URL, downloadUrl } from '../../core/book/catalog';
 import { nextBookNumber } from '../../core/game/carry-over';
 import { SERIES_RULES } from '../../core/game/rules';
@@ -22,6 +22,8 @@ interface LibraryEntry {
   book: BookMeta;
   savedSection: number | null;
   finished: boolean;
+  /** Livre analysé avec une ancienne version : du texte peut manquer, un réimport le corrige. */
+  outdated: boolean;
   /** Livre suivant de la série Kaï (importé ou non), pour reprendre le héros. */
   next: { number: number; title: string; code: string; imported: boolean } | null;
 }
@@ -55,6 +57,7 @@ export class LibraryPage {
         return {
           book,
           savedSection: games.find((g) => g.bookId === book.id)?.section ?? null,
+          outdated: (book.parserVersion ?? 1) < PARSER_VERSION,
           finished: games.find((g) => g.bookId === book.id)?.finished ?? false,
           next: nextEntry
             ? { ...nextEntry, imported: books.some((b) => b.id === nextEntry.code) }

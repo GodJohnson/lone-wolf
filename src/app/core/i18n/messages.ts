@@ -142,6 +142,8 @@ export const fr = {
   'reader.finishBook': 'Terminer le livre',
   'reader.library': 'Retour à la bibliothèque',
   'library.finished': 'Terminé',
+  'library.outdated':
+    'Ce livre a été importé avec une ancienne version : certains passages (panneaux, enseignes) manquent. Réimportez son zip pour les retrouver ; votre partie est conservée.',
   'lexicon.title': 'Lexique du livre',
   'lexicon.hint':
     'Touchez une page pour la consulter ici : disciplines, équipement, règles de combat…',
@@ -377,6 +379,8 @@ export const en: Record<MessageKey, string> = {
   'reader.finishBook': 'Finish the book',
   'reader.library': 'Back to the library',
   'library.finished': 'Finished',
+  'library.outdated':
+    'This book was imported with an older version: some passages (signs) are missing. Re-import its zip to get them back; your game is kept.',
   'lexicon.title': 'Book lexicon',
   'lexicon.hint': 'Tap a page to read it here: disciplines, equipment, combat rules…',
   'desktop.reference': 'Items and lexicon',

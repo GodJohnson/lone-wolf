@@ -1084,3 +1084,18 @@ figure {
   margin: 0.25rem 0 0.5rem;
   font-weight: 600;
 }
+
+/* Panneaux et enseignes du livre */
+.signpost {
+  margin: 0.75rem auto 1rem;
+  padding: 0.5rem 1rem;
+  max-width: 30rem;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  text-align: center;
+}

@@ -28,6 +28,7 @@ const ALLOWED_TAGS = new Set([
   'dt',
   'dd',
   'blockquote',
+  'div',
   'table',
   'thead',
   'tbody',

@@ -54,6 +54,12 @@ export function parseBlocks(root: Element, skipFirstHeading = true): Block[] {
         if (image) blocks.push({ kind: 'figure', image });
         continue;
       }
+      // Panneaux et enseignes (« North Star Tavern—Barnacle Street ») : du texte direct dans un div.
+      if (tag === 'div' && el.classList.contains('signpost')) {
+        const html = cleanOuterHtml(el);
+        if (html) blocks.push({ kind: 'html', html });
+        continue;
+      }
       if (CONTAINER_TAGS.has(tag)) {
         visit(el);
         continue;

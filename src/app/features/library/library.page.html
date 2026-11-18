@@ -37,6 +37,9 @@
                 </p>
               </div>
             </div>
+            @if (entry.outdated) {
+              <p class="notice notice--warning small">{{ i18n.t('library.outdated') }}</p>
+            }
             <div class="book-card__actions">
               @if (entry.savedSection !== null) {
                 <a class="button button--primary" [routerLink]="['/book', entry.book.id, 'play']">

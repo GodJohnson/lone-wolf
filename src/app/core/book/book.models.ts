@@ -3,6 +3,13 @@
  * a téléchargé lui-même ; il n'est jamais embarqué dans l'application ni dans le dépôt.
  */
 
+/**
+ * Version courante de l'analyse des zips. À incrémenter quand l'analyse conserve du contenu qu'elle
+ * perdait avant : la bibliothèque propose alors de réimporter les livres plus anciens.
+ * 2 : panneaux et enseignes (div.signpost) conservés.
+ */
+export const PARSER_VERSION = 2;
+
 export type BookLanguage = 'en' | 'es';
 
 /** Séries de Loup Solitaire : déterminent les règles de création du personnage. */
@@ -31,6 +38,8 @@ export interface BookMeta {
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */
   copyright: string;
   importedAt: string;
+  /** Version de l'analyse du zip ayant produit ce livre (absente = 1) ; voir `PARSER_VERSION`. */
+  parserVersion?: number;
 }
 
 export interface PageRef {
