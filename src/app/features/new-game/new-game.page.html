@@ -32,6 +32,11 @@
               })
             }}
           </p>
+          @if (c.character.weaponskill) {
+            <p class="weaponskill-line">
+              ⚔ {{ i18n.t('chart.weaponskill', { weapon: c.character.weaponskill }) }}
+            </p>
+          }
           @if (c.character.weapons.length) {
             <h3 class="small">{{ i18n.t('carry.weapons', { max: rules().maxWeapons }) }}</h3>
             <div class="chips">
@@ -43,7 +48,7 @@
                   [attr.aria-pressed]="isKept(w)"
                   (click)="toggleKept(w)"
                 >
-                  {{ w }}
+                  {{ w }}{{ isSkilled(w) ? ' ✓ +2' : '' }}
                 </button>
               }
             </div>
