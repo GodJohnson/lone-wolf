@@ -9,14 +9,16 @@ import {
   resource,
   signal,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
 import { MealChoice, requiresMeal } from '../../core/game/equipment';
 import { evaluateChoices } from '../../core/game/choice-conditions';
-import { FoundItem, annotateItems, itemKey } from '../../core/game/item-detection';
+import { FoundItem, annotateItems, guessSlot, itemKey } from '../../core/game/item-detection';
 import { rulesFor } from '../../core/game/rules';
 import { ItemSheetComponent } from './item-sheet.component';
+import { SelectionBarComponent } from './selection-bar.component';
 import { CharacterPanelComponent } from './character-panel.component';
 import { LexiconPanelComponent } from './lexicon-panel.component';
 import { ViewportService } from '../../core/viewport.service';
@@ -38,6 +40,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     RandomNumberComponent,
     CombatPanelComponent,
     ItemSheetComponent,
+    SelectionBarComponent,
     CharacterPanelComponent,
     LexiconPanelComponent,
   ],
@@ -49,6 +52,7 @@ export class ReaderPage {
   protected readonly game = inject(GameService);
   private readonly books = inject(BookRepository);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   readonly bookId = input.required<string>();
 
@@ -99,6 +103,8 @@ export class ReaderPage {
   private readonly userNonItems = signal(this.books.userNonItems());
   /** Liens écartés par le joueur (« Pas ramassable ici »), mis à jour sans recharger le livre. */
   private readonly dismissedItems = linkedSignal(() => this.book.value()?.dismissedItems ?? []);
+  /** Objets déclarés à la main (`<section>|<nom>`). */
+  private readonly declaredItems = linkedSignal(() => this.book.value()?.declaredItems ?? []);
   protected readonly annotated = computed(() => {
     const section = this.sectionNumber();
     const prefix = `${section}|`;
@@ -107,11 +113,15 @@ export class ReaderPage {
         .filter((k) => k.startsWith(prefix))
         .map((k) => k.slice(prefix.length)),
     );
+    const declared = this.declaredItems()
+      .filter((k) => k.startsWith(prefix))
+      .map((k) => k.slice(prefix.length));
     return annotateItems(
       this.section.value()?.blocks ?? [],
       this.nonItemWords.value() ?? [],
       ignored,
       this.userNonItems(),
+      declared,
     );
   });
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
@@ -142,8 +152,34 @@ export class ReaderPage {
     if (item?.kind === 'item') this.userNonItems.set(this.books.addUserNonItem(item.name));
   }
 
-  protected itemAdded(label: string): void {
+  /** Mots sélectionnés dans le texte : on ouvre la confirmation d'ajout, nom et emplacement modifiables. */
+  protected declareSelection(text: string): void {
+    // Texte traduit par le navigateur : la sélection n'existe pas dans le texte du livre, donc le lien
+    // ne pourrait pas être retrouvé. L'objet est ajouté à l'inventaire, sans mémoriser de lien.
+    this.declareLinkable.set(this.sourceText().includes(normalizeText(text)));
+    this.selectedItem.set({ kind: 'item', name: text, slot: guessSlot(text, ''), declared: true });
+    this.document.getSelection()?.removeAllRanges();
+  }
+
+  /** La sélection déclarée figure dans le texte source : un lien peut être mémorisé. */
+  protected readonly declareLinkable = signal(true);
+
+  /** Texte brut de la section, pour vérifier qu'une sélection en fait bien partie. */
+  private readonly sourceText = computed(() => {
+    const blocks = this.section.value()?.blocks ?? [];
+    return normalizeText(
+      blocks.map((b) => ('html' in b ? b.html.replace(/<[^>]+>/g, ' ') : '')).join(' '),
+    );
+  });
+
+  protected async itemAdded(label: string): Promise<void> {
+    const item = this.selectedItem();
+    const section = this.sectionNumber();
     this.selectedItem.set(null);
+    // Un objet déclaré à la main devient un lien dans cette section (retiré par l'annulation de la Feuille).
+    if (item?.kind === 'item' && item.declared && section !== null && this.declareLinkable()) {
+      this.declaredItems.set(await this.books.declareItem(this.bookId(), `${section}|${label}`));
+    }
     this.flash(this.i18n.t('item.added', { item: label }));
   }
 
@@ -244,4 +280,10 @@ function readTipDismissed(): boolean {
   } catch {
     return false;
   }
+}
+
+function normalizeText(text: string): string {
+  const decoded =
+    new DOMParser().parseFromString(text, 'text/html').documentElement.textContent ?? '';
+  return decoded.replace(/[\s\u00a0\u2009]+/g, ' ').trim();
 }

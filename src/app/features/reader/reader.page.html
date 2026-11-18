@@ -133,6 +133,7 @@
         <lw-item-sheet
           [item]="found"
           [rules]="rules()"
+          [declareLinkable]="declareLinkable()"
           [inline]="true"
           (closed)="selectedItem.set(null)"
           (dismissed)="dismissItem()"
@@ -164,6 +165,8 @@
   }
 </div>
 
+<lw-selection-bar (declare)="declareSelection($event)" />
+
 @if (toast(); as text) {
   <div class="toast" role="status">{{ text }}</div>
 }
@@ -187,6 +190,7 @@
     <lw-item-sheet
       [item]="found"
       [rules]="rules()"
+      [declareLinkable]="declareLinkable()"
       (closed)="selectedItem.set(null)"
       (dismissed)="dismissItem()"
       (notAnItem)="markNotAnItem()"

@@ -72,6 +72,28 @@ export class BookRepository {
     return dismissedItems;
   }
 
+  /** Mémorise un objet déclaré à la main dans une section ; retourne la liste à jour. */
+  async declareItem(bookId: string, key: string): Promise<string[]> {
+    return this.updateList(bookId, 'declaredItems', (list) => [...new Set([...list, key])]);
+  }
+
+  async undeclareItem(bookId: string, key: string): Promise<string[]> {
+    return this.updateList(bookId, 'declaredItems', (list) => list.filter((k) => k !== key));
+  }
+
+  private async updateList(
+    bookId: string,
+    field: 'declaredItems',
+    update: (list: string[]) => string[],
+  ): Promise<string[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    const list = update(book[field] ?? []);
+    await db.put('books', { ...book, [field]: list });
+    return list;
+  }
+
   /** Annule un « Pas ici » ; retourne la liste à jour. */
   async restoreItem(bookId: string, key: string): Promise<string[]> {
     const db = await database();
@@ -103,8 +125,16 @@ export class BookRepository {
   async save(book: ParsedBook): Promise<void> {
     // Les corrections du joueur survivent à un réimport.
     const previous = await this.get(book.meta.id);
-    if (previous?.dismissedItems)
-      book = { ...book, meta: { ...book.meta, dismissedItems: previous.dismissedItems } };
+    if (previous?.dismissedItems || previous?.declaredItems) {
+      book = {
+        ...book,
+        meta: {
+          ...book.meta,
+          dismissedItems: previous.dismissedItems,
+          declaredItems: previous.declaredItems,
+        },
+      };
+    }
     await this.removeContent(book.meta.id);
     const db = await database();
     const tx = db.transaction(['books', 'sections', 'pages', 'images'], 'readwrite');
