@@ -1,6 +1,7 @@
 import { Block } from '../book/book.models';
 import { ItemSlot } from './equipment';
 import { ITEM_TERMS, NON_ITEM_TERMS } from './known-terms';
+import { parseBuySentence, parsePriceLine } from './purchases';
 
 /**
  * Repérage des objets ramassables dans le texte d'une section, pour les rendre cliquables.
@@ -14,7 +15,8 @@ import { ITEM_TERMS, NON_ITEM_TERMS } from './known-terms';
 export type FoundItem =
   | { kind: 'item'; name: string; slot: ItemSlot; declared?: boolean }
   | { kind: 'gold'; amount: number; label: string }
-  | { kind: 'meals'; count: number; label: string };
+  | { kind: 'meals'; count: number; label: string }
+  | { kind: 'purchase'; name: string; price: number; slot: ItemSlot; declared?: boolean };
 
 export interface AnnotatedBlocks {
   blocks: Block[];
@@ -137,6 +139,7 @@ const KNOWN_ITEM_PATTERNS = ITEM_TERMS.map(
 
 /** Clé d'un objet détecté, pour mémoriser « Pas ramassable ici » (avec le numéro de section). */
 export function itemKey(item: FoundItem): string {
+  if (item.kind === 'purchase') return `buy:${item.name}`;
   return item.kind === 'item' ? item.name : item.label;
 }
 const MEALS_PATTERN = /\b(?:enough food for\s+)?(\d+|a|one|two|three|four|five)\s+Meals?\b/gi;
@@ -155,17 +158,92 @@ export function annotateItems(
   excludedTerms: readonly string[] = [],
   /** Objets déclarés à la main par le joueur dans cette section (noms exacts) : toujours liés. */
   declared: readonly string[] = [],
+  /** Achats déclarés à la main par le joueur dans cette section. */
+  declaredPurchases: readonly { name: string; price: number }[] = [],
 ): AnnotatedBlocks {
   const excluded = new Set([...NON_ITEMS, ...excludedTerms.map((t) => t.toLowerCase())]);
   const items: FoundItem[] = [];
   const lexicon = new Set(nonItemWords);
   for (const term of NON_ITEMS) if (!term.includes(' ')) lexicon.add(term);
   const annotated = blocks.map((block) => {
-    if (block.kind !== 'html' || !/^<p[\s>]/.test(block.html)) return block;
-    const html = annotateParagraph(block.html, items, lexicon, ignored, excluded, declared);
+    if (block.kind !== 'html' || !/^<(?:p|ul)[\s>]/.test(block.html)) return block;
+    let html = annotatePurchases(block.html, items, ignored, declaredPurchases);
+    if (/^<p[\s>]/.test(html)) {
+      html = annotateParagraph(html, items, lexicon, ignored, excluded, declared);
+    }
     return html === block.html ? block : { ...block, html };
   });
   return { blocks: annotated, items };
+}
+
+/**
+ * Achats d'un bloc : lignes de prix d'une boutique (`<li>`), phrases « If you wish to buy … pay N Gold
+ * Crowns » (`<p>`) et achats déclarés à la main par le joueur (liés partout où leur nom apparaît).
+ */
+function annotatePurchases(
+  html: string,
+  items: FoundItem[],
+  ignored: ReadonlySet<string>,
+  declared: readonly { name: string; price: number }[],
+): string {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const root = doc.body.firstElementChild;
+  if (!root) return html;
+  const targets = root.tagName === 'UL' ? [...root.querySelectorAll('li')] : [root];
+  let changed = false;
+  for (const target of targets) {
+    const text = target.textContent ?? '';
+    const found: { start: number; end: number; item: FoundItem }[] = [];
+    const add = (start: number, end: number, item: FoundItem) => {
+      if (!ignored.has(itemKey(item))) found.push({ start, end, item });
+    };
+    if (root.tagName === 'UL') {
+      const line = parsePriceLine(text);
+      if (line) {
+        const slot = guessSlot(line.name, '');
+        add(line.start, line.end, { kind: 'purchase', name: line.name, price: line.price, slot });
+      }
+    } else {
+      for (const sentence of splitSentences(text)) {
+        const buy = parseBuySentence(sentence.text);
+        if (!buy) continue;
+        const slot = guessSlot(buy.name, sentence.text);
+        add(sentence.offset + buy.start, sentence.offset + buy.end, {
+          kind: 'purchase',
+          name: buy.name,
+          price: buy.price,
+          slot,
+        });
+      }
+    }
+    for (const d of declared) {
+      const pattern = new RegExp(d.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      for (let m = pattern.exec(text); m; m = pattern.exec(text)) {
+        add(m.index, m.index + m[0].length, {
+          kind: 'purchase',
+          name: d.name,
+          price: d.price,
+          slot: guessSlot(d.name, ''),
+          declared: true,
+        });
+      }
+    }
+    found.sort((a, b) => a.start - b.start || b.end - a.end);
+    const kept: typeof found = [];
+    let end = -1;
+    for (const f of found) {
+      if (f.start < end) continue;
+      end = f.end;
+      kept.push(f);
+    }
+    if (!kept.length) continue;
+    wrapRanges(
+      target,
+      kept.map((f) => ({ ...f, index: items.push(f.item) - 1 })),
+    );
+    changed = true;
+  }
+  return changed ? root.outerHTML : html;
 }
 
 function annotateParagraph(

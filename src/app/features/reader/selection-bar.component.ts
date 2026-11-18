@@ -32,6 +32,15 @@ const EXCLUDED =
         >
           ＋ {{ i18n.t('declare.add', { text: shorten(selected) }) }}
         </button>
+        <button
+          type="button"
+          class="button"
+          (pointerdown)="$event.preventDefault()"
+          (mousedown)="$event.preventDefault()"
+          (click)="declarePurchase.emit(selected)"
+        >
+          🪙 {{ i18n.t('buy.declareAction', { text: shorten(selected) }) }}
+        </button>
       </div>
     }
   `,
@@ -41,6 +50,8 @@ export class SelectionBarComponent {
   private readonly document = inject(DOCUMENT);
   /** Mots sélectionnés, à ajouter comme objet. */
   readonly declare = output<string>();
+  /** Mots sélectionnés, à acheter (ligne de prix non détectée). */
+  readonly declarePurchase = output<string>();
   protected readonly text = signal<string | null>(null);
 
   constructor() {

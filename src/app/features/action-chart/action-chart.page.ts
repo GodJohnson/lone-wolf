@@ -74,6 +74,23 @@ export class ActionChartPage {
       .sort((a, b) => a.section - b.section || a.name.localeCompare(b.name)),
   );
 
+  /** Achats déclarés à la main (`<section>|<prix>|<nom>`). */
+  private readonly declaredPurchases = linkedSignal(
+    () => this.book.value()?.declaredPurchases ?? [],
+  );
+  protected readonly purchasesHere = computed(() =>
+    this.declaredPurchases()
+      .map((key) => {
+        const [section, price, ...rest] = key.split('|');
+        return { key, section: Number(section), price: Number(price), name: rest.join('|') };
+      })
+      .sort((a, b) => a.section - b.section || a.name.localeCompare(b.name)),
+  );
+
+  protected async undeclarePurchase(key: string): Promise<void> {
+    this.declaredPurchases.set(await this.books.undeclarePurchase(this.bookId(), key));
+  }
+
   protected async undeclare(key: string): Promise<void> {
     this.declaredItems.set(await this.books.undeclareItem(this.bookId(), key));
   }

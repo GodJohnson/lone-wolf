@@ -18,6 +18,8 @@ import { evaluateChoices } from '../../core/game/choice-conditions';
 import { FoundItem, annotateItems, guessSlot, itemKey } from '../../core/game/item-detection';
 import { rulesFor } from '../../core/game/rules';
 import { ItemSheetComponent } from './item-sheet.component';
+import { PaymentSheetComponent } from './payment-sheet.component';
+import { guessPrice, paymentsOf } from '../../core/game/purchases';
 import { SelectionBarComponent } from './selection-bar.component';
 import { CharacterPanelComponent } from './character-panel.component';
 import { LexiconPanelComponent } from './lexicon-panel.component';
@@ -46,6 +48,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     CartwheelComponent,
     PortholesComponent,
     ItemSheetComponent,
+    PaymentSheetComponent,
     SelectionBarComponent,
     CharacterPanelComponent,
     LexiconPanelComponent,
@@ -111,6 +114,10 @@ export class ReaderPage {
   private readonly dismissedItems = linkedSignal(() => this.book.value()?.dismissedItems ?? []);
   /** Objets déclarés à la main (`<section>|<nom>`). */
   private readonly declaredItems = linkedSignal(() => this.book.value()?.declaredItems ?? []);
+  /** Achats déclarés à la main (`<section>|<prix>|<nom>`). */
+  private readonly declaredPurchases = linkedSignal(
+    () => this.book.value()?.declaredPurchases ?? [],
+  );
   protected readonly annotated = computed(() => {
     const section = this.sectionNumber();
     const prefix = `${section}|`;
@@ -128,8 +135,25 @@ export class ReaderPage {
       ignored,
       this.userNonItems(),
       declared,
+      this.declaredPurchases()
+        .filter((k) => k.startsWith(prefix))
+        .map((k) => {
+          const [price, ...name] = k.slice(prefix.length).split('|');
+          return { name: name.join('|'), price: Number(price) };
+        }),
     );
   });
+  /** Prix des choix payants de la section. */
+  protected readonly payments = computed(() => paymentsOf(this.section.value()?.blocks ?? []));
+  protected readonly pendingPayment = signal<{ target: number; price: number } | null>(null);
+
+  protected async confirmPayment(): Promise<void> {
+    const payment = this.pendingPayment();
+    this.pendingPayment.set(null);
+    if (!payment || !(await this.game.pay(payment.price))) return;
+    this.flash(this.i18n.t('buy.paid', { price: payment.price }));
+    await this.goTo(payment.target);
+  }
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
   protected readonly selectedItem = signal<FoundItem | null>(null);
 
@@ -139,6 +163,9 @@ export class ReaderPage {
   }
 
   protected foundLabel(item: FoundItem): string {
+    if (item.kind === 'purchase') {
+      return this.i18n.t('buy.label', { name: item.name, price: item.price });
+    }
     return item.kind === 'item' ? item.name : item.label;
   }
 
@@ -165,6 +192,37 @@ export class ReaderPage {
     this.declareLinkable.set(this.sourceText().includes(normalizeText(text)));
     this.selectedItem.set({ kind: 'item', name: text, slot: guessSlot(text, ''), declared: true });
     this.document.getSelection()?.removeAllRanges();
+  }
+
+  /** Mots sélectionnés à acheter : confirmation avec le prix lu dans le texte (à corriger si besoin). */
+  protected declarePurchaseSelection(text: string): void {
+    const source = this.sourceText();
+    this.declareLinkable.set(source.includes(normalizeText(text)));
+    this.selectedItem.set({
+      kind: 'purchase',
+      name: text,
+      price: guessPrice(source, normalizeText(text)),
+      slot: guessSlot(text, ''),
+      declared: true,
+    });
+    this.document.getSelection()?.removeAllRanges();
+  }
+
+  /** Achat effectué : un achat déclaré à la main devient un lien dans cette section. */
+  protected async itemBought(event: {
+    message: string;
+    name: string;
+    price: number;
+  }): Promise<void> {
+    const item = this.selectedItem();
+    const section = this.sectionNumber();
+    this.selectedItem.set(null);
+    if (item?.kind === 'purchase' && item.declared && section !== null && this.declareLinkable()) {
+      this.declaredPurchases.set(
+        await this.books.declarePurchase(this.bookId(), `${section}|${event.price}|${item.name}`),
+      );
+    }
+    this.flash(event.message);
   }
 
   /** La sélection déclarée figure dans le texte source : un lien peut être mémorisé. */
