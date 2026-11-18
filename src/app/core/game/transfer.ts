@@ -35,6 +35,7 @@ export function encodeGame(state: GameState): TransferResult {
     c: { ...state.character, notes: state.character.notes.slice(0, MAX_NOTES) },
     f: [...new Set(state.foughtIn)].slice(-50),
     m: state.mealResolved ? 1 : 0,
+    x: (state.flags ?? []).slice(0, 20),
   };
   const payload = toBase64Url(deflateSync(strToU8(JSON.stringify(data)), { level: 9 }));
   if (payload.length > MAX_PAYLOAD_CHARS) throw new TransferError('tooBig');
@@ -81,6 +82,7 @@ function validate(data: unknown): GameState {
     combat: null,
     foughtIn: list(d['f'], 50).map((n) => int(n, 1, 9999)),
     mealResolved: d['m'] === 1,
+    flags: d['x'] === undefined ? [] : list(d['x'], 20).map((f) => str(f, 40)),
     createdAt: now,
     updatedAt: now,
   };

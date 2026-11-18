@@ -1200,3 +1200,66 @@ lw-character-panel > * {
     bottom: 1.5rem;
   }
 }
+
+/* ---------- Cartwheel (livre 2, section 238) ---------- */
+
+.cartwheel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.cartwheel h3 {
+  margin: 0.25rem 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.cartwheel__funds {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+}
+.cartwheel__numbers {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.4rem;
+}
+.cartwheel__numbers .chip {
+  min-height: 44px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.cartwheel__ball {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border: 3px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+.cartwheel__ball--rolling {
+  opacity: 0.6;
+}
+.cartwheel__log {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+.cartwheel__win {
+  color: var(--success);
+  font-weight: 600;
+}
+.cartwheel__exits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

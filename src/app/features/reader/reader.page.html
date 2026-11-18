@@ -52,6 +52,9 @@
           [conditions]="choiceConditions()"
         >
           <lw-combat-panel />
+          @if (minigame() === 'cartwheel') {
+            <lw-cartwheel lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
+          }
           @if (mealDue() && game.character(); as c) {
             <section
               lwBeforeChoices
