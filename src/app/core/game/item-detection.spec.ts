@@ -185,4 +185,13 @@ describe('item-detection', () => {
       );
     });
   });
+
+  it('lit le nom entre guillemets à inscrire sur la Feuille (Magic Spear)', () => {
+    const { items } = annotateItems([
+      p(
+        'If you win the combat, you can keep the Spear. Mark it on your <a href="action.htm">Action Chart</a> under the Special Items section as a &lsquo;Magic Spear.&rsquo;',
+      ),
+    ]);
+    expect(items).toEqual([{ kind: 'item', name: 'Magic Spear', slot: 'specialItems' }]);
+  });
 });

@@ -132,6 +132,10 @@ const GOLD_PATTERN =
 /** « 10 Crowns » sans « Gold » : seulement avec un nombre (« the Crown » peut être un objet). */
 const CROWNS_PATTERN = /\b(\d+|two|three|four|five|six|seven|eight|nine|ten)\s+Crowns\b/gi;
 
+/** Nom entre guillemets courbes à inscrire sur la Feuille : « … as a ‘Magic Spear.’ » (fin de phrase possible). */
+const QUOTED_NAME = /(?<=‘)([A-Z][A-Za-z -]{2,40}?)(?=[.,]|’|$)/g;
+const MARK_SENTENCE = /\b(?:mark|record|note)\b|\b(?:Special|Backpack) Items?\b/i;
+
 const NON_ITEMS = new Set(NON_ITEM_TERMS.map((t) => t.toLowerCase()));
 const KNOWN_ITEM_PATTERNS = ITEM_TERMS.map(
   (term) => new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'),
@@ -266,6 +270,8 @@ function annotateParagraph(
 
   const sentences = splitSentences(text);
   const matches: { start: number; end: number; item: FoundItem }[] = [];
+  /** Noms précis à inscrire (‘Magic Spear’) : ils remplacent le nom générique du même paragraphe (« the Spear »). */
+  const quoted: string[] = [];
 
   // Objets déclarés à la main : liés partout où ils apparaissent, sans condition sur le paragraphe.
   for (const sentence of sentences) {
@@ -300,6 +306,24 @@ function annotateParagraph(
       },
       matches,
     );
+    if (MARK_SENTENCE.test(sentence.text)) {
+      collect(
+        QUOTED_NAME,
+        sentence,
+        (m) => {
+          const name = m[1].replace(/\s+/g, ' ').trim();
+          if (!isItemName(name, lexicon, excluded)) return null;
+          quoted.push(name.toLowerCase());
+          const slot = /\bSpecial Items?\b/i.test(sentence.text)
+            ? 'specialItems'
+            : /\bBackpack Items?\b/i.test(sentence.text)
+              ? 'backpack'
+              : guessSlot(name, context);
+          return { kind: 'item', name, slot };
+        },
+        matches,
+      );
+    }
     for (const pattern of KNOWN_ITEM_PATTERNS) {
       collect(
         pattern,
@@ -340,7 +364,11 @@ function annotateParagraph(
   for (const m of matches) {
     if (m.start < end) continue;
     end = m.end; // un objet écarté masque aussi ses formes plus courtes au même endroit
-    if (!ignored.has(itemKey(m.item))) kept.push(m);
+    const generic =
+      m.item.kind === 'item' &&
+      !m.item.declared &&
+      quoted.some((q) => q.endsWith(' ' + (m.item as { name: string }).name.toLowerCase()));
+    if (!generic && !ignored.has(itemKey(m.item))) kept.push(m);
   }
   if (!kept.length) return html;
   wrapRanges(
