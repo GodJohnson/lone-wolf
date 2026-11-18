@@ -16,6 +16,7 @@ export type FoundItem =
   | { kind: 'item'; name: string; slot: ItemSlot; declared?: boolean }
   | { kind: 'gold'; amount: number; label: string }
   | { kind: 'meals'; count: number; label: string }
+  | { kind: 'endurance'; amount: number; label: string; declared?: boolean }
   | { kind: 'purchase'; name: string; price: number; slot: ItemSlot; declared?: boolean };
 
 export interface AnnotatedBlocks {
@@ -164,6 +165,8 @@ export function annotateItems(
   declared: readonly string[] = [],
   /** Achats déclarés à la main par le joueur dans cette section. */
   declaredPurchases: readonly { name: string; price: number }[] = [],
+  /** Liens d'ENDURANCE déclarés à la main dans cette section (texte du passage et montant signé). */
+  declaredEndurance: readonly { text: string; amount: number }[] = [],
 ): AnnotatedBlocks {
   const excluded = new Set([...NON_ITEMS, ...excludedTerms.map((t) => t.toLowerCase())]);
   const items: FoundItem[] = [];
@@ -172,6 +175,7 @@ export function annotateItems(
   const annotated = blocks.map((block) => {
     if (block.kind !== 'html' || !/^<(?:p|ul)[\s>]/.test(block.html)) return block;
     let html = annotatePurchases(block.html, items, ignored, declaredPurchases);
+    if (/^<p[\s>]/.test(html)) html = annotateEndurance(html, items, ignored, declaredEndurance);
     if (/^<p[\s>]/.test(html)) {
       html = annotateParagraph(html, items, lexicon, ignored, excluded, declared);
     }
@@ -248,6 +252,69 @@ function annotatePurchases(
     changed = true;
   }
   return changed ? root.outerHTML : html;
+}
+
+const ENDURANCE_PATTERN = new RegExp(
+  String.raw`\b(lose|lost|gain|regain|restore|recover)\w*\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+ENDURANCE\s+points?\b`,
+  'gi',
+);
+/** Pertes/gains répétés (« for every round of combat ») : pas un montant unique à appliquer. */
+const REPEATED = /\b(?:every|each|per)\s+(?:round|assault|turn|hour|day)|\bfor each\b/i;
+
+/** « You lose 2 ENDURANCE points » : un lien pour appliquer la perte (ou le gain) sur la Feuille. */
+function annotateEndurance(
+  html: string,
+  items: FoundItem[],
+  ignored: ReadonlySet<string>,
+  declared: readonly { text: string; amount: number }[],
+): string {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const paragraph = doc.body.firstElementChild;
+  if (!paragraph) return html;
+  const found: { start: number; end: number; item: FoundItem }[] = [];
+  for (const sentence of splitSentences(paragraph.textContent ?? '')) {
+    if (REPEATED.test(sentence.text)) continue;
+    collect(
+      ENDURANCE_PATTERN,
+      sentence,
+      (m) => {
+        const n = toNumber(m[2]);
+        if (!n) return null;
+        const amount = /^(?:lose|lost)/i.test(m[1]) ? -n : n;
+        const item: FoundItem = { kind: 'endurance', amount, label: m[0] };
+        return ignored.has(itemKey(item)) ? null : item;
+      },
+      found,
+    );
+  }
+  const text = paragraph.textContent ?? '';
+  for (const d of declared) {
+    const pattern = new RegExp(d.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    for (let m = pattern.exec(text); m; m = pattern.exec(text)) {
+      const item: FoundItem = {
+        kind: 'endurance',
+        amount: d.amount,
+        label: d.text,
+        declared: true,
+      };
+      found.push({ start: m.index, end: m.index + m[0].length, item });
+    }
+  }
+  // Un passage déclaré à la main remplace la détection automatique qu'il recouvre.
+  found.sort((a, b) => a.start - b.start || b.end - a.end);
+  const kept: typeof found = [];
+  let end = -1;
+  for (const f of found) {
+    if (f.start < end) continue;
+    end = f.end;
+    kept.push(f);
+  }
+  if (!kept.length) return html;
+  wrapRanges(
+    paragraph,
+    kept.map((f) => ({ ...f, index: items.push(f.item) - 1 })),
+  );
+  return paragraph.outerHTML;
 }
 
 function annotateParagraph(
@@ -519,31 +586,34 @@ function splitSentences(text: string): { text: string; offset: number; index: nu
   return result;
 }
 
-/** Entoure des plages du texte (offsets dans `textContent`) de liens `#item-N`, sans casser le balisage. */
+/**
+ * Entoure des plages du texte (offsets dans `textContent`) de liens `#item-N`, sans casser le balisage.
+ * Une plage qui traverse un élément (« 2 <span>ENDURANCE</span> points ») reçoit un lien par morceau.
+ */
 function wrapRanges(root: Element, ranges: { start: number; end: number; index: number }[]): void {
   const doc = root.ownerDocument;
   for (const range of [...ranges].reverse()) {
     const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const pieces: { node: Text; start: number; end: number }[] = [];
     let offset = 0;
     let node: Text | null;
     while ((node = walker.nextNode() as Text | null)) {
       const length = node.data.length;
-      const start = range.start - offset;
-      // La plage doit tenir dans un seul nœud texte (cas courant) ; sinon on renonce au lien.
-      if (start >= 0 && start < length) {
-        const end = range.end - offset;
-        if (end <= length && !node.parentElement?.closest('a')) {
-          const target = node.splitText(start);
-          target.splitText(end - start);
-          const link = doc.createElement('a');
-          link.setAttribute('href', `${ITEM_LINK_PREFIX}${range.index}`);
-          link.setAttribute('class', 'item-link');
-          target.replaceWith(link);
-          link.appendChild(target);
-        }
-        break;
-      }
+      const start = Math.max(range.start - offset, 0);
+      const end = Math.min(range.end - offset, length);
+      if (start < end) pieces.push({ node, start, end });
       offset += length;
+      if (offset >= range.end) break;
+    }
+    for (const piece of pieces) {
+      if (piece.node.parentElement?.closest('a')) continue;
+      const target = piece.node.splitText(piece.start);
+      target.splitText(piece.end - piece.start);
+      const link = doc.createElement('a');
+      link.setAttribute('href', `${ITEM_LINK_PREFIX}${range.index}`);
+      link.setAttribute('class', 'item-link');
+      target.replaceWith(link);
+      link.appendChild(target);
     }
   }
 }

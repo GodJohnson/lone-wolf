@@ -194,4 +194,41 @@ describe('item-detection', () => {
     ]);
     expect(items).toEqual([{ kind: 'item', name: 'Magic Spear', slot: 'specialItems' }]);
   });
+
+  describe('ENDURANCE', () => {
+    it('lie une perte d’ENDURANCE, même avec le mot dans un élément', () => {
+      const { blocks, items } = annotateItems([
+        p('You collapse. You lose 2 <span class="smallcaps">ENDURANCE</span> points.'),
+      ]);
+      expect(items).toEqual([{ kind: 'endurance', amount: -2, label: 'lose 2 ENDURANCE points' }]);
+      expect((blocks[0] as { html: string }).html).toContain('class="item-link">lose 2 </a>');
+    });
+
+    it('lie un gain, mais pas une perte répétée à chaque assaut', () => {
+      expect(annotateItems([p('You regain 3 ENDURANCE points.')]).items).toEqual([
+        { kind: 'endurance', amount: 3, label: 'regain 3 ENDURANCE points' },
+      ]);
+      expect(
+        annotateItems([p('You will lose 2 ENDURANCE points for every round of combat.')]).items,
+      ).toEqual([]);
+    });
+  });
+
+  it('lie une perte d’ENDURANCE déclarée à la main et respecte « Pas ici »', () => {
+    const text = p('The poison burns your veins and you feel weaker.');
+    const { items } = annotateItems(
+      [text],
+      [],
+      new Set(),
+      [],
+      [],
+      [],
+      [{ text: 'you feel weaker', amount: -3 }],
+    );
+    expect(items).toEqual([
+      { kind: 'endurance', amount: -3, label: 'you feel weaker', declared: true },
+    ]);
+    const lose = p('You lose 2 ENDURANCE points.');
+    expect(annotateItems([lose], [], new Set(['lose 2 ENDURANCE points'])).items).toEqual([]);
+  });
 });

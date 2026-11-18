@@ -121,6 +121,10 @@ export class ReaderPage {
   private readonly declaredPurchases = linkedSignal(
     () => this.book.value()?.declaredPurchases ?? [],
   );
+  /** Liens d'ENDURANCE déclarés à la main (`<section>|<montant>|<texte>`). */
+  private readonly declaredEndurance = linkedSignal(
+    () => this.book.value()?.declaredEndurance ?? [],
+  );
   protected readonly annotated = computed(() => {
     const section = this.sectionNumber();
     const prefix = `${section}|`;
@@ -144,6 +148,12 @@ export class ReaderPage {
           const [price, ...name] = k.slice(prefix.length).split('|');
           return { name: name.join('|'), price: Number(price) };
         }),
+      this.declaredEndurance()
+        .filter((k) => k.startsWith(prefix))
+        .map((k) => {
+          const [amount, ...text] = k.slice(prefix.length).split('|');
+          return { text: text.join('|'), amount: Number(amount) };
+        }),
     );
   });
   /** Prix des choix payants de la section. */
@@ -166,6 +176,11 @@ export class ReaderPage {
   }
 
   protected foundLabel(item: FoundItem): string {
+    if (item.kind === 'endurance') {
+      return this.i18n.t(item.amount < 0 ? 'endurance.lose' : 'endurance.gain', {
+        n: Math.abs(item.amount),
+      });
+    }
     if (item.kind === 'purchase') {
       return this.i18n.t('buy.label', { name: item.name, price: item.price });
     }
@@ -211,6 +226,20 @@ export class ReaderPage {
     this.document.getSelection()?.removeAllRanges();
   }
 
+  /** Mots sélectionnés à lier comme perte/gain d'ENDURANCE : montant lu dans le texte (modifiable). */
+  protected declareEnduranceSelection(text: string): void {
+    this.declareLinkable.set(this.sourceText().includes(normalizeText(text)));
+    const n = Number(/\d+/.exec(text)?.[0] ?? 0);
+    const gain = /\b(?:gain|regain|restore|recover)/i.test(text);
+    this.selectedItem.set({
+      kind: 'endurance',
+      amount: gain ? n : -n,
+      label: text,
+      declared: true,
+    });
+    this.document.getSelection()?.removeAllRanges();
+  }
+
   /** Achat effectué : un achat déclaré à la main devient un lien dans cette section. */
   protected async itemBought(event: {
     message: string;
@@ -223,6 +252,11 @@ export class ReaderPage {
     if (item?.kind === 'purchase' && item.declared && section !== null && this.declareLinkable()) {
       this.declaredPurchases.set(
         await this.books.declarePurchase(this.bookId(), `${section}|${event.price}|${item.name}`),
+      );
+    }
+    if (item?.kind === 'endurance' && item.declared && section !== null && this.declareLinkable()) {
+      this.declaredEndurance.set(
+        await this.books.declareEndurance(this.bookId(), `${section}|${event.price}|${item.label}`),
       );
     }
     this.flash(event.message);

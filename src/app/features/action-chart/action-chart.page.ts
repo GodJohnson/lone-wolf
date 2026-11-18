@@ -87,6 +87,23 @@ export class ActionChartPage {
       .sort((a, b) => a.section - b.section || a.name.localeCompare(b.name)),
   );
 
+  /** Liens d'ENDURANCE déclarés à la main (`<section>|<montant>|<texte>`). */
+  private readonly declaredEndurance = linkedSignal(
+    () => this.book.value()?.declaredEndurance ?? [],
+  );
+  protected readonly enduranceHere = computed(() =>
+    this.declaredEndurance()
+      .map((key) => {
+        const [section, amount, ...rest] = key.split('|');
+        return { key, section: Number(section), amount: Number(amount), text: rest.join('|') };
+      })
+      .sort((a, b) => a.section - b.section || a.text.localeCompare(b.text)),
+  );
+
+  protected async undeclareEndurance(key: string): Promise<void> {
+    this.declaredEndurance.set(await this.books.undeclareEndurance(this.bookId(), key));
+  }
+
   protected async undeclarePurchase(key: string): Promise<void> {
     this.declaredPurchases.set(await this.books.undeclarePurchase(this.bookId(), key));
   }
