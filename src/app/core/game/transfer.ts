@@ -126,12 +126,12 @@ function str(value: unknown, max: number): string {
   return value;
 }
 
-function toBase64Url(bytes: Uint8Array): string {
+export function toBase64Url(bytes: Uint8Array): string {
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
-function fromBase64Url(text: string): Uint8Array {
+export function fromBase64Url(text: string): Uint8Array {
   const padded = text.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((text.length + 3) % 4);
   return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
 }

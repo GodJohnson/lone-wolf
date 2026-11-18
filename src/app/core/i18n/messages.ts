@@ -15,6 +15,16 @@ export const fr = {
   'common.loading': 'Chargement…',
 
   'library.title': 'Bibliothèque',
+  'library.continueTo': 'Continuer au livre {number}',
+  'library.importNext': 'Pour continuer : importez le livre {number} ({title}).',
+  'carry.title': 'Votre héros depuis « {book} »',
+  'carry.summary':
+    'Disciplines, armes et objets spéciaux reportés (objets spéciaux : {items}). Or reporté : {gold}. Vous choisissez une discipline de plus.',
+  'carry.weapons': 'Armes reportées (vous pouvez en laisser, maximum {max} au total) :',
+  'carry.notCarried':
+    'Le sac à dos et les Repas ne sont pas reportés. Votre ENDURANCE repart à son total.',
+  'carry.missing': 'La partie du livre précédent est introuvable sur cet appareil.',
+
   'library.transfer': 'Transférer',
   'library.importGame': 'Importer une partie (QR code ou lien)',
   'transfer.title': 'Transférer la partie',
@@ -34,6 +44,26 @@ export const fr = {
   'transfer.scan': 'Scanner un QR code',
   'transfer.noCamera': 'Caméra indisponible ici : collez le lien ci-dessous.',
   'transfer.cameraDenied': 'Accès à la caméra refusé : autorisez-le, ou collez le lien ci-dessous.',
+  'transfer.receive': 'Recevoir sans caméra (afficher un QR code)',
+  'transfer.receiveWaiting': 'En attente de l’autre appareil…',
+  'transfer.receiveHint':
+    'Sur l’autre appareil : « Importer une partie » puis « Scanner » (ou « Transférer » puis « Scanner »), ou ouvrez ce lien. La partie arrive ici toute seule.',
+  'transfer.relayNote':
+    'La partie transite chiffrée par le relais public ntfy.sh ; la clé ne figure que dans ce QR code.',
+  'transfer.relayDown':
+    'Le relais est injoignable ou a coupé la connexion. Réessayez, ou utilisez le lien à coller.',
+  'transfer.receiveTimeout': 'Aucune partie reçue au bout de 10 minutes. Recommencez.',
+  'transfer.sendTo': 'Envoyer à un autre appareil',
+  'transfer.sendToHint': 'L’autre appareil affiche un QR code de réception : scannez-le ici.',
+  'send.title': 'Envoyer une partie',
+  'send.intro': 'Un autre appareil attend une partie. Laquelle envoyer ?',
+  'send.button': 'Envoyer cette partie',
+  'send.sending': 'Envoi…',
+  'send.sent':
+    'Partie envoyée. Elle apparaît sur l’autre appareil, qui vous demandera confirmation.',
+  'send.failed': 'Envoi impossible : le relais est injoignable. Réessayez.',
+  'send.invalid': 'Ce lien de réception est invalide.',
+  'send.none': 'Aucune partie en cours sur cet appareil.',
   'transfer.paste': 'Coller un lien',
   'transfer.pastePlaceholder': 'https://…/#/transfer/…',
   'transfer.read': 'Lire le lien',
@@ -220,6 +250,16 @@ export const en: Record<MessageKey, string> = {
   'common.loading': 'Loading…',
 
   'library.title': 'Library',
+  'library.continueTo': 'Continue to book {number}',
+  'library.importNext': 'To continue: import book {number} ({title}).',
+  'carry.title': 'Your hero from “{book}”',
+  'carry.summary':
+    'Disciplines, weapons and Special Items carried over (Special Items: {items}). Gold carried over: {gold}. You choose one extra discipline.',
+  'carry.weapons': 'Weapons carried over (you may leave some, {max} in total at most):',
+  'carry.notCarried':
+    'The Backpack and Meals are not carried over. Your ENDURANCE starts back at its total.',
+  'carry.missing': 'The previous book’s game could not be found on this device.',
+
   'library.transfer': 'Transfer',
   'library.importGame': 'Import a game (QR code or link)',
   'transfer.title': 'Transfer the game',
@@ -238,6 +278,25 @@ export const en: Record<MessageKey, string> = {
   'transfer.scan': 'Scan a QR code',
   'transfer.noCamera': 'Camera unavailable here: paste the link below.',
   'transfer.cameraDenied': 'Camera access denied: allow it, or paste the link below.',
+  'transfer.receive': 'Receive without a camera (show a QR code)',
+  'transfer.receiveWaiting': 'Waiting for the other device…',
+  'transfer.receiveHint':
+    'On the other device: “Import a game” then “Scan” (or “Transfer” then “Scan”), or open this link. The game arrives here by itself.',
+  'transfer.relayNote':
+    'The game goes through the public ntfy.sh relay, encrypted; the key only lives in this QR code.',
+  'transfer.relayDown':
+    'The relay is unreachable or dropped the connection. Try again, or use the link to paste.',
+  'transfer.receiveTimeout': 'No game received after 10 minutes. Start again.',
+  'transfer.sendTo': 'Send to another device',
+  'transfer.sendToHint': 'The other device shows a receive QR code: scan it here.',
+  'send.title': 'Send a game',
+  'send.intro': 'Another device is waiting for a game. Which one to send?',
+  'send.button': 'Send this game',
+  'send.sending': 'Sending…',
+  'send.sent': 'Game sent. It appears on the other device, which will ask you to confirm.',
+  'send.failed': 'Could not send: the relay is unreachable. Try again.',
+  'send.invalid': 'This receive link is invalid.',
+  'send.none': 'No game in progress on this device.',
   'transfer.paste': 'Paste a link',
   'transfer.pastePlaceholder': 'https://…/#/transfer/…',
   'transfer.read': 'Read link',

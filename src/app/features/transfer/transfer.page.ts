@@ -9,14 +9,18 @@ import {
 } from '@angular/core';
 import { BookRepository } from '../../core/book/book-repository';
 import { GameService } from '../../core/game/game.service';
+import { channelCode, parseChannelCode } from '../../core/game/relay';
 import { encodeGame } from '../../core/game/transfer';
+import { Router } from '@angular/router';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { QrScannerComponent } from '../../shared/qr-scanner.component';
+import { qrDataUrl } from '../../shared/qr';
 import { TopBarComponent } from '../../shared/top-bar.component';
 
 /** Export d'une partie : QR code + lien à copier ou partager. */
 @Component({
   selector: 'lw-transfer-page',
-  imports: [TopBarComponent],
+  imports: [TopBarComponent, QrScannerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <lw-top-bar
@@ -52,6 +56,14 @@ import { TopBarComponent } from '../../shared/top-bar.component';
           }
         </section>
         <p class="notice">{{ i18n.t('transfer.bookNote') }}</p>
+        <section class="card">
+          <h2>{{ i18n.t('transfer.sendTo') }}</h2>
+          <p class="small muted">{{ i18n.t('transfer.sendToHint') }}</p>
+          <lw-qr-scanner (scanned)="goSend($event)" />
+          @if (scanError(); as message) {
+            <p class="notice notice--error" role="alert">{{ message }}</p>
+          }
+        </section>
       } @else if (error()) {
         <p class="notice notice--error">{{ error() }}</p>
       } @else {
@@ -72,6 +84,8 @@ export class TransferPage {
   });
   protected readonly error = signal<string | null>(null);
   protected readonly copied = signal(false);
+  protected readonly scanError = signal<string | null>(null);
+  private readonly router = inject(Router);
   protected readonly canShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   private readonly state = resource({
@@ -95,12 +109,19 @@ export class TransferPage {
   protected readonly qr = resource({
     params: () => this.result()?.link,
     loader: async ({ params }) => {
-      // Module CommonJS : selon le bundler, les fonctions sont sur le module ou sur `default`.
-      const mod = await import('qrcode');
-      const QRCode = mod.default ?? mod;
-      return QRCode.toDataURL(params, { errorCorrectionLevel: 'L', margin: 2, width: 320 });
+      return qrDataUrl(params);
     },
   });
+
+  /** QR « réception » d'un autre appareil : on va choisir la partie à envoyer. */
+  protected goSend(text: string): void {
+    const channel = parseChannelCode(text);
+    if (!channel) {
+      this.scanError.set(this.i18n.t('transfer.error.invalid'));
+      return;
+    }
+    this.router.navigate(['/send', channelCode(channel)]);
+  }
 
   protected async copy(link: string): Promise<void> {
     try {

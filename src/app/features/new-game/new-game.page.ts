@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   resource,
@@ -16,6 +17,7 @@ import {
   startingEquipmentFor,
   weaponCount,
 } from '../../core/game/equipment';
+import { CarriedHero, alreadyOwned, carryOver } from '../../core/game/carry-over';
 import { GameService } from '../../core/game/game.service';
 import { randomNumber } from '../../core/game/random';
 import { DISCIPLINE, KAI_WEAPONSKILL_TABLE, newCharacter, rulesFor } from '../../core/game/rules';
@@ -35,6 +37,8 @@ export class NewGamePage {
   private readonly router = inject(Router);
 
   readonly bookId = input.required<string>();
+  /** Livre précédent dont on reprend le héros (`?from=01fftd`). */
+  readonly from = input<string>();
 
   protected readonly book = resource({
     params: () => this.bookId(),
@@ -42,6 +46,31 @@ export class NewGamePage {
   });
 
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
+
+  // ---- Reprise du héros du livre précédent ----
+  private readonly previous = resource({
+    params: () => this.from(),
+    loader: ({ params }) => this.game.peek(params),
+  });
+  private readonly previousBook = resource({
+    params: () => this.from(),
+    loader: ({ params }) => this.books.get(params),
+  });
+  protected readonly carried = computed<CarriedHero | null>(() => {
+    const previous = this.previous.value();
+    const book = this.book.value();
+    return previous && book ? carryOver(previous.character, book.disciplines) : null;
+  });
+  protected readonly previousTitle = computed(() => this.previousBook.value()?.title ?? '');
+  protected readonly lockedDisciplines = computed(() => this.carried()?.disciplines ?? []);
+  /** Armes reportées que le joueur garde (il peut en laisser pour faire de la place). */
+  protected readonly keptWeapons = signal<string[]>([]);
+  private readonly carriedWeaponskill = computed(
+    () => this.carried()?.character.weaponskill ?? null,
+  );
+  protected readonly disciplinesToChoose = computed(() =>
+    this.carried() ? this.lockedDisciplines().length + 1 : this.rules().disciplinesToChoose,
+  );
   protected readonly csRoll = signal<number | null>(null);
   protected readonly epRoll = signal<number | null>(null);
   protected readonly selected = signal<string[]>([]);
@@ -51,6 +80,7 @@ export class NewGamePage {
   protected readonly needsWeapon = computed(
     () =>
       this.isKai() &&
+      !this.carriedWeaponskill() &&
       this.selected().some((d) => d.toLowerCase() === DISCIPLINE.weaponskill.toLowerCase()),
   );
   protected readonly weapon = computed(() => {
@@ -88,9 +118,9 @@ export class NewGamePage {
 
   protected readonly canStart = computed(
     () =>
-      this.csRoll() !== null &&
-      this.epRoll() !== null &&
-      this.selected().length === this.rules().disciplinesToChoose &&
+      (!!this.carried() || (this.csRoll() !== null && this.epRoll() !== null)) &&
+      (!this.from() || !!this.carried()) &&
+      this.selected().length === this.disciplinesToChoose() &&
       (!this.needsWeapon() || this.weapon() !== null) &&
       this.equipmentReady(),
   );
@@ -121,7 +151,10 @@ export class NewGamePage {
     const pick = this.equipment()?.pick;
     if (pick?.mode !== 'choose' || this.isChosen(index)) return true;
     if (this.chosen().length >= pick.count) return false;
-    return weaponCount([...this.chosenOptions(), pick.options[index]]) <= this.rules().maxWeapons;
+    return (
+      this.keptWeapons().length + weaponCount([...this.chosenOptions(), pick.options[index]]) <=
+      this.rules().maxWeapons
+    );
   }
 
   protected toggleOption(index: number): void {
@@ -135,10 +168,50 @@ export class NewGamePage {
     return this.selected().includes(discipline);
   }
 
+  protected isLocked(discipline: string): boolean {
+    return this.lockedDisciplines().includes(discipline);
+  }
+
   protected toggle(discipline: string): void {
+    if (this.isLocked(discipline)) return;
     this.selected.update((list) => {
       if (list.includes(discipline)) return list.filter((d) => d !== discipline);
-      return list.length < this.rules().disciplinesToChoose ? [...list, discipline] : list;
+      return list.length < this.disciplinesToChoose() ? [...list, discipline] : list;
+    });
+  }
+
+  protected isKept(weapon: string): boolean {
+    return this.keptWeapons().includes(weapon);
+  }
+
+  /** Laisser une arme libère une place ; en reprendre n'est possible que s'il en reste. */
+  protected toggleKept(weapon: string): void {
+    this.keptWeapons.update((list) => {
+      if (list.includes(weapon)) return list.filter((w) => w !== weapon);
+      const room = this.rules().maxWeapons - weaponCount(this.chosenOptions());
+      return list.length < room ? [...list, weapon] : list;
+    });
+    // Un choix d'équipement devenu impossible (trop d'armes) est retiré.
+    this.chosen.update((list) => {
+      const pick = this.equipment()?.pick;
+      if (pick?.mode !== 'choose') return list;
+      const out: number[] = [];
+      for (const i of list) {
+        const options = [...out, i].map((n) => pick.options[n]);
+        if (this.keptWeapons().length + weaponCount(options) <= this.rules().maxWeapons)
+          out.push(i);
+      }
+      return out;
+    });
+  }
+
+  constructor() {
+    // Dès que le héros précédent est lu : disciplines reportées cochées, armes reportées gardées.
+    effect(() => {
+      const carried = this.carried();
+      if (!carried) return;
+      this.selected.set([...carried.disciplines]);
+      this.keptWeapons.set([...carried.character.weapons]);
     });
   }
 
@@ -147,16 +220,21 @@ export class NewGamePage {
     if (!book || !this.canStart()) return;
     if ((await this.game.exists(book.id)) && !confirm(this.i18n.t('newGame.overwrite'))) return;
 
-    const character = newCharacter(book.series, this.csRoll()!, this.epRoll()!);
+    const carried = this.carried();
+    const character = carried
+      ? { ...carried.character, weapons: [...this.keptWeapons()] }
+      : newCharacter(book.series, this.csRoll()!, this.epRoll()!);
     character.disciplines = [...this.selected()];
-    character.weaponskill = this.needsWeapon() ? this.weapon() : null;
+    character.weaponskill =
+      carried?.character.weaponskill ?? (this.needsWeapon() ? this.weapon() : null);
 
     const eq = this.equipment();
     let equipped = character;
     if (eq) {
       const picked = eq.pick.mode === 'random' ? [this.randomItem()!] : this.chosenOptions();
       const grants: Grant[] = [
-        ...eq.fixed,
+        // Les objets fixes déjà reportés (ex. la carte) ne sont pas donnés en double.
+        ...eq.fixed.filter((g) => !('name' in g) || !alreadyOwned(character, g.name)),
         { slot: 'gold', amount: eq.goldBase + this.goldRoll()! },
         ...picked.flatMap((o) => o.grants),
       ];

@@ -43,6 +43,11 @@ export class GameService {
     return game;
   }
 
+  /** Lit la partie d'un livre sans en faire la partie courante (ex. pour la reprendre au livre suivant). */
+  async peek(bookId: string): Promise<GameState | undefined> {
+    return (await database()).get('games', bookId);
+  }
+
   async exists(bookId: string): Promise<boolean> {
     return !!(await (await database()).get('games', bookId));
   }

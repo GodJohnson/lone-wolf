@@ -10,38 +10,81 @@
       <p class="notice notice--warning">{{ i18n.t('newGame.unverifiedRules') }}</p>
     }
 
-    <section class="card">
-      <div class="stat-row">
-        <div class="stat">
-          <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
-          <span class="stat__value">{{
-            csRoll() === null ? '–' : rules().combatSkillBase + csRoll()!
-          }}</span>
-          <span class="stat__hint">{{
-            i18n.t('newGame.formula', { base: rules().combatSkillBase })
-          }}</span>
+    @if (carried(); as c) {
+      <section class="card">
+        <h2>{{ i18n.t('carry.title', { book: previousTitle() }) }}</h2>
+        <div class="stat-row">
+          <div class="stat">
+            <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
+            <span class="stat__value">{{ c.character.combatSkill }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
+            <span class="stat__value">{{ c.character.enduranceMax }}</span>
+          </div>
         </div>
-        <div class="stat">
-          <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
-          <span class="stat__value">{{
-            epRoll() === null ? '–' : rules().enduranceBase + epRoll()!
-          }}</span>
-          <span class="stat__hint">{{
-            i18n.t('newGame.formula', { base: rules().enduranceBase })
-          }}</span>
+        <p class="small muted">
+          {{
+            i18n.t('carry.summary', {
+              gold: c.character.gold,
+              items: c.character.specialItems.length,
+            })
+          }}
+        </p>
+        @if (c.character.weapons.length) {
+          <h3 class="small">{{ i18n.t('carry.weapons', { max: rules().maxWeapons }) }}</h3>
+          <div class="chips">
+            @for (w of c.character.weapons; track w) {
+              <button
+                type="button"
+                class="chip"
+                [class.chip--on]="isKept(w)"
+                [attr.aria-pressed]="isKept(w)"
+                (click)="toggleKept(w)"
+              >
+                {{ w }}
+              </button>
+            }
+          </div>
+        }
+        <p class="small muted">{{ i18n.t('carry.notCarried') }}</p>
+      </section>
+    } @else if (from()) {
+      <p class="notice notice--error">{{ i18n.t('carry.missing') }}</p>
+    } @else {
+      <section class="card">
+        <div class="stat-row">
+          <div class="stat">
+            <span class="stat__label">{{ i18n.t('newGame.combatSkill') }}</span>
+            <span class="stat__value">{{
+              csRoll() === null ? '–' : rules().combatSkillBase + csRoll()!
+            }}</span>
+            <span class="stat__hint">{{
+              i18n.t('newGame.formula', { base: rules().combatSkillBase })
+            }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat__label">{{ i18n.t('newGame.endurance') }}</span>
+            <span class="stat__value">{{
+              epRoll() === null ? '–' : rules().enduranceBase + epRoll()!
+            }}</span>
+            <span class="stat__hint">{{
+              i18n.t('newGame.formula', { base: rules().enduranceBase })
+            }}</span>
+          </div>
         </div>
-      </div>
-      <button type="button" class="button button--block" (click)="rollStats()">
-        🎲 {{ csRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
-      </button>
-    </section>
+        <button type="button" class="button button--block" (click)="rollStats()">
+          🎲 {{ csRoll() === null ? i18n.t('newGame.roll') : i18n.t('newGame.reroll') }}
+        </button>
+      </section>
+    }
 
     <section class="card">
       <h2>
         {{
           i18n.t('newGame.disciplines', {
             count: selected().length,
-            max: rules().disciplinesToChoose,
+            max: disciplinesToChoose(),
           })
         }}
       </h2>
@@ -52,6 +95,7 @@
             class="chip"
             [class.chip--on]="isSelected(d)"
             [attr.aria-pressed]="isSelected(d)"
+            [disabled]="isLocked(d)"
             (click)="toggle(d)"
           >
             {{ d }}
