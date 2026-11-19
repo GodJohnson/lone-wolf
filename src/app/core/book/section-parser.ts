@@ -1,4 +1,4 @@
-import { Block, Enemy } from './book.models';
+import { Block, Enemy, FootnoteRecord } from './book.models';
 import { cleanInnerHtml, cleanOuterHtml, normalizedText } from './html-cleaner';
 
 /**
@@ -96,6 +96,17 @@ export function parseBlocks(root: Element, skipFirstHeading = true): Block[] {
 
   visit(root);
   return blocks;
+}
+
+/** Notes de bas de page d'une section (`section#footnotes`, paragraphes « [3] texte »). */
+export function parseFootnotes(doc: Document): FootnoteRecord[] {
+  const notes: FootnoteRecord[] = [];
+  for (const p of Array.from(doc.querySelectorAll('#footnotes p'))) {
+    const html = cleanInnerHtml(p);
+    const match = /^\[(?:<a[^>]*>)?\s*(\d{1,2})\s*(?:<\/a>)?\]\s*/.exec(html);
+    if (match) notes.push({ number: match[1], html: html.slice(match[0].length) });
+  }
+  return notes;
 }
 
 export function parseEnemy(text: string): Enemy | null {

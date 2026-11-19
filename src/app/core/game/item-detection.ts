@@ -16,6 +16,7 @@ export type FoundItem =
   | { kind: 'item'; name: string; slot: ItemSlot; declared?: boolean }
   | { kind: 'gold'; amount: number; label: string }
   | { kind: 'meals'; count: number; label: string }
+  | { kind: 'place'; name: string; declared?: boolean }
   | { kind: 'endurance'; amount: number; label: string; declared?: boolean }
   | { kind: 'purchase'; name: string; price: number; slot: ItemSlot; declared?: boolean };
 
@@ -145,6 +146,7 @@ const KNOWN_ITEM_PATTERNS = ITEM_TERMS.map(
 
 /** Clé d'un objet détecté, pour mémoriser « Pas ramassable ici » (avec le numéro de section). */
 export function itemKey(item: FoundItem): string {
+  if (item.kind === 'place') return `place:${item.name}`;
   if (item.kind === 'purchase') return `buy:${item.name}`;
   return item.kind === 'item' ? item.name : item.label;
 }
@@ -168,6 +170,8 @@ export function annotateItems(
   declaredPurchases: readonly { name: string; price: number }[] = [],
   /** Liens d'ENDURANCE déclarés à la main dans cette section (texte du passage et montant signé). */
   declaredEndurance: readonly { text: string; amount: number }[] = [],
+  /** Lieux à lier : noms connus de la carte du livre, et textes déclarés à la main dans cette section. */
+  places: { known: readonly string[]; declared: readonly string[] } = { known: [], declared: [] },
 ): AnnotatedBlocks {
   const excluded = new Set([...NON_ITEMS, ...excludedTerms.map((t) => t.toLowerCase())]);
   const items: FoundItem[] = [];
@@ -177,6 +181,7 @@ export function annotateItems(
     if (block.kind !== 'html' || !/^<(?:p|ul)[\s>]/.test(block.html)) return block;
     let html = annotatePurchases(block.html, items, ignored, declaredPurchases);
     if (/^<p[\s>]/.test(html)) html = annotateEndurance(html, items, ignored, declaredEndurance);
+    if (/^<p[\s>]/.test(html)) html = annotatePlaces(html, items, ignored, places);
     if (/^<p[\s>]/.test(html)) {
       html = annotateParagraph(html, items, lexicon, ignored, excluded, declared);
     }
@@ -253,6 +258,50 @@ function annotatePurchases(
     changed = true;
   }
   return changed ? root.outerHTML : html;
+}
+
+/** Noms de lieux (carte du livre) et textes déclarés à la main : liens qui ouvrent la carte. */
+function annotatePlaces(
+  html: string,
+  items: FoundItem[],
+  ignored: ReadonlySet<string>,
+  places: { known: readonly string[]; declared: readonly string[] },
+): string {
+  if (!places.known.length && !places.declared.length) return html;
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const paragraph = doc.body.firstElementChild;
+  if (!paragraph) return html;
+  const text = paragraph.textContent ?? '';
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const found: { start: number; end: number; item: FoundItem }[] = [];
+  const scan = (names: readonly string[], declared: boolean) => {
+    for (const name of new Set(names)) {
+      const pattern = new RegExp(declared ? escape(name) : `\\b${escape(name)}\\b`, 'g');
+      for (let m = pattern.exec(text); m; m = pattern.exec(text)) {
+        const item: FoundItem = declared
+          ? { kind: 'place', name: m[0], declared: true }
+          : { kind: 'place', name: m[0] };
+        if (!ignored.has(itemKey(item)))
+          found.push({ start: m.index, end: m.index + m[0].length, item });
+      }
+    }
+  };
+  scan(places.known, false);
+  scan(places.declared, true);
+  found.sort((a, b) => a.start - b.start || b.end - a.end);
+  const kept: typeof found = [];
+  let end = -1;
+  for (const f of found) {
+    if (f.start < end) continue;
+    end = f.end;
+    kept.push(f);
+  }
+  if (!kept.length) return html;
+  wrapRanges(
+    paragraph,
+    kept.map((f) => ({ ...f, index: items.push(f.item) - 1, cls: 'item-link place-link' })),
+  );
+  return paragraph.outerHTML;
 }
 
 const ENDURANCE_PATTERN = new RegExp(
@@ -592,7 +641,10 @@ function splitSentences(text: string): { text: string; offset: number; index: nu
  * Entoure des plages du texte (offsets dans `textContent`) de liens `#item-N`, sans casser le balisage.
  * Une plage qui traverse un élément (« 2 <span>ENDURANCE</span> points ») reçoit un lien par morceau.
  */
-function wrapRanges(root: Element, ranges: { start: number; end: number; index: number }[]): void {
+function wrapRanges(
+  root: Element,
+  ranges: { start: number; end: number; index: number; cls?: string }[],
+): void {
   const doc = root.ownerDocument;
   for (const range of [...ranges].reverse()) {
     const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -613,7 +665,7 @@ function wrapRanges(root: Element, ranges: { start: number; end: number; index: 
       target.splitText(piece.end - piece.start);
       const link = doc.createElement('a');
       link.setAttribute('href', `${ITEM_LINK_PREFIX}${range.index}`);
-      link.setAttribute('class', 'item-link');
+      link.setAttribute('class', range.cls ?? 'item-link');
       target.replaceWith(link);
       link.appendChild(target);
     }

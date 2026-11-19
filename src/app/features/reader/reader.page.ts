@@ -18,6 +18,8 @@ import { evaluateChoices } from '../../core/game/choice-conditions';
 import { FoundItem, annotateItems, guessSlot, itemKey } from '../../core/game/item-detection';
 import { rulesFor } from '../../core/game/rules';
 import { ItemSheetComponent } from './item-sheet.component';
+import { MapViewerComponent } from './map-viewer.component';
+import { knownPlaceNames } from '../../core/game/places';
 import { PaymentSheetComponent } from './payment-sheet.component';
 import { guessPrice, paymentsOf } from '../../core/game/purchases';
 import { SelectionBarComponent } from './selection-bar.component';
@@ -52,6 +54,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     SamorComponent,
     ItemSheetComponent,
     PaymentSheetComponent,
+    MapViewerComponent,
     SelectionBarComponent,
     CharacterPanelComponent,
     LexiconPanelComponent,
@@ -125,6 +128,36 @@ export class ReaderPage {
   private readonly declaredEndurance = linkedSignal(
     () => this.book.value()?.declaredEndurance ?? [],
   );
+  /** Lieux déclarés à la main (`<section>|<texte>`) et épingles du joueur sur la carte (`<nom>|<x>|<y>`). */
+  private readonly declaredPlaces = linkedSignal(() => this.book.value()?.declaredPlaces ?? []);
+  protected readonly placePins = linkedSignal(() => this.book.value()?.placePins ?? []);
+  protected readonly mapView = signal<{ name: string | null; declarable: boolean } | null>(null);
+
+  protected openMap(name: string | null, declarable = false): void {
+    this.mapView.set({ name, declarable });
+  }
+
+  protected async pinPlace(pin: { name: string; x: number; y: number }): Promise<void> {
+    this.placePins.set(await this.books.setPlacePin(this.bookId(), pin.name, pin.x, pin.y));
+  }
+
+  /** Mots sélectionnés à repérer sur la carte : épingle à placer si le lieu est inconnu. */
+  protected declarePlaceSelection(text: string): void {
+    this.declareLinkable.set(this.sourceText().includes(normalizeText(text)));
+    this.openMap(text, this.declareLinkable());
+    this.document.getSelection()?.removeAllRanges();
+  }
+
+  /** Le lieu déclaré devient un lien dans cette section. */
+  protected async linkPlace(): Promise<void> {
+    const name = this.mapView()?.name;
+    const section = this.sectionNumber();
+    if (!name || section === null) return;
+    this.declaredPlaces.set(await this.books.declarePlace(this.bookId(), `${section}|${name}`));
+    this.mapView.update((v) => (v ? { ...v, declarable: false } : v));
+    this.flash(this.i18n.t('map.linked', { name }));
+  }
+
   protected readonly annotated = computed(() => {
     const section = this.sectionNumber();
     const prefix = `${section}|`;
@@ -154,6 +187,12 @@ export class ReaderPage {
           const [amount, ...text] = k.slice(prefix.length).split('|');
           return { text: text.join('|'), amount: Number(amount) };
         }),
+      {
+        known: [...knownPlaceNames(this.bookId()), ...this.placePins().map((p) => p.split('|')[0])],
+        declared: this.declaredPlaces()
+          .filter((k) => k.startsWith(prefix))
+          .map((k) => k.slice(prefix.length)),
+      },
     );
   });
   /** Prix des choix payants de la section. */
@@ -172,10 +211,15 @@ export class ReaderPage {
 
   protected openItem(index: number): void {
     const item = this.annotated().items[index];
+    if (item?.kind === 'place') {
+      this.openMap(item.name, false);
+      return;
+    }
     if (item && !this.game.isDead()) this.selectedItem.set(item);
   }
 
   protected foundLabel(item: FoundItem): string {
+    if (item.kind === 'place') return `📍 ${item.name}`;
     if (item.kind === 'endurance') {
       return this.i18n.t(item.amount < 0 ? 'endurance.lose' : 'endurance.gain', {
         n: Math.abs(item.amount),

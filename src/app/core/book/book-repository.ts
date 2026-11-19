@@ -5,6 +5,10 @@ import { BookMeta, PageRecord, ParsedBook, SectionRecord } from './book.models';
 
 const USER_NON_ITEMS_KEY = 'lone-wolf.nonItems';
 
+/** Listes de corrections du joueur conservées avec le livre. */
+type PlayerList =
+  'declaredItems' | 'declaredPurchases' | 'declaredEndurance' | 'declaredPlaces' | 'placePins';
+
 @Injectable({ providedIn: 'root' })
 export class BookRepository {
   private readonly imageUrls = new Map<string, Promise<string | null>>();
@@ -90,6 +94,28 @@ export class BookRepository {
     return this.updateList(bookId, 'declaredPurchases', (list) => list.filter((k) => k !== key));
   }
 
+  /** Mémorise un lieu déclaré à la main (`<section>|<texte>`) ; retourne la liste à jour. */
+  async declarePlace(bookId: string, key: string): Promise<string[]> {
+    return this.updateList(bookId, 'declaredPlaces', (list) => [...new Set([...list, key])]);
+  }
+
+  async undeclarePlace(bookId: string, key: string): Promise<string[]> {
+    return this.updateList(bookId, 'declaredPlaces', (list) => list.filter((k) => k !== key));
+  }
+
+  /** Place (ou déplace) l'épingle d'un lieu sur la carte (`<nom>|<x>|<y>`, fractions) ; retourne la liste. */
+  async setPlacePin(bookId: string, name: string, x: number, y: number): Promise<string[]> {
+    const entry = `${name}|${x.toFixed(4)}|${y.toFixed(4)}`;
+    return this.updateList(bookId, 'placePins', (list) => [
+      ...list.filter((k) => k.split('|')[0].toLowerCase() !== name.toLowerCase()),
+      entry,
+    ]);
+  }
+
+  async removePlacePin(bookId: string, entry: string): Promise<string[]> {
+    return this.updateList(bookId, 'placePins', (list) => list.filter((k) => k !== entry));
+  }
+
   /** Mémorise un lien d'ENDURANCE déclaré (`<section>|<montant>|<texte>`) ; retourne la liste à jour. */
   async declareEndurance(bookId: string, key: string): Promise<string[]> {
     return this.updateList(bookId, 'declaredEndurance', (list) => [...new Set([...list, key])]);
@@ -101,7 +127,7 @@ export class BookRepository {
 
   private async updateList(
     bookId: string,
-    field: 'declaredItems' | 'declaredPurchases' | 'declaredEndurance',
+    field: PlayerList,
     update: (list: string[]) => string[],
   ): Promise<string[]> {
     const db = await database();
@@ -143,12 +169,7 @@ export class BookRepository {
   async save(book: ParsedBook): Promise<void> {
     // Les corrections du joueur survivent à un réimport.
     const previous = await this.get(book.meta.id);
-    if (
-      previous?.dismissedItems ||
-      previous?.declaredItems ||
-      previous?.declaredPurchases ||
-      previous?.declaredEndurance
-    ) {
+    if (previous) {
       book = {
         ...book,
         meta: {
@@ -157,6 +178,8 @@ export class BookRepository {
           declaredItems: previous.declaredItems,
           declaredPurchases: previous.declaredPurchases,
           declaredEndurance: previous.declaredEndurance,
+          declaredPlaces: previous.declaredPlaces,
+          placePins: previous.placePins,
         },
       };
     }

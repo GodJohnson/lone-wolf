@@ -12,6 +12,7 @@ import {
   mainText,
   pageTitle,
   parseBlocks,
+  parseFootnotes,
   parseDisciplines,
   parseDocument,
   parseTableOfContents,
@@ -112,7 +113,13 @@ export function parseBookEntries(entries: Unzipped): ParsedBook {
 
     const number = sectionNumberFromFile(name);
     if (number !== null) {
-      sections.push({ bookId: id, number, blocks: parseBlocks(root, true) });
+      const notes = parseFootnotes(doc);
+      sections.push({
+        bookId: id,
+        number,
+        blocks: parseBlocks(root, true),
+        ...(notes.length ? { notes } : {}),
+      });
       continue;
     }
     const pageId = name.replace(/\.html?$/i, '');
