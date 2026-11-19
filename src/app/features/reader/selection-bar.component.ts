@@ -50,6 +50,15 @@ const EXCLUDED =
         >
           ❤ {{ i18n.t('endurance.declareAction') }}
         </button>
+        <button
+          type="button"
+          class="button"
+          (pointerdown)="$event.preventDefault()"
+          (mousedown)="$event.preventDefault()"
+          (click)="declarePlace.emit(selected)"
+        >
+          📍 {{ i18n.t('map.declareAction') }}
+        </button>
       </div>
     }
   `,
@@ -63,6 +72,8 @@ export class SelectionBarComponent {
   readonly declarePurchase = output<string>();
   /** Mots sélectionnés, à lier comme perte ou gain d'ENDURANCE. */
   readonly declareEndurance = output<string>();
+  /** Mots sélectionnés, à repérer sur la carte comme un lieu. */
+  readonly declarePlace = output<string>();
   protected readonly text = signal<string | null>(null);
 
   constructor() {

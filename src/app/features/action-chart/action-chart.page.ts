@@ -100,6 +100,29 @@ export class ActionChartPage {
       .sort((a, b) => a.section - b.section || a.text.localeCompare(b.text)),
   );
 
+  /** Lieux déclarés à la main et repères posés sur la carte. */
+  private readonly declaredPlaces = linkedSignal(() => this.book.value()?.declaredPlaces ?? []);
+  private readonly placePins = linkedSignal(() => this.book.value()?.placePins ?? []);
+  protected readonly placesHere = computed(() =>
+    this.declaredPlaces()
+      .map((key) => {
+        const [section, ...rest] = key.split('|');
+        return { key, section: Number(section), name: rest.join('|') };
+      })
+      .sort((a, b) => a.section - b.section || a.name.localeCompare(b.name)),
+  );
+  protected readonly pinsHere = computed(() =>
+    this.placePins().map((key) => ({ key, name: key.split('|')[0] })),
+  );
+
+  protected async undeclarePlace(key: string): Promise<void> {
+    this.declaredPlaces.set(await this.books.undeclarePlace(this.bookId(), key));
+  }
+
+  protected async removePin(key: string): Promise<void> {
+    this.placePins.set(await this.books.removePlacePin(this.bookId(), key));
+  }
+
   protected async undeclareEndurance(key: string): Promise<void> {
     this.declaredEndurance.set(await this.books.undeclareEndurance(this.bookId(), key));
   }

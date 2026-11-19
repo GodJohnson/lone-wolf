@@ -95,6 +95,9 @@ export function isSkilledWeapon(character: Character, weapon: string): boolean {
   const skill = character.weaponskill?.trim().toLowerCase();
   if (!skill || !hasDiscipline(character, DISCIPLINE.weaponskill)) return false;
   const name = weapon.trim().toLowerCase();
+  // Sommerswerd : se traite comme une épée à une main ; Weaponskill avec Short Sword, Sword ou Broadsword
+  // lui donne +2 (soit +10 au total avec ses +8), sans cumul avec une autre arme maîtrisée.
+  if (name === 'sommerswerd') return ['short sword', 'sword', 'broadsword'].includes(skill);
   if (name === skill) return true;
   const otherTableWeapon = KAI_WEAPONSKILL_TABLE.some((t) => t.toLowerCase() === name);
   return name.endsWith(' ' + skill) && !otherTableWeapon;
@@ -130,7 +133,8 @@ export interface CombatSkillBreakdown {
 }
 
 /** Un objet spécial qui est une arme (« Magic Spear ») : il sert en combat comme une arme portée. */
-const WEAPON_LIKE = /\b(?:spear|sword|broadsword|axe|mace|dagger|warhammer|quarterstaff|bow)$/i;
+const WEAPON_LIKE =
+  /\b(?:spear|sword|broadsword|axe|mace|dagger|warhammer|quarterstaff|bow|sommerswerd)$/i;
 
 /** Armes utilisables en combat : armes portées et objets spéciaux qui en sont (voir `WEAPON_LIKE`). */
 export function combatWeapons(character: Character): string[] {
@@ -161,6 +165,10 @@ export function effectiveCombatSkill(
   };
 }
 
+export function hasSommerswerd(character: Character): boolean {
+  return character.specialItems.some((i) => i.trim().toLowerCase() === 'sommerswerd');
+}
+
 export function startCombat(
   section: number,
   blockIndex: number,
@@ -174,6 +182,7 @@ export function startCombat(
     enemyEndurance: enemy.endurance,
     modifier: 0,
     useMindblast: hasDiscipline(character, DISCIPLINE.mindblast),
+    undead: /helghast/i.test(enemy.name),
     rounds: [],
     outcome: 'ongoing',
   };
@@ -192,7 +201,12 @@ export function playRound(
   if (combat.outcome !== 'ongoing') return { combat, character };
 
   const ratio = effectiveCombatSkill(character, combat).total - combat.enemy.combatSkill;
-  const { enemyLoss, playerLoss } = combatResult(ratio, roll);
+  const result = combatResult(ratio, roll);
+  const { playerLoss } = result;
+  // Sommerswerd : double les pertes d'ENDURANCE des morts-vivants (Helghast…).
+  const doubled = combat.undead && hasSommerswerd(character);
+  const enemyLoss =
+    doubled && typeof result.enemyLoss === 'number' ? result.enemyLoss * 2 : result.enemyLoss;
 
   const enemyEndurance = evade
     ? combat.enemyEndurance

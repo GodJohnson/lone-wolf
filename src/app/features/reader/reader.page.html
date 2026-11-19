@@ -42,6 +42,7 @@
           [lang]="book.value()?.lang ?? 'en'"
           [bookId]="bookId()"
           [blocks]="annotated().blocks"
+          [notes]="section.value()?.notes ?? []"
           [interactive]="true"
           [choicesDisabled]="game.isDead()"
           (section)="goTo($event)"
@@ -153,6 +154,9 @@
           (bought)="itemBought($event)"
         />
       }
+      <button type="button" class="button button--block" (click)="openMap(null)">
+        🗺 {{ i18n.t('map.title') }}
+      </button>
       <section class="card">
         <h2>{{ i18n.t('desktop.found') }}</h2>
         @if (annotated().items.length) {
@@ -161,7 +165,7 @@
               <li>
                 <span>{{ foundLabel(found) }}</span>
                 <button type="button" class="button button--small" (click)="openItem($index)">
-                  ＋ {{ i18n.t('common.add') }}
+                  {{ found.kind === 'place' ? '🗺' : '＋ ' + i18n.t('common.add') }}
                 </button>
               </li>
             }
@@ -181,6 +185,7 @@
   (declare)="declareSelection($event)"
   (declarePurchase)="declarePurchaseSelection($event)"
   (declareEndurance)="declareEnduranceSelection($event)"
+  (declarePlace)="declarePlaceSelection($event)"
 />
 
 @if (toast(); as text) {
@@ -194,6 +199,9 @@
     </a>
     <button type="button" (click)="showRandom.set(true)">
       <span aria-hidden="true">🎲</span>{{ i18n.t('reader.random') }}
+    </button>
+    <button type="button" (click)="openMap(null)">
+      <span aria-hidden="true">🗺</span>{{ i18n.t('map.title') }}
     </button>
     <a [routerLink]="['/book', bookId(), 'page', book.value()?.pages?.[0]?.id ?? 'title']">
       <span aria-hidden="true">📖</span>{{ i18n.t('reader.rules') }}
@@ -222,6 +230,18 @@
     [target]="payment.target"
     (closed)="pendingPayment.set(null)"
     (confirmed)="confirmPayment()"
+  />
+}
+
+@if (mapView(); as view) {
+  <lw-map-viewer
+    [bookId]="bookId()"
+    [place]="view.name"
+    [pins]="placePins()"
+    [declarable]="view.declarable"
+    (closed)="mapView.set(null)"
+    (pinned)="pinPlace($event)"
+    (declared)="linkPlace()"
   />
 }
 

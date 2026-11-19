@@ -1,5 +1,5 @@
 import { FAKE_SECTION_1 } from '../../../testing/fake-book';
-import { mainText, parseBlocks, parseDocument, parseEnemy } from './section-parser';
+import { mainText, parseBlocks, parseDocument, parseEnemy, parseFootnotes } from './section-parser';
 
 describe('section-parser', () => {
   const blocks = parseBlocks(mainText(parseDocument(FAKE_SECTION_1))!);
@@ -61,5 +61,19 @@ describe('section-parser', () => {
       kind: 'html',
       html: '<div class="signpost">Fog Inn—Harbour Street</div>',
     });
+  });
+
+  it('lit les notes de bas de page (section#footnotes) sans le « [N] »', () => {
+    const doc = parseDocument(
+      '<article><div class="maintext"><h3>7</h3><p>Texte<sup><a>3</a></sup></p></div>' +
+        '<section id="footnotes"><h4>Footnotes</h4>' +
+        '<p>[<a name="x" href="#y">3</a>] Une <span class="smallcaps">NOTE</span> inventée.</p></section></article>',
+    );
+    expect(parseFootnotes(doc)).toEqual([
+      { number: '3', html: 'Une <span class="smallcaps">NOTE</span> inventée.' },
+    ]);
+    expect(
+      parseFootnotes(parseDocument('<article><div class="maintext"></div></article>')),
+    ).toEqual([]);
   });
 });

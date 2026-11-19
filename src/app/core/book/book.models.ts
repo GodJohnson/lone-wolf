@@ -7,8 +7,9 @@
  * Version courante de l'analyse des zips. À incrémenter quand l'analyse conserve du contenu qu'elle
  * perdait avant : la bibliothèque propose alors de réimporter les livres plus anciens.
  * 2 : panneaux et enseignes (div.signpost) conservés.
+ * 3 : notes de bas de page des sections conservées.
  */
-export const PARSER_VERSION = 2;
+export const PARSER_VERSION = 3;
 
 export type BookLanguage = 'en' | 'es';
 
@@ -39,6 +40,10 @@ export interface BookMeta {
   declaredPurchases?: string[];
   /** Liens d'ENDURANCE déclarés à la main : `<section>|<montant signé>|<texte>`. */
   declaredEndurance?: string[];
+  /** Lieux déclarés à la main (nom non détecté) : `<section>|<texte>`. */
+  declaredPlaces?: string[];
+  /** Épingles posées sur la carte par le joueur : `<nom>|<x>|<y>` (fractions de l'image). */
+  placePins?: string[];
   /** Pages hors sections disponibles (règles, carte, équipement...), dans l'ordre de la table des matières. */
   pages: PageRef[];
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */
@@ -71,6 +76,13 @@ export interface SectionRecord {
   bookId: string;
   number: number;
   blocks: Block[];
+  /** Notes de bas de page (`<sup>3</sup>` dans le texte) : numéro et contenu HTML nettoyé. */
+  notes?: FootnoteRecord[];
+}
+
+export interface FootnoteRecord {
+  number: string;
+  html: string;
 }
 
 export interface PageRecord {

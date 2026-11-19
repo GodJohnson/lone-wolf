@@ -34,6 +34,8 @@ export interface CombatState {
   /** Modificateur de circonstance saisi par le joueur (ex. -1 dans la section 17). */
   modifier: number;
   useMindblast: boolean;
+  /** Ennemi mort-vivant : l'Épée de Sommer double ses pertes d'ENDURANCE. */
+  undead?: boolean;
   rounds: CombatRound[];
   outcome: 'ongoing' | 'won' | 'lost' | 'evaded';
 }

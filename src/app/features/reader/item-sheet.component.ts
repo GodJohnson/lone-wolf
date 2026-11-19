@@ -224,7 +224,7 @@ export class ItemSheetComponent {
         n: Math.abs(amount),
       });
     }
-    return item.kind === 'item' || item.kind === 'purchase' ? item.name : item.label;
+    return 'label' in item ? item.label : item.name;
   });
   protected readonly canAdd = computed(() => {
     if (this.isEndurance()) return this.amount() !== 0;
@@ -306,7 +306,9 @@ export class ItemSheetComponent {
       this.error.set(this.i18n.t(`chart.error.${error}`));
       return;
     }
-    this.added.emit(item.kind === 'item' ? this.name().trim() : item.label);
+    this.added.emit(
+      item.kind === 'item' ? this.name().trim() : 'label' in item ? item.label : item.name,
+    );
   }
 
   /** Perte ou gain d'ENDURANCE du récit, borné entre 0 et le total. */

@@ -43,6 +43,42 @@ describe('rules', () => {
     expect(effectiveCombatSkill(other, { modifier: 0, useMindblast: false }).noWeapon).toBe(-4);
   });
 
+  it('Sommerswerd : +8 HAB, +2 Weaponskill avec une épée (soit +10), compte comme arme', () => {
+    const base = { weapons: [], specialItems: ['Sommerswerd'] };
+    const none = hero({ ...base });
+    expect(effectiveCombatSkill(none, { modifier: 0, useMindblast: false })).toMatchObject({
+      noWeapon: 0,
+      items: 8,
+      weaponskill: 0,
+    });
+    const skilled = hero({ ...base, disciplines: ['Weaponskill'], weaponskill: 'Broadsword' });
+    const b = effectiveCombatSkill(skilled, { modifier: 0, useMindblast: false });
+    expect(b.items + b.weaponskill).toBe(10);
+    const axe = hero({ ...base, disciplines: ['Weaponskill'], weaponskill: 'Axe' });
+    expect(effectiveCombatSkill(axe, { modifier: 0, useMindblast: false }).weaponskill).toBe(0);
+  });
+
+  it('Sommerswerd : double les pertes d’un mort-vivant, sans cumuler le +2 avec une autre arme', () => {
+    const c = hero({
+      disciplines: ['Weaponskill'],
+      weaponskill: 'Sword',
+      weapons: ['Sword'],
+      specialItems: ['Sommerswerd'],
+    });
+    expect(effectiveCombatSkill(c, { modifier: 0, useMindblast: false }).weaponskill).toBe(2);
+    const enemy = { name: 'Helghast', combatSkill: 22, endurance: 30 };
+    const start = startCombat(1, 0, enemy, c);
+    expect(start.undead).toBe(true);
+    const normal = playRound({ ...start, undead: false }, c, 9).combat.rounds[0].enemyLoss;
+    const doubled = playRound(start, c, 9).combat.rounds[0].enemyLoss;
+    expect(doubled).toBe((normal as number) * 2);
+    const plain = hero({ weapons: ['Sword'] });
+    expect(playRound(startCombat(1, 0, enemy, plain), plain, 9).combat.rounds[0].enemyLoss).toBe(
+      playRound({ ...startCombat(1, 0, enemy, plain), undead: false }, plain, 9).combat.rounds[0]
+        .enemyLoss,
+    );
+  });
+
   it('joue un assaut et détecte la victoire', () => {
     const c = hero();
     const combat = startCombat(1, 0, { name: 'Rat', combatSkill: 15, endurance: 3 }, c);

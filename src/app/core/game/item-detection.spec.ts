@@ -231,4 +231,44 @@ describe('item-detection', () => {
     const lose = p('You lose 2 ENDURANCE points.');
     expect(annotateItems([lose], [], new Set(['lose 2 ENDURANCE points'])).items).toEqual([]);
   });
+
+  it('propose le Sommerswerd (Objet spécial) quand le texte dit que vous le possédez', () => {
+    const { items } = annotateItems([
+      p(
+        'Make the necessary adjustments to your COMBAT SKILL total now that you possess the Sommerswerd.',
+      ),
+    ]);
+    expect(items).toEqual([{ kind: 'item', name: 'Sommerswerd', slot: 'specialItems' }]);
+  });
+
+  describe('lieux', () => {
+    it('lie les noms de lieux de la carte, dans une section', () => {
+      const { blocks, items } = annotateItems(
+        [p('You ride from Holmgard towards Ragadorn along the coast.')],
+        [],
+        new Set(),
+        [],
+        [],
+        [],
+        [],
+        { known: ['Holmgard', 'Ragadorn'], declared: [] },
+      );
+      expect(items).toEqual([
+        { kind: 'place', name: 'Holmgard' },
+        { kind: 'place', name: 'Ragadorn' },
+      ]);
+      expect((blocks[0] as { html: string }).html).toContain(
+        'class="item-link place-link">Holmgard</a>',
+      );
+    });
+
+    it('lie un lieu déclaré à la main, respecte « Pas ici » et la casse des noms connus', () => {
+      const text = p('The old fort of Marrow Hill stands by holmgard.');
+      const { items } = annotateItems([text], [], new Set(['place:Holmgard']), [], [], [], [], {
+        known: ['Holmgard'],
+        declared: ['Marrow Hill'],
+      });
+      expect(items).toEqual([{ kind: 'place', name: 'Marrow Hill', declared: true }]);
+    });
+  });
 });

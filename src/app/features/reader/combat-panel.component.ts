@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { GameService } from '../../core/game/game.service';
-import { DISCIPLINE, hasDiscipline } from '../../core/game/rules';
+import { DISCIPLINE, hasDiscipline, hasSommerswerd } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
@@ -36,6 +36,15 @@ export class CombatPanelComponent {
 
   protected adjustModifier(delta: number): void {
     this.game.updateCombat((c) => ({ ...c, modifier: c.modifier + delta }));
+  }
+
+  protected readonly hasSommerswerd = computed(() => {
+    const c = this.game.character();
+    return !!c && hasSommerswerd(c);
+  });
+
+  protected toggleUndead(): void {
+    this.game.updateCombat((c) => ({ ...c, undead: !c.undead }));
   }
 
   protected toggleMindblast(): void {
