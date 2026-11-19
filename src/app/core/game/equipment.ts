@@ -25,6 +25,8 @@ const ITEM_EFFECTS: Record<string, ItemEffect> = {
   'chainmail waistcoat': { endurance: 4 },
   'padded leather waistcoat': { endurance: 2 },
   shield: { combatSkill: 2 },
+  /** Épée de Sommer : +8 HAB (le +2 Weaponskill avec une épée est compté à part, sans cumul). */
+  sommerswerd: { combatSkill: 8 },
   'healing potion': { heal: 4 },
   'potion of laumspur': { heal: 4 },
   laumspur: { heal: 4 },
@@ -53,6 +55,7 @@ export const KNOWN_ITEMS: Record<ItemSlot, readonly string[]> = {
     'Chainmail Waistcoat',
     'Padded Leather Waistcoat',
     'Shield',
+    'Sommerswerd',
     'Map of Sommerlund',
   ],
 };

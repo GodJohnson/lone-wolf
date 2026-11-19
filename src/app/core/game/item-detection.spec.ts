@@ -231,4 +231,13 @@ describe('item-detection', () => {
     const lose = p('You lose 2 ENDURANCE points.');
     expect(annotateItems([lose], [], new Set(['lose 2 ENDURANCE points'])).items).toEqual([]);
   });
+
+  it('propose le Sommerswerd (Objet spécial) quand le texte dit que vous le possédez', () => {
+    const { items } = annotateItems([
+      p(
+        'Make the necessary adjustments to your COMBAT SKILL total now that you possess the Sommerswerd.',
+      ),
+    ]);
+    expect(items).toEqual([{ kind: 'item', name: 'Sommerswerd', slot: 'specialItems' }]);
+  });
 });

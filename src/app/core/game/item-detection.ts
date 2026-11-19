@@ -28,7 +28,7 @@ export interface AnnotatedBlocks {
 export const ITEM_LINK_PREFIX = '#item-';
 
 const TAKE_PARAGRAPH =
-  /\b(?:may|can|might) (?:also )?(?:keep|take)\b|\bif you (?:wish|decide|want) to (?:keep|take|buy|purchase|accept|put on)\b|\b(?:mark|record|note)\b[^.]*\bAction Chart\b|\b(?:Special|Backpack) Items?\b|\bif you wish\b/i;
+  /\b(?:may|can|might) (?:also )?(?:keep|take)\b|\bif you (?:wish|decide|want) to (?:keep|take|buy|purchase|accept|put on)\b|\b(?:mark|record|note)\b[^.]*\bAction Chart\b|\b(?:Special|Backpack) Items?\b|\bif you wish\b|\bnow that you (?:possess|have|hold)\b/i;
 const LOSS_SENTENCE =
   /\b(?:erase|remove|lose|lost|stolen|steal|discard|confiscat\w*|exchange|give|pay|fee|cost|demand\w*|bribe)\b/i;
 
@@ -78,6 +78,7 @@ const ITEM_NOUNS = new Set([
   'vial',
   'whistle',
   'medallion',
+  'sommerswerd',
 ]);
 /** Mots capitalisés qui ne désignent pas des objets à ramasser. */
 const STOP_WORDS = new Set(
@@ -568,6 +569,7 @@ export function guessSlot(name: string, context: string): ItemSlot {
   const near = new RegExp(`${escaped}[^.]*?\\b(Special|Backpack) Item`, 'i').exec(context);
   if (near) return near[1].toLowerCase() === 'special' ? 'specialItems' : 'backpack';
   const last = name.toLowerCase().split(' ').pop()!.replace(/s$/, '');
+  if (name.toLowerCase() === 'sommerswerd') return 'specialItems';
   if (WEAPON_NOUNS.has(last)) return 'weapons';
   if (/\bSpecial Item\b/i.test(context) && !/\bBackpack Item\b/i.test(context))
     return 'specialItems';
