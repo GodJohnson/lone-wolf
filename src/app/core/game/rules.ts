@@ -3,7 +3,23 @@ import { combatResult } from './combat-results-table';
 import { itemsCombatBonus } from './equipment';
 import { Character, CombatRound, CombatState } from './game.models';
 
+/** Rangs Kaï (« Levels of Kai Training ») : un rang par Discipline maîtrisée, de 1 à 10. */
+export const KAI_RANKS = [
+  'Novice',
+  'Intuite',
+  'Doan',
+  'Acolyte',
+  'Initiate',
+  'Aspirant',
+  'Guardian',
+  'Warmarn',
+  'Savant',
+  'Master',
+] as const;
+
 export interface SeriesRules {
+  /** Rangs de la série, du plus bas au plus haut (absent : rangs non gérés). */
+  ranks?: readonly string[];
   disciplinesToChoose: number;
   combatSkillBase: number;
   enduranceBase: number;
@@ -26,6 +42,7 @@ export const SERIES_RULES: Record<Series, SeriesRules> = {
     maxBackpackItems: 8,
     maxGold: 50,
     verified: true,
+    ranks: KAI_RANKS,
   },
   magnakai: {
     disciplinesToChoose: 3,
@@ -55,6 +72,17 @@ export const SERIES_RULES: Record<Series, SeriesRules> = {
     verified: false,
   },
 };
+
+/** Rang du personnage (index dans `rules.ranks`) : une Discipline de plus, un rang de plus. */
+export function rankIndex(character: Character, rules: SeriesRules): number | null {
+  const count = character.disciplines.length;
+  return rules.ranks && count >= 1 ? Math.min(count, rules.ranks.length) - 1 : null;
+}
+
+export function rankName(character: Character, rules: SeriesRules): string | null {
+  const index = rankIndex(character, rules);
+  return index === null ? null : (rules.ranks?.[index] ?? null);
+}
 
 export function rulesFor(series: Series | null): SeriesRules {
   return SERIES_RULES[series ?? 'kai'];

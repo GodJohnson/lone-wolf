@@ -16,7 +16,7 @@ import { Enemy } from '../../core/book/book.models';
 import { MealChoice, requiresMeal } from '../../core/game/equipment';
 import { evaluateChoices } from '../../core/game/choice-conditions';
 import { FoundItem, annotateItems, guessSlot, itemKey } from '../../core/game/item-detection';
-import { rulesFor } from '../../core/game/rules';
+import { rankIndex, rulesFor } from '../../core/game/rules';
 import { ItemSheetComponent } from './item-sheet.component';
 import { MapViewerComponent } from './map-viewer.component';
 import { knownPlaceNames } from '../../core/game/places';
@@ -334,6 +334,10 @@ export class ReaderPage {
       this.section.value()?.blocks ?? [],
       this.game.character()?.disciplines ?? [],
       this.book.value()?.disciplines ?? [],
+      {
+        index: this.game.character() ? rankIndex(this.game.character()!, this.rules()) : null,
+        ranks: this.rules().ranks ?? [],
+      },
     ),
   );
 

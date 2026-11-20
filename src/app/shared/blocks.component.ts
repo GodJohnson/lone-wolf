@@ -64,13 +64,7 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
                   cond && cond.status !== 'unknown' && !(cond.status === 'met' && cond.negated)
                 ) {
                   <span class="choice__condition">
-                    {{
-                      cond.status === 'met'
-                        ? '✓ ' + cond.disciplines.join(' · ')
-                        : i18n.t(cond.negated ? 'choice.excludedBy' : 'choice.requires', {
-                            disciplines: cond.disciplines.join(' / '),
-                          })
-                    }}
+                    {{ conditionLabel(cond) }}
                   </span>
                 }
               </span>
@@ -165,6 +159,17 @@ export class BlocksComponent {
   readonly fight = output<{ index: number; enemy: Enemy }>();
   /** Lien d'objet ramassable (`#item-N`) touché : N = index dans la liste des objets détectés. */
   readonly item = output<number>();
+
+  /** Texte sous un choix conditionné : disciplines et rang exigés, ou « ✓ » s'ils sont remplis. */
+  protected conditionLabel(cond: ChoiceCondition): string {
+    const names = [...cond.disciplines];
+    if (cond.rank) names.push(this.i18n.t('choice.rank', { rank: cond.rank }));
+    if (cond.status === 'met') return '✓ ' + names.join(' · ');
+    const joiner = cond.rank ? ' + ' : ' / ';
+    return this.i18n.t(cond.negated ? 'choice.excludedBy' : 'choice.requires', {
+      disciplines: names.join(joiner),
+    });
+  }
 
   protected choose(target: number, index: number): void {
     const price = this.payments()[index];

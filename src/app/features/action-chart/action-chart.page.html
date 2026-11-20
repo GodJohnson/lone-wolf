@@ -112,6 +112,9 @@
           }
         }
       </div>
+      @if (rank(); as name) {
+        <p class="small">{{ i18n.t('chart.rank', { rank: name }) }}</p>
+      }
       @if (c.weaponskill) {
         <p class="small">{{ i18n.t('chart.weaponskill', { weapon: c.weaponskill }) }}</p>
       }
