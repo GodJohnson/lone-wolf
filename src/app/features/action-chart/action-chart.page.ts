@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Character } from '../../core/game/game.models';
 import { GameService } from '../../core/game/game.service';
-import { isSkilledWeapon, rulesFor } from '../../core/game/rules';
+import { isSkilledWeapon, rankName, rulesFor } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
@@ -44,6 +44,11 @@ export class ActionChartPage {
     },
   });
   protected readonly rules = computed(() => rulesFor(this.book.value()?.series ?? null));
+  /** Rang Kaï selon le nombre de Disciplines (absent pour les séries sans rangs gérés). */
+  protected readonly rank = computed(() => {
+    const c = this.game.character();
+    return c ? rankName(c, this.rules()) : null;
+  });
 
   /** Bonus affiché à côté d'une arme : seule l'arme maîtrisée en donne un. */
   protected readonly weaponHint = (name: string): string => {

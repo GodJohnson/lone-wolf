@@ -12,7 +12,7 @@ import { RouterLink } from '@angular/router';
 import { ItemListComponent } from '../action-chart/item-list.component';
 import { ItemSlot, backpackLoad } from '../../core/game/equipment';
 import { GameService } from '../../core/game/game.service';
-import { SeriesRules, isSkilledWeapon } from '../../core/game/rules';
+import { SeriesRules, isSkilledWeapon, rankName } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 
 /** Fiche du personnage en colonne latérale (bureau) : toujours visible pendant la lecture. */
@@ -57,6 +57,9 @@ import { I18nService } from '../../core/i18n/i18n.service';
             <span class="chip chip--on">{{ d }}</span>
           }
         </div>
+        @if (rank(); as name) {
+          <p class="small">{{ i18n.t('chart.rank', { rank: name }) }}</p>
+        }
         @if (game.canUndo()) {
           <button type="button" class="button button--small button--block" (click)="game.undo()">
             ↶ {{ i18n.t('common.undo') }}
@@ -122,6 +125,10 @@ export class CharacterPanelComponent {
 
   readonly bookId = input.required<string>();
   readonly rules = input.required<SeriesRules>();
+  protected readonly rank = computed(() => {
+    const c = this.game.character();
+    return c ? rankName(c, this.rules()) : null;
+  });
   readonly random = output<void>();
 
   protected readonly character = this.game.character;

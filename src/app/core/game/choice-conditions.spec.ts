@@ -121,4 +121,51 @@ describe('choice-conditions', () => {
   it('ignore les blocs qui ne sont pas des choix', () => {
     expect(evaluateChoices([{ kind: 'html', html: '<p>x</p>' }], [], BOOK)).toEqual([null]);
   });
+
+  describe('rang Kaï', () => {
+    const KAI = [
+      'Novice',
+      'Intuite',
+      'Doan',
+      'Acolyte',
+      'Initiate',
+      'Aspirant',
+      'Guardian',
+      'Warmarn',
+    ];
+    const blocks = [
+      choice('If you possess an Onyx Medallion, turn to 305.'),
+      choice(
+        'If you have the Kai Discipline of Camouflage and have reached the Kai Rank of Guardian or higher, turn to 49.',
+      ),
+      choice('If you do not have this Special Item or this Discipline and Kai Rank, turn to 159.'),
+    ];
+    const run = (owned: string[], index: number | null) =>
+      evaluateChoices(blocks, owned, BOOK, { index, ranks: KAI });
+
+    it('remplit la condition avec la discipline et un rang suffisant', () => {
+      const result = run(['Camouflage'], 6);
+      expect(result[1]).toMatchObject({
+        status: 'met',
+        disciplines: ['Camouflage'],
+        rank: 'Guardian',
+      });
+    });
+    it('refuse si le rang est trop bas ou la discipline absente', () => {
+      expect(run(['Camouflage'], 4)[1]?.status).toBe('unmet');
+      expect(run(['Hunting'], 7)[1]?.status).toBe('unmet');
+    });
+    it('reste incertain sans rang géré, et laisse les autres choix utilisables', () => {
+      expect(run(['Camouflage'], null)[1]?.status).toBe('unknown');
+      expect(run(['Camouflage'], 6)[0]?.status).toBe('unknown');
+    });
+    it('lit aussi « reached the Kai Rank of X or higher » seul', () => {
+      const only = [
+        choice('If you have reached the Kai Rank of Aspirant or higher, turn to 9.'),
+        choice('Otherwise, turn to 10.'),
+      ];
+      expect(evaluateChoices(only, [], BOOK, { index: 5, ranks: KAI })[0]?.status).toBe('met');
+      expect(evaluateChoices(only, [], BOOK, { index: 2, ranks: KAI })[0]?.status).toBe('unmet');
+    });
+  });
 });

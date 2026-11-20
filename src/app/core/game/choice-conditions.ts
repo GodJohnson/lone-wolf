@@ -14,12 +14,19 @@ export interface ChoiceCondition {
   disciplines: string[];
   /** Condition négative (« If you do not have… »). */
   negated: boolean;
+  /** Rang Kaï exigé (« reached the Kai Rank of Guardian or higher »). */
+  rank?: string;
 }
 
 const UNKNOWN: ChoiceCondition = { status: 'unknown', disciplines: [], negated: false };
 
 const POSITIVE =
   /^if you (?:have|possess|possess and wish to use|wish to use|wish to demonstrate)(?: the| your)?(?: [\w-]+)* disciplines? of (either |both )?(.+?)(?: (?:to|on) .*)?$/i;
+
+/** « If you have the Kai Discipline of Camouflage and have reached the Kai Rank of Guardian or higher ». */
+const RANK_CLAUSE =
+  /^if you (?:have|possess)(?: the| your)?(?: [\w-]+)* disciplines? of (.+?) and (?:have )?(?:you have )?reached the Kai Rank of (\w+)(?: or higher)?$/i;
+const RANK_ONLY = /^if you (?:have )?reached the Kai Rank of (\w+)(?: or higher)?$/i;
 
 /** Négation qui renvoie aux disciplines citées plus haut dans la section (« this », « the above »). */
 const NEGATIVE_THIS =
@@ -39,6 +46,8 @@ export function evaluateChoices(
   blocks: readonly Block[],
   playerDisciplines: readonly string[],
   bookDisciplines: readonly string[],
+  /** Rang du personnage (index dans `ranks`), `null` si les rangs de la série ne sont pas gérés. */
+  rank: { index: number | null; ranks: readonly string[] } = { index: null, ranks: [] },
 ): (ChoiceCondition | null)[] {
   const owned = new Set(playerDisciplines.map((d) => d.toLowerCase()));
   const known = new Map(bookDisciplines.map((d) => [d.toLowerCase(), d]));
@@ -50,6 +59,23 @@ export function evaluateChoices(
   const results = blocks.map((block): ChoiceCondition | null => {
     if (block.kind !== 'choice') return null;
     const clause = conditionClause(htmlToText(block.html));
+
+    const ranked = RANK_CLAUSE.exec(clause) ?? RANK_ONLY.exec(clause);
+    if (ranked) {
+      const [, list, wanted] = ranked.length === 3 ? ranked : [ranked[0], null, ranked[1]];
+      const needed = rank.ranks.findIndex((r) => r.toLowerCase() === wanted.toLowerCase());
+      const names = list ? parseList(list, known) : { names: [], joiner: 'and' as const };
+      if (needed < 0 || rank.index === null || !names) return UNKNOWN;
+      mentioned.push(...names.names);
+      last = names.names;
+      const hasAll = names.names.every((d) => owned.has(d.toLowerCase()));
+      return {
+        status: hasAll && rank.index >= needed ? 'met' : 'unmet',
+        disciplines: names.names,
+        negated: false,
+        rank: rank.ranks[needed],
+      };
+    }
 
     const positive = POSITIVE.exec(clause);
     if (positive) {
