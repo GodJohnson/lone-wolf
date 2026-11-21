@@ -13,6 +13,16 @@ export interface Character {
   gold: number;
   meals: number;
   notes: string;
+  /** Objets, or et Repas mis de côté (confisqués, laissés en route) : ne comptent plus, mais restent récupérables. */
+  stash?: Stash;
+}
+
+export interface Stash {
+  weapons: string[];
+  backpack: string[];
+  specialItems: string[];
+  gold: number;
+  meals: number;
 }
 
 export interface CombatRound {
