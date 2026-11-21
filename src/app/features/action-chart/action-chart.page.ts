@@ -17,13 +17,14 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
+import { StashPanelComponent } from './stash-panel.component';
 import { ItemSlot, backpackLoad } from '../../core/game/equipment';
 
 type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'meals';
 
 @Component({
   selector: 'lw-action-chart-page',
-  imports: [TopBarComponent, ItemListComponent, CounterComponent],
+  imports: [TopBarComponent, ItemListComponent, CounterComponent, StashPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './action-chart.page.html',
 })

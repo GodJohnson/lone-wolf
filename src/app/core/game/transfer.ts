@@ -1,5 +1,5 @@
 import { deflateSync, inflateSync, strFromU8, strToU8 } from 'fflate';
-import { Character, GameState } from './game.models';
+import { Character, GameState, Stash } from './game.models';
 
 /**
  * Transfert d'une partie d'un appareil à l'autre : la partie est compressée et encodée dans un lien
@@ -105,6 +105,19 @@ function character(value: unknown): Character {
     gold: int(c['gold'], 0, 500),
     meals: int(c['meals'], 0, 50),
     notes: typeof c['notes'] === 'string' ? c['notes'].slice(0, MAX_NOTES) : '',
+    ...(c['stash'] === undefined ? {} : { stash: stash(c['stash']) }),
+  };
+}
+
+function stash(value: unknown): Stash {
+  const s = asRecord(value);
+  const names = (v: unknown, max: number) => list(v, max).map((n) => str(n, 80));
+  return {
+    weapons: names(s['weapons'], 6),
+    backpack: names(s['backpack'], 20),
+    specialItems: names(s['specialItems'], 40),
+    gold: int(s['gold'], 0, 500),
+    meals: int(s['meals'], 0, 50),
   };
 }
 
