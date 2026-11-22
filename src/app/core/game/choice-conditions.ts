@@ -1,4 +1,5 @@
 import { Block } from '../book/book.models';
+import { LORE_CIRCLES } from './lore-circles';
 
 /**
  * Reconnaissance des choix conditionnés par une discipline (« If you have the Kai Discipline of
@@ -21,12 +22,14 @@ export interface ChoiceCondition {
 const UNKNOWN: ChoiceCondition = { status: 'unknown', disciplines: [], negated: false };
 
 const POSITIVE =
-  /^if you (?:have|possess|possess and wish to use|wish to use|wish to demonstrate)(?: the| your)?(?: [\w-]+)* disciplines? of (either |both )?(.+?)(?: (?:to|on) .*)?$/i;
+  /^(?:otherwise,? )?if you (?:have|possess|possess and wish to use|wish to use|wish to demonstrate)(?: the| your)?(?: [\w-]+)* disciplines? of (either |both )?(.+?)(?: (?:to|on) .*)?$/i;
 
 /** « If you have the Kai Discipline of Camouflage and have reached the Kai Rank of Guardian or higher ». */
 const RANK_CLAUSE =
-  /^if you (?:have|possess)(?: the| your)?(?: [\w-]+)* disciplines? of (.+?) and (?:have )?(?:you have )?reached the Kai Rank of (\w+)(?: or higher)?$/i;
-const RANK_ONLY = /^if you (?:have )?reached the Kai Rank of (\w+)(?: or higher)?$/i;
+  /^if you (?:have|possess)(?: the| your)?(?: [\w-]+)* disciplines? of (.+?) and (?:have )?(?:you have )?reached the (?:Kai|Magnakai) Rank of ([\w' -]+?)(?: or higher)?$/i;
+const LORE_CIRCLE_CLAUSE = /^if you have completed the Lore-circle of (?:the )?([\w-]+)/i;
+const RANK_ONLY =
+  /^if you (?:have )?reached the (?:Kai|Magnakai) Rank of ([\w' -]+?)(?: or higher)?$/i;
 
 /** Négation qui renvoie aux disciplines citées plus haut dans la section (« this », « the above »). */
 const NEGATIVE_THIS =
@@ -59,6 +62,20 @@ export function evaluateChoices(
   const results = blocks.map((block): ChoiceCondition | null => {
     if (block.kind !== 'choice') return null;
     const clause = conditionClause(htmlToText(block.html));
+
+    // « If you have completed the Lore-circle of Fire (that is, you possess … ) » (Magnakai).
+    const circle = LORE_CIRCLE_CLAUSE.exec(clause);
+    if (circle) {
+      const found = LORE_CIRCLES.find((c) =>
+        c.name.toLowerCase().endsWith(circle[1].toLowerCase()),
+      );
+      if (!found) return UNKNOWN;
+      const names = found.disciplines.map((d) => known.get(d.toLowerCase()) ?? d);
+      mentioned.push(...names);
+      last = names;
+      const met = found.disciplines.every((d) => owned.has(d.toLowerCase()));
+      return { status: met ? 'met' : 'unmet', disciplines: names, negated: false };
+    }
 
     const ranked = RANK_CLAUSE.exec(clause) ?? RANK_ONLY.exec(clause);
     if (ranked) {

@@ -79,6 +79,51 @@ describe('rules', () => {
     );
   });
 
+  describe('Magnakai', () => {
+    const magnakai = (over: Partial<Character> = {}) =>
+      hero({
+        disciplines: ['Weaponmastery'],
+        weaponmastery: ['Sword'],
+        weapons: ['Sword'],
+        ...over,
+      });
+    const cs = (c: Character, combat = {}) =>
+      effectiveCombatSkill(c, { modifier: 0, useMindblast: false, ...combat });
+
+    it('Weaponmastery : +3 HAB avec une arme maîtrisée, rien avec une autre', () => {
+      expect(cs(magnakai()).weaponskill).toBe(3);
+      expect(cs(magnakai({ weapons: ['Axe'] })).weaponskill).toBe(0);
+      expect(cs(magnakai({ weapons: ['Giak Sword'] })).weaponskill).toBe(3);
+      expect(cs(magnakai({ weapons: ['Short Sword'] })).weaponskill).toBe(0);
+    });
+
+    it('Psi-surge : +4 HAB, −2 END par assaut, impossible à 6 END ou moins, sans cumul avec Mindblast', () => {
+      const c = magnakai({ disciplines: ['Psi-surge'], endurance: 20 });
+      expect(cs(c, { usePsiSurge: true }).psisurge).toBe(4);
+      expect(cs(c, { usePsiSurge: true, useMindblast: true })).toMatchObject({
+        psisurge: 4,
+        mindblast: 0,
+      });
+      expect(cs(c, { useMindblast: true })).toMatchObject({ psisurge: 0, mindblast: 2 });
+      expect(cs({ ...c, endurance: 6 }, { usePsiSurge: true }).psisurge).toBe(0);
+      const enemy = { name: 'Rat', combatSkill: 15, endurance: 30 };
+      const start = startCombat(1, 0, enemy, c);
+      expect(start.usePsiSurge).toBe(true);
+      const plain = playRound({ ...start, usePsiSurge: false }, c, 5);
+      const surge = playRound(start, c, 5);
+      expect(surge.character.endurance).toBeLessThan(plain.character.endurance);
+      expect(surge.combat.rounds[0].playerLoss).toBe(
+        (plain.combat.rounds[0].playerLoss as number) + 2,
+      );
+    });
+
+    it('Curing soigne comme Healing : +1 END par section sans combat', () => {
+      const c = hero({ disciplines: ['Curing'], endurance: 10, enduranceMax: 25 });
+      expect(healingOnLeave(c, 5, []).endurance).toBe(11);
+      expect(healingOnLeave(c, 5, [5]).endurance).toBe(10);
+    });
+  });
+
   it('joue un assaut et détecte la victoire', () => {
     const c = hero();
     const combat = startCombat(1, 0, { name: 'Rat', combatSkill: 15, endurance: 3 }, c);

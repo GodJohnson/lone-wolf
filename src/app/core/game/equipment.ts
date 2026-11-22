@@ -193,6 +193,28 @@ export const STARTING_EQUIPMENT: Record<string, StartingEquipment> = {
       ],
     },
   },
+  '06tkot': {
+    fixed: [{ slot: 'specialItems', name: 'Map of the Stornlands' }],
+    goldBase: 10,
+    pick: {
+      mode: 'choose',
+      count: 5,
+      options: [
+        weapon('Sword'),
+        backpack('Potion of Laumspur'),
+        weapon('Warhammer'),
+        weapon('Bow'),
+        special('Quiver'),
+        meals('4 Special Rations', 4),
+        weapon('Quarterstaff'),
+        special('Padded Leather Waistcoat'),
+        backpack('Rope'),
+        weapon('Dagger'),
+        backpack('Tinderbox'),
+        weapon('Axe'),
+      ],
+    },
+  },
   '05sots': {
     fixed: [{ slot: 'specialItems', name: 'Map of Vassagonia' }],
     goldBase: 10,

@@ -343,7 +343,9 @@ export class ReaderPage {
 
   protected readonly canHunt = computed(() => {
     const c = this.game.character();
-    return !!c && hasDiscipline(c, DISCIPLINE.hunting);
+    return (
+      !!c && (hasDiscipline(c, DISCIPLINE.hunting) || hasDiscipline(c, DISCIPLINE.huntmastery))
+    );
   });
 
   protected eat(choice: MealChoice): void {

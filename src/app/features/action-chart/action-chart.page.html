@@ -118,6 +118,28 @@
       @if (c.weaponskill) {
         <p class="small">{{ i18n.t('chart.weaponskill', { weapon: c.weaponskill }) }}</p>
       }
+      @if (hasMastery()) {
+        <h3 class="small">{{ i18n.t('chart.mastery') }}</h3>
+        <div class="chips">
+          @for (w of masteryList; track w) {
+            <button
+              type="button"
+              class="chip"
+              [class.chip--on]="c.weaponmastery?.includes(w)"
+              [attr.aria-pressed]="!!c.weaponmastery?.includes(w)"
+              (click)="toggleMastery(w)"
+            >
+              {{ w }}
+            </button>
+          }
+        </div>
+      }
+      @for (circle of circles(); track circle.name) {
+        <p class="small">
+          ✦
+          {{ i18n.t('chart.lore', { circle: circle.name, cs: circle.cs, ep: circle.ep }) }}
+        </p>
+      }
     </section>
 
     @if (error(); as message) {

@@ -18,11 +18,13 @@ import {
   weaponCount,
 } from '../../core/game/equipment';
 import { CarriedHero, alreadyOwned, carryOver } from '../../core/game/carry-over';
+import { syncLoreBonus } from '../../core/game/lore-circles';
 import { GameService } from '../../core/game/game.service';
 import { randomNumber } from '../../core/game/random';
 import {
   DISCIPLINE,
   KAI_WEAPONSKILL_TABLE,
+  WEAPONMASTERY_WEAPONS,
   isSkilledWeapon,
   newCharacter,
   rulesFor,
@@ -77,7 +79,15 @@ export class NewGamePage {
   protected readonly carried = computed<CarriedHero | null>(() => {
     const previous = this.previous.value();
     const book = this.book.value();
-    return previous && book ? carryOver(previous.character, book.disciplines) : null;
+    return previous && book
+      ? carryOver(previous.character, book.disciplines, this.newSeries())
+      : null;
+  });
+  /** Le héros vient d'une autre série (Kaï → Magnakai) : on rechoisit ses Disciplines. */
+  protected readonly newSeries = computed(() => {
+    const from = this.previousBook.value();
+    const book = this.book.value();
+    return !!from && !!book && from.series !== book.series;
   });
   protected readonly previousTitle = computed(() => this.previousBook.value()?.title ?? '');
   protected readonly lockedDisciplines = computed(() => this.carried()?.disciplines ?? []);
@@ -87,7 +97,9 @@ export class NewGamePage {
     () => this.carried()?.character.weaponskill ?? null,
   );
   protected readonly disciplinesToChoose = computed(() =>
-    this.carried() ? this.lockedDisciplines().length + 1 : this.rules().disciplinesToChoose,
+    this.carried() && !this.newSeries()
+      ? this.lockedDisciplines().length + 1
+      : this.rules().disciplinesToChoose,
   );
   protected readonly csRoll = signal<number | null>(null);
   protected readonly epRoll = signal<number | null>(null);
@@ -101,6 +113,25 @@ export class NewGamePage {
       !this.carriedWeaponskill() &&
       this.selected().some((d) => d.toLowerCase() === DISCIPLINE.weaponskill.toLowerCase()),
   );
+  protected readonly isMagnakai = computed(() => !!this.rules().loreCircles);
+  /** Weaponmastery choisie : cocher des armes sur la liste (3 au départ de la série). */
+  protected readonly masteryWeapons = WEAPONMASTERY_WEAPONS;
+  protected readonly masteryChoice = signal<string[]>([]);
+  protected readonly masteryCount = 3;
+  protected readonly needsMastery = computed(
+    () =>
+      this.isMagnakai() &&
+      this.selected().some((d) => d.toLowerCase() === DISCIPLINE.weaponmastery.toLowerCase()),
+  );
+  protected toggleMastery(weapon: string): void {
+    this.masteryChoice.update((list) =>
+      list.includes(weapon)
+        ? list.filter((w) => w !== weapon)
+        : list.length < this.masteryCount
+          ? [...list, weapon]
+          : list,
+    );
+  }
   protected readonly weapon = computed(() => {
     const roll = this.weaponRoll();
     return roll === null ? null : KAI_WEAPONSKILL_TABLE[roll];
@@ -140,6 +171,7 @@ export class NewGamePage {
       (!this.from() || !!this.carried()) &&
       this.selected().length === this.disciplinesToChoose() &&
       (!this.needsWeapon() || this.weapon() !== null) &&
+      (!this.needsMastery() || this.masteryChoice().length === this.masteryCount) &&
       this.equipmentReady(),
   );
 
@@ -251,6 +283,7 @@ export class NewGamePage {
     character.disciplines = [...this.selected()];
     character.weaponskill =
       carried?.character.weaponskill ?? (this.needsWeapon() ? this.weapon() : null);
+    if (this.needsMastery()) character.weaponmastery = [...this.masteryChoice()];
 
     const eq = this.equipment();
     let equipped = character;
@@ -264,6 +297,8 @@ export class NewGamePage {
       ];
       equipped = applyGrants(character, grants, this.rules()).character;
     }
+    // Cercles de Lore (Magnakai) : bonus HAB/END des Disciplines groupées.
+    if (this.rules().loreCircles) equipped = syncLoreBonus(equipped);
     await this.game.newGame(book.id, equipped);
     await this.game.load(book.id);
     await this.router.navigate(['/book', book.id, 'play']);

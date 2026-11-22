@@ -12,7 +12,15 @@ import { Router } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Character } from '../../core/game/game.models';
 import { GameService } from '../../core/game/game.service';
-import { isSkilledWeapon, rankName, rulesFor } from '../../core/game/rules';
+import {
+  DISCIPLINE,
+  WEAPONMASTERY_WEAPONS,
+  hasDiscipline,
+  isSkilledWeapon,
+  rankName,
+  rulesFor,
+} from '../../core/game/rules';
+import { completedCircles, syncLoreBonus } from '../../core/game/lore-circles';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
@@ -198,13 +206,39 @@ export class ActionChartPage {
   }
 
   protected toggleDiscipline(name: string): void {
-    this.game.updateCharacter((c) => ({
-      ...c,
-      disciplines: c.disciplines.includes(name)
-        ? c.disciplines.filter((d) => d !== name)
-        : [...c.disciplines, name],
-    }));
+    this.game.updateCharacter((c) => {
+      const next = {
+        ...c,
+        disciplines: c.disciplines.includes(name)
+          ? c.disciplines.filter((d) => d !== name)
+          : [...c.disciplines, name],
+      };
+      // Cercles de Lore (Magnakai) : les bonus suivent les Disciplines possédées.
+      return this.rules().loreCircles ? syncLoreBonus(next) : next;
+    });
   }
+
+  /** Armes de Weaponmastery (liste du livre 6) : on en coche une de plus à chaque livre terminé. */
+  protected readonly masteryList = WEAPONMASTERY_WEAPONS;
+  protected readonly hasMastery = computed(() => {
+    const c = this.game.character();
+    return !!c && hasDiscipline(c, DISCIPLINE.weaponmastery);
+  });
+  protected toggleMastery(weapon: string): void {
+    this.game.updateCharacter((c) => {
+      const list = c.weaponmastery ?? [];
+      return {
+        ...c,
+        weaponmastery: list.includes(weapon) ? list.filter((w) => w !== weapon) : [...list, weapon],
+      };
+    });
+  }
+
+  /** Cercles de Lore accomplis, avec leurs bonus. */
+  protected readonly circles = computed(() => {
+    const c = this.game.character();
+    return c && this.rules().loreCircles ? completedCircles(c) : [];
+  });
 
   protected saveNotes(notes: string): void {
     if (notes !== this.character()?.notes)

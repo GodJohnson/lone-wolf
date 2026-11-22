@@ -39,6 +39,9 @@
         @if (b.mindblast) {
           <li>Mindblast {{ signed(b.mindblast) }}</li>
         }
+        @if (b.psisurge) {
+          <li>Psi-surge {{ signed(b.psisurge) }}</li>
+        }
         @if (b.items) {
           <li>{{ i18n.t('combat.items') }} {{ signed(b.items) }}</li>
         }
@@ -61,6 +64,20 @@
           <input type="checkbox" [checked]="c.useMindblast" (change)="toggleMindblast()" />
           {{ i18n.t('combat.mindblast') }}
         </label>
+      }
+      @if (canPsiSurge()) {
+        <label class="toggle">
+          <input
+            type="checkbox"
+            [checked]="!!c.usePsiSurge && !psiSurgeLow()"
+            [disabled]="psiSurgeLow()"
+            (change)="togglePsiSurge()"
+          />
+          {{ i18n.t('combat.psisurge') }}
+        </label>
+        @if (psiSurgeLow()) {
+          <p class="small muted">{{ i18n.t('combat.psisurgeLow') }}</p>
+        }
       }
       @if (hasSommerswerd()) {
         <label class="toggle">

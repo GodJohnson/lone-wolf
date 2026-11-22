@@ -51,7 +51,7 @@ export class LibraryPage {
       return books.map((book) => {
         const nextNumber = nextBookNumber(
           book.number,
-          book.series === 'kai' ? SERIES_RULES.kai : null,
+          book.series === 'kai' || book.series === 'magnakai' ? SERIES_RULES[book.series] : null,
         );
         const nextEntry = CATALOG.find((c) => c.number === nextNumber);
         return {

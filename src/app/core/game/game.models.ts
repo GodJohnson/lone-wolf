@@ -7,12 +7,16 @@ export interface Character {
   disciplines: string[];
   /** Arme maîtrisée (discipline Weaponskill / Maîtrise des armes). */
   weaponskill: string | null;
+  /** Armes maîtrisées avec la Discipline Magnakai Weaponmastery (+3 HAB), cochées sur la liste d'armes. */
+  weaponmastery?: string[];
   weapons: string[];
   backpack: string[];
   specialItems: string[];
   gold: number;
   meals: number;
   notes: string;
+  /** Bonus de Cercles de Lore (HAB/END) déjà ajoutés à `combatSkill` et `enduranceMax`. */
+  loreApplied?: { cs: number; ep: number };
   /** Objets, or et Repas mis de côté (confisqués, laissés en route) : ne comptent plus, mais restent récupérables. */
   stash?: Stash;
 }
@@ -44,6 +48,8 @@ export interface CombatState {
   /** Modificateur de circonstance saisi par le joueur (ex. -1 dans la section 17). */
   modifier: number;
   useMindblast: boolean;
+  /** Psi-surge (Magnakai) utilisé dans ce combat : +4 HAB, −2 END par assaut. */
+  usePsiSurge?: boolean;
   /** Ennemi mort-vivant : l'Épée de Sommer double ses pertes d'ENDURANCE. */
   undead?: boolean;
   rounds: CombatRound[];

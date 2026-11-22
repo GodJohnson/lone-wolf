@@ -43,9 +43,28 @@ describe('carryOver', () => {
     expect(alreadyOwned(carried.character, 'Seal of Hammerdal')).toBe(false);
   });
 
-  it('le livre suivant n’existe que dans la série Kaï (1 à 5)', () => {
+  it('le livre suivant : série Kaï (1 à 5, le 6 ouvrant la série Magnakai) puis Magnakai (6 à 11)', () => {
     expect(nextBookNumber(1, SERIES_RULES.kai)).toBe(2);
-    expect(nextBookNumber(4, SERIES_RULES.kai)).toBe(5);
-    expect(nextBookNumber(5, SERIES_RULES.kai)).toBeNull();
+    expect(nextBookNumber(5, SERIES_RULES.kai)).toBe(6);
+    expect(nextBookNumber(6, SERIES_RULES.kai)).toBeNull();
+    expect(nextBookNumber(6, SERIES_RULES.magnakai)).toBe(7);
+    expect(nextBookNumber(11, SERIES_RULES.magnakai)).toBe(12);
+    expect(nextBookNumber(12, SERIES_RULES.magnakai)).toBeNull();
+    expect(nextBookNumber(5, null)).toBeNull();
+  });
+
+  it('passage Kaï → Magnakai : disciplines et maîtrise d’arme à rechoisir, le reste est reporté', () => {
+    const next = carryOver(hero(), ['Weaponmastery', 'Curing'], true);
+    expect(next.disciplines).toEqual([]);
+    expect(next.character).toMatchObject({
+      combatSkill: 15,
+      enduranceMax: 30,
+      endurance: 30,
+      weaponskill: null,
+      weapons: ['Axe', 'Sword'],
+      specialItems: ['Map of Sommerlund', 'Chainmail Waistcoat'],
+      gold: 31,
+    });
+    expect(next.character.backpack).toEqual([]);
   });
 });

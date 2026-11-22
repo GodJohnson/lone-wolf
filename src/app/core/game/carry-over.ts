@@ -13,9 +13,16 @@ export interface CarriedHero {
   disciplines: string[];
 }
 
-export function carryOver(previous: Character, bookDisciplines: readonly string[]): CarriedHero {
+export function carryOver(
+  previous: Character,
+  bookDisciplines: readonly string[],
+  /** Le nouveau livre ouvre une autre série (Kaï → Magnakai) : on rechoisit ses Disciplines. */
+  newSeries = false,
+): CarriedHero {
   const known = new Map(bookDisciplines.map((d) => [d.toLowerCase(), d]));
-  const disciplines = previous.disciplines.map((d) => known.get(d.toLowerCase()) ?? d);
+  const disciplines = newSeries
+    ? []
+    : previous.disciplines.map((d) => known.get(d.toLowerCase()) ?? d);
   return {
     disciplines,
     character: {
@@ -23,6 +30,8 @@ export function carryOver(previous: Character, bookDisciplines: readonly string[
       // L'ENDURANCE reportée est le total de départ : les blessures du livre précédent sont soignées.
       endurance: previous.enduranceMax,
       disciplines,
+      // Armes maîtrisées, rangs et bonus de cercles ne passent pas d'une série à l'autre.
+      ...(newSeries ? { weaponskill: null, weaponmastery: undefined, loreApplied: undefined } : {}),
       backpack: [],
       meals: 0,
     },
@@ -35,7 +44,13 @@ export function alreadyOwned(character: Character, name: string): boolean {
   return [...character.weapons, ...character.specialItems].some((i) => i.toLowerCase() === lower);
 }
 
-/** Livre suivant dans la série Kaï (1 à 5), ou null. */
+/**
+ * Livre suivant dont les règles de passage sont connues, ou null : livres 1 à 5 (Kaï, le livre 6
+ * ouvrant la série Magnakai) et 6 à 11 (Magnakai).
+ */
 export function nextBookNumber(number: number, rules: SeriesRules | null): number | null {
-  return rules && number >= 1 && number <= 4 ? number + 1 : null;
+  if (!rules) return null;
+  const last = rules.loreCircles ? 11 : 5;
+  const first = rules.loreCircles ? 6 : 1;
+  return number >= first && number <= last ? number + 1 : null;
 }
