@@ -26,7 +26,13 @@ import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
 import { StashPanelComponent } from './stash-panel.component';
-import { ItemSlot, arrowCount, backpackLoad, hasQuiver } from '../../core/game/equipment';
+import {
+  DEFAULT_ARROWS,
+  ItemSlot,
+  arrowCount,
+  backpackLoad,
+  hasQuiver,
+} from '../../core/game/equipment';
 
 type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'meals';
 
@@ -176,6 +182,11 @@ export class ActionChartPage {
   });
 
   /** Une flèche tirée, ou retrouvée. */
+  /** Un Quiver neuf contient 6 flèches. */
+  protected refillArrows(): void {
+    this.game.updateCharacter((c) => ({ ...c, arrows: DEFAULT_ARROWS }));
+  }
+
   protected adjustArrows(delta: number): void {
     this.game.updateCharacter(
       (c) => ({ ...c, arrows: Math.min(99, Math.max(0, arrowCount(c) + delta)) }),

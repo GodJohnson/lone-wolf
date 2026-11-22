@@ -80,12 +80,6 @@
             {{ i18n.t('chart.eatMeal') }}
           </button>
         </div>
-        @if (quiver()) {
-          <div class="stat">
-            <span class="stat__label">🏹 {{ i18n.t('chart.arrows') }}</span>
-            <lw-counter [value]="arrows()" (delta)="adjustArrows($event)" />
-          </div>
-        }
       </div>
     </section>
 
@@ -167,6 +161,28 @@
           {{ i18n.t('chart.weaponsRuleSkill', { weapon: c.weaponskill }) }}
         }
       </p>
+    </section>
+    <section class="card quiver-card">
+      <h2>🏹 {{ i18n.t('chart.quiver') }}</h2>
+      @if (quiver()) {
+        <div class="stat">
+          <span class="stat__label">{{ i18n.t('chart.arrows') }}</span>
+          <lw-counter [value]="arrows()" (delta)="adjustArrows($event)" />
+          <button type="button" class="button button--small" (click)="refillArrows()">
+            {{ i18n.t('chart.refill') }}
+          </button>
+        </div>
+        <p class="small muted">{{ i18n.t('chart.quiverHint') }}</p>
+      } @else {
+        <p class="small muted">{{ i18n.t('chart.noQuiver') }}</p>
+        <button
+          type="button"
+          class="button button--small"
+          (click)="addItem('specialItems', 'Quiver')"
+        >
+          ＋ {{ i18n.t('chart.addQuiver') }}
+        </button>
+      }
     </section>
     <section class="card">
       <lw-item-list
