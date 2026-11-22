@@ -38,9 +38,5 @@ export const routes: Routes = [
     path: 'send/:code',
     loadComponent: () => import('./features/transfer/send.page').then((m) => m.SendPage),
   },
-  {
-    path: 'tower-war',
-    loadComponent: () => import('./features/tower-war/tower-war.page').then((m) => m.TowerWarPage),
-  },
   { path: '**', redirectTo: '' },
 ];
