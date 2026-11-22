@@ -119,6 +119,39 @@
         </section>
       }
 
+      @if (!game.isDead()) {
+        <section class="card jump-card">
+          @if (numberEntry()) {
+            <p>{{ i18n.t('jump.puzzle') }}</p>
+          }
+          @if (numberEntry() || jumpOpen()) {
+            <form class="jump-card__form" (submit)="$event.preventDefault(); jump()">
+              <input
+                type="number"
+                inputmode="numeric"
+                min="1"
+                [max]="book.value()?.sectionCount ?? null"
+                [value]="jumpValue()"
+                (input)="jumpValue.set($any($event.target).value)"
+                [attr.aria-label]="i18n.t('jump.label')"
+                [placeholder]="i18n.t('jump.label')"
+              />
+              <button type="submit" class="button button--primary" [disabled]="!jumpValue().trim()">
+                {{ i18n.t('jump.go') }}
+              </button>
+            </form>
+          } @else {
+            <button
+              type="button"
+              class="button button--ghost button--small button--block"
+              (click)="jumpOpen.set(true)"
+            >
+              {{ i18n.t('jump.open') }}
+            </button>
+          }
+        </section>
+      }
+
       @if (game.state()?.history?.length) {
         <button type="button" class="button button--ghost button--block" (click)="game.back()">
           ↶ {{ i18n.t('reader.previous') }}
