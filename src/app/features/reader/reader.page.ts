@@ -350,10 +350,30 @@ export class ReaderPage {
     this.game.resolveMeal(choice);
   }
 
+  /** Énigme : le texte demande de déduire soi-même le numéro de la section suivante (livre 5 §331). */
+  protected readonly numberEntry = computed(() =>
+    /turn to the entry number|write the numbers in order/i.test(this.sourceText()),
+  );
+  protected readonly jumpOpen = signal(false);
+  protected readonly jumpValue = signal('');
+
+  /** Va à la section saisie (énigmes, serrures à code…). */
+  protected async jump(): Promise<void> {
+    const max = this.book.value()?.sectionCount ?? 0;
+    const n = Number(this.jumpValue().trim());
+    if (!Number.isInteger(n) || n < 1 || (max && n > max)) {
+      this.flash(this.i18n.t('jump.invalid', { max }));
+      return;
+    }
+    this.jumpValue.set('');
+    this.jumpOpen.set(false);
+    await this.goTo(n);
+  }
+
   /** Fin de livre : aucune suite proposée (ni choix cliquable, ni lien vers une autre section). */
   protected readonly isBookEnd = computed(() => {
     const blocks = this.section.value()?.blocks;
-    if (!blocks) return false;
+    if (!blocks || this.numberEntry()) return false;
     const hasExit = blocks.some(
       (b) => b.kind === 'choice' || (b.kind === 'html' && /href="sect\d+\.htm"/.test(b.html)),
     );
