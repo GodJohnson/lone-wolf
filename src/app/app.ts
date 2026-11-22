@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { UpdateBannerComponent } from './shared/update-banner.component';
 import { I18nService } from './core/i18n/i18n.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, UpdateBannerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: '<router-outlet />',
+  template: '<router-outlet /><lw-update-banner />',
   // L'interface est déjà traduite : seule le texte des livres est proposé à la traduction du navigateur.
   host: { translate: 'no', class: 'notranslate' },
 })

@@ -57,9 +57,12 @@
                     ➜ {{ i18n.t('library.continueTo', { number: next.number }) }}
                   </a>
                 } @else {
-                  <span class="small muted">{{
-                    i18n.t('library.importNext', { number: next.number, title: next.title })
-                  }}</span>
+                  <p class="notice small">
+                    {{ i18n.t('library.importNext', { number: next.number, title: next.title }) }}
+                    <a [href]="nextUrl(next.code)" rel="noopener noreferrer">{{
+                      i18n.t('library.download')
+                    }}</a>
+                  </p>
                 }
               }
               @if (entry.savedSection !== null) {
