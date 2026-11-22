@@ -271,4 +271,22 @@ describe('item-detection', () => {
       expect(items).toEqual([{ kind: 'place', name: 'Marrow Hill', declared: true }]);
     });
   });
+
+  it('lie le nom complet d’un lieu (« Bir Rabalou ») et non son dernier mot', () => {
+    const { items, blocks } = annotateItems(
+      [p('The trail runs between Ikaresh and Bir Rabalou.')],
+      [],
+      new Set(),
+      [],
+      [],
+      [],
+      [],
+      { known: ['Bir Rabalou', 'Rabalou', 'Ikaresh'], declared: [] },
+    );
+    expect(items).toEqual([
+      { kind: 'place', name: 'Ikaresh' },
+      { kind: 'place', name: 'Bir Rabalou' },
+    ]);
+    expect((blocks[0] as { html: string }).html).toContain('>Bir Rabalou</a>');
+  });
 });
