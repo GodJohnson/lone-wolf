@@ -10,7 +10,7 @@ import {
 import { CounterComponent } from '../../shared/counter.component';
 import { RouterLink } from '@angular/router';
 import { ItemListComponent } from '../action-chart/item-list.component';
-import { ItemSlot, backpackLoad } from '../../core/game/equipment';
+import { ItemSlot, arrowCount, backpackLoad, hasQuiver } from '../../core/game/equipment';
 import { GameService } from '../../core/game/game.service';
 import { SeriesRules, isSkilledWeapon, rankName } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -51,6 +51,12 @@ import { I18nService } from '../../core/i18n/i18n.service';
             <span class="stat__label">{{ i18n.t('chart.meals') }}</span>
             <lw-counter [value]="c.meals" (delta)="adjust('meals', $event)" />
           </div>
+          @if (quiver()) {
+            <div class="stat">
+              <span class="stat__label">🏹 {{ i18n.t('chart.arrows') }}</span>
+              <lw-counter [value]="arrows()" (delta)="adjustArrows($event)" />
+            </div>
+          }
         </div>
         <div class="chips">
           @for (d of c.disciplines; track d) {
@@ -143,6 +149,23 @@ export class CharacterPanelComponent {
     const c = this.character();
     return c && isSkilledWeapon(c, name) ? `+2 ${this.i18n.t('combat.cs')} ✓` : '';
   };
+
+  protected readonly quiver = computed(() => {
+    const c = this.game.character();
+    return !!c && hasQuiver(c);
+  });
+  protected readonly arrows = computed(() => {
+    const c = this.game.character();
+    return c ? arrowCount(c) : 0;
+  });
+
+  /** Une flèche tirée, ou retrouvée. */
+  protected adjustArrows(delta: number): void {
+    this.game.updateCharacter(
+      (c) => ({ ...c, arrows: Math.min(99, Math.max(0, arrowCount(c) + delta)) }),
+      'arrows',
+    );
+  }
 
   protected adjust(field: 'endurance' | 'gold' | 'meals', delta: number): void {
     this.error.set(null);

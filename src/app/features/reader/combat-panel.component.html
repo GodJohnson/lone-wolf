@@ -79,6 +79,19 @@
           <p class="small muted">{{ i18n.t('combat.psisurgeLow') }}</p>
         }
       }
+      <label class="toggle">
+        <input type="checkbox" [checked]="!!c.mindforce" (change)="toggleMindforce()" />
+        {{ i18n.t('combat.mindforce', { n: c.mindforce || 2 }) }}
+      </label>
+      @if (c.mindforce) {
+        <p class="small muted">
+          {{
+            i18n.t(mindProtected() ? 'combat.mindforceSafe' : 'combat.mindforceHit', {
+              n: c.mindforce,
+            })
+          }}
+        </p>
+      }
       @if (hasSommerswerd()) {
         <label class="toggle">
           <input type="checkbox" [checked]="!!c.undead" (change)="toggleUndead()" />

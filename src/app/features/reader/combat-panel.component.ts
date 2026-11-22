@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { GameService } from '../../core/game/game.service';
-import { DISCIPLINE, hasDiscipline, hasSommerswerd } from '../../core/game/rules';
+import {
+  DISCIPLINE,
+  hasDiscipline,
+  hasSommerswerd,
+  mindforceProtected,
+} from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
@@ -29,6 +34,15 @@ export class CombatPanelComponent {
     const c = this.character();
     return !!c && hasDiscipline(c, DISCIPLINE.psisurge);
   });
+  protected readonly mindProtected = computed(() => {
+    const c = this.character();
+    return !!c && mindforceProtected(c);
+  });
+
+  protected toggleMindforce(): void {
+    this.game.updateCombat((c) => ({ ...c, mindforce: c.mindforce ? 0 : 2 }));
+  }
+
   protected readonly psiSurgeLow = computed(() => (this.character()?.endurance ?? 0) <= 6);
   protected readonly rounds = computed(() => [...(this.combat()?.rounds ?? [])].reverse());
 

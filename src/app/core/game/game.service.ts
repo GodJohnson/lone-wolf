@@ -240,12 +240,12 @@ export class GameService {
     });
   }
 
-  async startCombat(blockIndex: number, enemy: Enemy): Promise<void> {
+  async startCombat(blockIndex: number, enemy: Enemy, mindforce = 0): Promise<void> {
     const state = this._state();
     if (!state) return;
     await this.commit({
       ...state,
-      combat: startCombat(state.section, blockIndex, enemy, state.character),
+      combat: startCombat(state.section, blockIndex, enemy, state.character, mindforce),
       foughtIn: state.foughtIn.includes(state.section)
         ? state.foughtIn
         : [...state.foughtIn, state.section],

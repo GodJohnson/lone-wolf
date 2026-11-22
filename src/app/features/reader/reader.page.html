@@ -23,6 +23,9 @@
           </span>
           <span>🪙 {{ c.gold }}</span>
           <span>🍖 {{ c.meals }}</span>
+          @if (arrowCount(c); as arrows) {
+            <span>🏹 {{ arrows }}</span>
+          }
         </div>
       }
     }

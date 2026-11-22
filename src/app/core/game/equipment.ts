@@ -32,6 +32,18 @@ const ITEM_EFFECTS: Record<string, ItemEffect> = {
   laumspur: { heal: 4 },
 };
 
+/** Contenu d'un Quiver neuf (« This contains six Arrows »). */
+export const DEFAULT_ARROWS = 6;
+
+export function hasQuiver(character: Character): boolean {
+  return character.specialItems.some((i) => i.trim().toLowerCase() === 'quiver');
+}
+
+/** Flèches restantes : 0 sans Quiver ; 6 tant que le joueur n'a rien décompté. */
+export function arrowCount(character: Character): number {
+  return hasQuiver(character) ? (character.arrows ?? DEFAULT_ARROWS) : 0;
+}
+
 export function itemEffect(name: string): ItemEffect | null {
   return ITEM_EFFECTS[name.trim().toLowerCase()] ?? null;
 }
