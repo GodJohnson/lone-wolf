@@ -9,6 +9,8 @@ export interface Character {
   weaponskill: string | null;
   /** Armes maîtrisées avec la Discipline Magnakai Weaponmastery (+3 HAB), cochées sur la liste d'armes. */
   weaponmastery?: string[];
+  /** Flèches du Carquois (Bow) ; absent = 6, le contenu d'un Quiver neuf. */
+  arrows?: number;
   weapons: string[];
   backpack: string[];
   specialItems: string[];
@@ -50,6 +52,8 @@ export interface CombatState {
   useMindblast: boolean;
   /** Psi-surge (Magnakai) utilisé dans ce combat : +4 HAB, −2 END par assaut. */
   usePsiSurge?: boolean;
+  /** Attaque de Mindforce : END perdus à chaque assaut (0/absent : aucune), sauf protection. */
+  mindforce?: number;
   /** Ennemi mort-vivant : l'Épée de Sommer double ses pertes d'ENDURANCE. */
   undead?: boolean;
   rounds: CombatRound[];

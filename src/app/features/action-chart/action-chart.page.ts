@@ -26,7 +26,7 @@ import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
 import { StashPanelComponent } from './stash-panel.component';
-import { ItemSlot, backpackLoad } from '../../core/game/equipment';
+import { ItemSlot, arrowCount, backpackLoad, hasQuiver } from '../../core/game/equipment';
 
 type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'meals';
 
@@ -165,6 +165,23 @@ export class ActionChartPage {
   });
   protected readonly inCombat = computed(() => this.game.combat()?.outcome === 'ongoing');
   protected readonly error = signal<string | null>(null);
+
+  protected readonly quiver = computed(() => {
+    const c = this.game.character();
+    return !!c && hasQuiver(c);
+  });
+  protected readonly arrows = computed(() => {
+    const c = this.game.character();
+    return c ? arrowCount(c) : 0;
+  });
+
+  /** Une flèche tirée, ou retrouvée. */
+  protected adjustArrows(delta: number): void {
+    this.game.updateCharacter(
+      (c) => ({ ...c, arrows: Math.min(99, Math.max(0, arrowCount(c) + delta)) }),
+      'arrows',
+    );
+  }
 
   protected adjust(field: NumericField, delta: number): void {
     const maxGold = this.rules().maxGold;

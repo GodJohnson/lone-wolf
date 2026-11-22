@@ -145,6 +145,9 @@ export const DISCIPLINE = {
   psisurge: 'Psi-surge',
   curing: 'Curing',
   huntmastery: 'Huntmastery',
+  // Protections contre les attaques de Mindforce.
+  mindshield: 'Mindshield',
+  psiscreen: 'Psi-screen',
 } as const;
 
 export function hasDiscipline(character: Character, name: string): boolean {
@@ -262,11 +265,21 @@ export function hasSommerswerd(character: Character): boolean {
   return character.specialItems.some((i) => i.trim().toLowerCase() === 'sommerswerd');
 }
 
+/** Mindshield (Kaï) et Psi-screen (Magnakai) annulent les pertes d'une attaque de Mindforce. */
+export function mindforceProtected(character: Character): boolean {
+  return (
+    hasDiscipline(character, DISCIPLINE.mindshield) ||
+    hasDiscipline(character, DISCIPLINE.psiscreen)
+  );
+}
+
 export function startCombat(
   section: number,
   blockIndex: number,
   enemy: Enemy,
   character: Character,
+  /** Perte d'END par assaut due à l'attaque de Mindforce de l'ennemi (0 : aucune). */
+  mindforce = 0,
 ): CombatState {
   return {
     section,
@@ -279,6 +292,7 @@ export function startCombat(
       !hasDiscipline(character, DISCIPLINE.psisurge),
     usePsiSurge: hasDiscipline(character, DISCIPLINE.psisurge) && character.endurance > 6,
     undead: /helghast/i.test(enemy.name),
+    ...(mindforce ? { mindforce } : {}),
     rounds: [],
     outcome: 'ongoing',
   };
@@ -300,8 +314,12 @@ export function playRound(
   const result = combatResult(ratio, roll);
   // Psi-surge : 2 points d'ENDURANCE de plus perdus à chaque assaut où on l'utilise.
   const psiCost = psiSurgeActive(character, combat) ? 2 : 0;
+  // Attaque de Mindforce : perte à chaque assaut, sauf Mindshield (Kaï) ou Psi-screen (Magnakai).
+  const mindCost = combat.mindforce && !mindforceProtected(character) ? combat.mindforce : 0;
   const playerLoss =
-    typeof result.playerLoss === 'number' ? result.playerLoss + psiCost : result.playerLoss;
+    typeof result.playerLoss === 'number'
+      ? result.playerLoss + psiCost + mindCost
+      : result.playerLoss;
   // Sommerswerd : double les pertes d'ENDURANCE des morts-vivants (Helghast…).
   const doubled = combat.undead && hasSommerswerd(character);
   const enemyLoss =

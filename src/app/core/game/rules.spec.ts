@@ -79,6 +79,23 @@ describe('rules', () => {
     );
   });
 
+  describe('Mindforce', () => {
+    const enemy = { name: 'Helghast', combatSkill: 22, endurance: 30 };
+    const loss = (c: Character, mindforce: number) =>
+      playRound(startCombat(1, 0, enemy, c, mindforce), c, 5).combat.rounds[0].playerLoss;
+
+    it('ajoute la perte à chaque assaut, sauf avec Mindshield ou Psi-screen', () => {
+      const bare = hero({ disciplines: [] });
+      const base = loss(bare, 0) as number;
+      expect(loss(bare, 2)).toBe(base + 2);
+      expect(loss(hero({ disciplines: ['Mindshield'] }), 2)).toBe(base);
+      expect(loss(hero({ disciplines: ['Psi-screen'] }), 2)).toBe(base);
+    });
+    it('démarre sans attaque Mindforce par défaut', () => {
+      expect(startCombat(1, 0, enemy, hero()).mindforce).toBeUndefined();
+    });
+  });
+
   describe('Magnakai', () => {
     const magnakai = (over: Partial<Character> = {}) =>
       hero({

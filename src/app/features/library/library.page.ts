@@ -67,6 +67,12 @@ export class LibraryPage {
     },
   });
 
+  /** Lien de téléchargement officiel du zip d'un livre (par code Project Aon). */
+  protected nextUrl(code: string): string {
+    const entry = CATALOG.find((c) => c.code === code);
+    return entry ? downloadUrl(entry) : '#';
+  }
+
   protected readonly catalog = computed(() => {
     const imported = new Set((this.library.value() ?? []).map((e) => e.book.id));
     return CATALOG.map((entry) => ({

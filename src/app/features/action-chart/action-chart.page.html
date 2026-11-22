@@ -80,6 +80,12 @@
             {{ i18n.t('chart.eatMeal') }}
           </button>
         </div>
+        @if (quiver()) {
+          <div class="stat">
+            <span class="stat__label">🏹 {{ i18n.t('chart.arrows') }}</span>
+            <lw-counter [value]="arrows()" (delta)="adjustArrows($event)" />
+          </div>
+        }
       </div>
     </section>
 

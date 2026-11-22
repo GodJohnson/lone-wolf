@@ -13,7 +13,7 @@ import { DOCUMENT } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { BookRepository } from '../../core/book/book-repository';
 import { Enemy } from '../../core/book/book.models';
-import { MealChoice, requiresMeal } from '../../core/game/equipment';
+import { MealChoice, arrowCount, requiresMeal } from '../../core/game/equipment';
 import { evaluateChoices } from '../../core/game/choice-conditions';
 import { FoundItem, annotateItems, guessSlot, itemKey } from '../../core/game/item-detection';
 import { rankIndex, rulesFor } from '../../core/game/rules';
@@ -72,6 +72,7 @@ export class ReaderPage {
   readonly bookId = input.required<string>();
 
   protected readonly viewport = inject(ViewportService);
+  protected readonly arrowCount = arrowCount;
   protected readonly showRandom = signal(false);
   protected readonly toast = signal<string | null>(null);
 
@@ -352,6 +353,15 @@ export class ReaderPage {
     this.game.resolveMeal(choice);
   }
 
+  /** Perte d'END par assaut annoncée par le texte (« lose 2 ENDURANCE points for every round … Mindforce »). */
+  private readonly mindforceLoss = computed(() => {
+    const text = this.sourceText();
+    if (!/mindforce/i.test(text)) return 0;
+    const m =
+      /(?:lose|lost)\s+(\d+)\s+ENDURANCE\s+points?\s+(?:for\s+)?(?:every|each)\s+round/i.exec(text);
+    return m ? Number(m[1]) : 0;
+  });
+
   /** Énigme : le texte demande de déduire soi-même le numéro de la section suivante (livre 5 §331). */
   protected readonly numberEntry = computed(() =>
     /turn to the entry number|write the numbers in order/i.test(this.sourceText()),
@@ -444,7 +454,7 @@ export class ReaderPage {
   }
 
   protected fight(event: { index: number; enemy: Enemy }): void {
-    this.game.startCombat(event.index, event.enemy);
+    this.game.startCombat(event.index, event.enemy, this.mindforceLoss());
   }
 
   private flash(text: string): void {

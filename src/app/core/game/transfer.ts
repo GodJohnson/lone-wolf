@@ -106,6 +106,7 @@ function character(value: unknown): Character {
     meals: int(c['meals'], 0, 50),
     notes: typeof c['notes'] === 'string' ? c['notes'].slice(0, MAX_NOTES) : '',
     ...(c['stash'] === undefined ? {} : { stash: stash(c['stash']) }),
+    ...(c['arrows'] === undefined ? {} : { arrows: int(c['arrows'], 0, 99) }),
     ...(c['weaponmastery'] === undefined ? {} : { weaponmastery: names(c['weaponmastery'], 10) }),
     ...(c['loreApplied'] === undefined ? {} : { loreApplied: loreApplied(c['loreApplied']) }),
   };

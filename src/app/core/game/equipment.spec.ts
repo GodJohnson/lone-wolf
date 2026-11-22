@@ -3,6 +3,7 @@ import {
   STARTING_EQUIPMENT,
   addItem,
   applyGrants,
+  arrowCount,
   backpackLoad,
   removeItem,
   requiresMeal,
@@ -98,5 +99,19 @@ describe('equipment', () => {
       true,
     );
     expect(requiresMeal('You may eat a Meal here if you wish.')).toBe(false);
+  });
+});
+
+describe('flèches', () => {
+  const c = (specialItems: string[], arrows?: number) => ({
+    ...newCharacter('magnakai', 5, 5),
+    specialItems,
+    ...(arrows === undefined ? {} : { arrows }),
+  });
+  it('0 sans Quiver, 6 dans un Quiver neuf, sinon le compte tenu', () => {
+    expect(arrowCount(c([]))).toBe(0);
+    expect(arrowCount(c(['Quiver']))).toBe(6);
+    expect(arrowCount(c(['quiver'], 2))).toBe(2);
+    expect(arrowCount(c(['Quiver'], 0))).toBe(0);
   });
 });
