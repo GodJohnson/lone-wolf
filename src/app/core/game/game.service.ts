@@ -1,12 +1,14 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Enemy } from '../book/book.models';
 import { database } from '../storage/database';
+import { BuffError, swallow, swallowInCombat } from './buffs';
 import { Character, CombatState, GameState } from './game.models';
 import { randomNumber } from './random';
 import {
   Grant,
   InventoryError,
   applyGrants,
+  itemEffect,
   ItemSlot,
   MealChoice,
   addItem,
@@ -176,10 +178,14 @@ export class GameService {
   }
 
   /** Ajoute un objet, de l'or ou des Repas trouvés ; retourne l'erreur éventuelle (capacité). */
-  async grant(grant: Grant, rules: SeriesRules): Promise<InventoryError | null> {
+  async grant(grant: Grant | readonly Grant[], rules: SeriesRules): Promise<InventoryError | null> {
     const state = this._state();
     if (!state) return null;
-    const { character, errors } = applyGrants(state.character, [grant], rules);
+    const { character, errors } = applyGrants(
+      state.character,
+      Array.isArray(grant) ? grant : [grant as Grant],
+      rules,
+    );
     if (errors.length) return errors[0];
     this.remember(state.character);
     await this.commit({ ...state, character });
@@ -192,7 +198,7 @@ export class GameService {
    */
   async buy(
     price: number,
-    grant: Grant | null,
+    grant: Grant | readonly Grant[] | null,
     rules: SeriesRules,
   ): Promise<InventoryError | 'noGold' | null> {
     const state = this._state();
@@ -200,7 +206,7 @@ export class GameService {
     if (state.character.gold < price) return 'noGold';
     let character = { ...state.character, gold: state.character.gold - price };
     if (grant) {
-      const result = applyGrants(character, [grant], rules);
+      const result = applyGrants(character, Array.isArray(grant) ? grant : [grant as Grant], rules);
       if (result.errors.length) return result.errors[0];
       character = result.character;
     }
@@ -225,8 +231,38 @@ export class GameService {
     await this.updateCharacter((c) => removeItem(c, slot, index));
   }
 
-  async useItem(index: number): Promise<void> {
+  /** Boit une potion ou avale un objet à effet temporaire ; retourne l'erreur éventuelle (effet déjà actif). */
+  async useItem(index: number): Promise<BuffError | null> {
+    const state = this._state();
+    if (!state) return null;
+    if (itemEffect(state.character.backpack[index] ?? '')?.buff) {
+      const result = swallow(state.character, index);
+      if (result.error) return result.error;
+      this.remember(state.character);
+      await this.commit({ ...state, character: result.character });
+      return null;
+    }
     await this.updateCharacter((c) => useItem(c, index));
+    return null;
+  }
+
+  /** Avale un objet à effet avant le premier assaut du combat en cours. */
+  async swallowInCombat(index: number): Promise<BuffError | null> {
+    const state = this._state();
+    if (!state?.combat) return null;
+    const result = swallowInCombat(state.character, state.combat, index);
+    if (result.error) return result.error;
+    this.remember(state.character);
+    await this.commit({ ...state, character: result.character, combat: result.combat });
+    return null;
+  }
+
+  /** Retire un effet prêt pour le prochain combat (avalé par erreur). */
+  async dropBuff(index: number): Promise<void> {
+    await this.updateCharacter((c) => {
+      const buffs = (c.buffs ?? []).filter((_, i) => i !== index);
+      return { ...c, buffs: buffs.length ? buffs : undefined };
+    });
   }
 
   async resolveMeal(choice: MealChoice): Promise<void> {
@@ -246,6 +282,8 @@ export class GameService {
     await this.commit({
       ...state,
       combat: startCombat(state.section, blockIndex, enemy, state.character, mindforce),
+      // Les effets avalés avant le combat sont passés dans le combat : ils ne restent pas sur le personnage.
+      character: state.character.buffs ? { ...state.character, buffs: undefined } : state.character,
       foughtIn: state.foughtIn.includes(state.section)
         ? state.foughtIn
         : [...state.foughtIn, state.section],

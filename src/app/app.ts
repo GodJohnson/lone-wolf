@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { UpdateBannerComponent } from './shared/update-banner.component';
+import { applyStoredItemSizes } from './core/game/item-sizes';
 import { I18nService } from './core/i18n/i18n.service';
 
 @Component({
@@ -14,4 +15,8 @@ import { I18nService } from './core/i18n/i18n.service';
 export class App {
   // Instancié dès le démarrage pour appliquer la langue au document.
   private readonly i18n = inject(I18nService);
+
+  constructor() {
+    applyStoredItemSizes();
+  }
 }

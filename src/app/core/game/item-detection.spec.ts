@@ -289,4 +289,15 @@ describe('item-detection', () => {
     ]);
     expect((blocks[0] as { html: string }).html).toContain('>Bir Rabalou</a>');
   });
+
+  it('détecte un prix « costs N Gold Crowns » dans un paragraphe d’achat (Alether Berries)', () => {
+    const { items } = annotateItems([
+      p(
+        'A handful of Alether Berries costs 3 Gold Crowns. If you swallow them before a fight, they will increase your COMBAT SKILL by 2 points. You may purchase up to 3 handfuls of Alether Berries. Each handful counts as one Backpack Item.',
+      ),
+    ]);
+    expect(items).toEqual([
+      { kind: 'purchase', name: 'Alether Berries', price: 3, slot: 'backpack' },
+    ]);
+  });
 });

@@ -1504,3 +1504,27 @@ lw-character-panel > * {
   margin: 0.75rem 0;
   padding-left: 1.25rem;
 }
+
+/* ---------- Exemplaires multiples ---------- */
+
+.item-count {
+  margin-left: 0.25rem;
+  color: var(--accent);
+}
+
+/* ---------- Lexique des consommables ---------- */
+
+.consumables summary {
+  cursor: pointer;
+}
+.consumables__list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.consumables__price {
+  margin-right: 0.75rem;
+  white-space: nowrap;
+}

@@ -191,12 +191,38 @@
         [items]="c.backpack"
         [full]="backpackLoad() >= rules().maxBackpackItems"
         [canUse]="!inCombat() && c.endurance < c.enduranceMax"
+        [canBuff]="!inCombat()"
         (added)="addItem('backpack', $event)"
         (removed)="removeItem('backpack', $event)"
         (used)="useItem($event)"
       />
       <p class="small muted">{{ i18n.t('chart.mealsInBackpack', { count: c.meals }) }}</p>
     </section>
+    @if (c.buffs?.length) {
+      <section class="card buffs-card">
+        <h2>✨ {{ i18n.t('chart.buffs') }}</h2>
+        <ul class="item-list">
+          @for (buff of c.buffs; track $index) {
+            <li>
+              <span>
+                {{ buff.name }}
+                <span class="item-effect">
+                  +{{ buff.combatSkill }} {{ i18n.t('combat.cs') }} · {{ i18n.t('chart.buffNext') }}
+                </span>
+              </span>
+              <button
+                type="button"
+                class="icon-button"
+                (click)="game.dropBuff($index)"
+                [attr.aria-label]="i18n.t('common.delete') + ' ' + buff.name"
+              >
+                ✕
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
     <section class="card">
       <lw-item-list
         slot="specialItems"
@@ -208,6 +234,8 @@
     </section>
 
     <lw-stash-panel [rules]="rules()" />
+
+    <lw-consumables-panel />
 
     @if (declaredHere().length) {
       <section class="card removed-links">

@@ -8,6 +8,8 @@
 export interface PriceLine {
   name: string;
   price: number;
+  /** Indication entre parenthèses du livre (« restores 4 ENDURANCE points »), si elle existe. */
+  effect?: string;
   /** Position du nom dans le texte de la ligne (pour y poser le lien). */
   start: number;
   end: number;
@@ -23,7 +25,7 @@ export interface BuySentence {
 
 /** « Sword—4 Gold Crowns » (tiret) ou « Swords 4 Gold Crowns each » (pluriel, sans tiret). */
 const PRICE_LINE =
-  /^\s*([A-Z][^—–(]*?)\s*(?:\([^)]*\))?\s*(?:[—–-]\s*(\d+)\s+Gold\s+Crowns?(\s+each)?|(\d+)\s+Gold\s+Crowns?(\s+each))\s*\d*\s*$/;
+  /^\s*([A-Z][^—–(]*?)\s*(?:\(([^)]*)\))?\s*(?:[—–-]\s*(\d+)\s+Gold\s+Crowns?(\s+each)?|(\d+)\s+Gold\s+Crowns?(\s+each))\s*\d*\s*$/;
 const WORDS: Record<string, number> = {
   a: 1,
   an: 1,
@@ -61,12 +63,13 @@ export function parsePriceLine(text: string): PriceLine | null {
   const m = PRICE_LINE.exec(clean);
   if (!m) return null;
   let name = m[1].trim();
-  if (m[3] || m[5]) name = singularName(name); // « … each » : un seul objet
+  if (m[4] || m[6]) name = singularName(name); // « … each » : un seul objet
   if (!name || name.length > 60) return null;
-  const price = Number(m[2] ?? m[4]);
+  const price = Number(m[3] ?? m[5]);
   if (!(price >= 1 && price <= 999)) return null;
   const start = text.indexOf(m[1].trim());
-  return { name, price, start, end: start + m[1].trim().length };
+  const effect = m[2]?.trim();
+  return { name, price, start, end: start + m[1].trim().length, ...(effect ? { effect } : {}) };
 }
 
 /** Phrase d'achat d'un objet par le joueur ; `null` pour les refus, les ventes par un autre et les services. */
@@ -84,6 +87,28 @@ export function parseBuySentence(sentence: string): BuySentence | null {
     price: amount(gold[1]),
     start: gold.index,
     end: gold.index + gold[0].length,
+  };
+}
+
+const COST = new RegExp(
+  String.raw`^\s*(?:[Aa]n?|[Oo]ne|[Tt]he)?\s*(?:(?:handful|bunch|dose|vial|flask|bottle|portion)s?\s+of\s+)?([A-Z][A-Za-z' -]{2,40}?)\s+costs?\s+${AMOUNT}\s+Gold\s+Crowns?\b`,
+);
+
+/**
+ * Phrase de prix d'un objet à acheter (« A handful of Alether Berries costs 3 Gold Crowns. »). À n'utiliser
+ * que dans un paragraphe qui parle d'acheter (la phrase seule n'exprime pas l'achat).
+ */
+export function parseCostSentence(sentence: string): BuySentence | null {
+  const m = COST.exec(sentence);
+  if (!m) return null;
+  const gold = new RegExp(GOLD.source, 'i').exec(sentence.slice(m.index));
+  if (!gold) return null;
+  const start = m.index + gold.index;
+  return {
+    name: m[1].trim().replace(/\s+/g, ' '),
+    price: amount(m[2]),
+    start,
+    end: start + gold[0].length,
   };
 }
 

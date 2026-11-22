@@ -1,7 +1,7 @@
 import { Block } from '../book/book.models';
 import { ItemSlot } from './equipment';
 import { ITEM_TERMS, NON_ITEM_TERMS } from './known-terms';
-import { parseBuySentence, parsePriceLine } from './purchases';
+import { parseBuySentence, parseCostSentence, parsePriceLine } from './purchases';
 
 /**
  * Repérage des objets ramassables dans le texte d'une section, pour les rendre cliquables.
@@ -31,7 +31,7 @@ export const ITEM_LINK_PREFIX = '#item-';
 const TAKE_PARAGRAPH =
   /\b(?:may|can|might) (?:also )?(?:keep|take)\b|\bif you (?:wish|decide|want) to (?:keep|take|buy|purchase|accept|put on)\b|\b(?:mark|record|note)\b[^.]*\bAction Chart\b|\b(?:Special|Backpack) Items?\b|\bif you wish\b|\bnow that you (?:possess|have|hold)\b/i;
 const LOSS_SENTENCE =
-  /\b(?:erase|remove|lose|lost|stolen|steal|discard|confiscat\w*|exchange|give|pay|fee|cost|demand\w*|bribe)\b/i;
+  /\b(?:erase|remove|lose|lost|stolen|steal|discard|confiscat\w*|exchange|give|pay|fees?|costs?|demand\w*|bribe|purchase|buy)\b/i;
 
 const NUMBER_WORDS: Record<string, number> = {
   a: 1,
@@ -218,8 +218,10 @@ function annotatePurchases(
         add(line.start, line.end, { kind: 'purchase', name: line.name, price: line.price, slot });
       }
     } else {
+      const buys = /\b(?:purchase|buy)\b/i.test(text);
       for (const sentence of splitSentences(text)) {
-        const buy = parseBuySentence(sentence.text);
+        const buy =
+          parseBuySentence(sentence.text) ?? (buys ? parseCostSentence(sentence.text) : null);
         if (!buy) continue;
         const slot = guessSlot(buy.name, sentence.text);
         add(sentence.offset + buy.start, sentence.offset + buy.end, {

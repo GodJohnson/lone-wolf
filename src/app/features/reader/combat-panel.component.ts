@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { itemEffect } from '../../core/game/equipment';
 import { GameService } from '../../core/game/game.service';
 import {
   DISCIPLINE,
@@ -41,6 +42,23 @@ export class CombatPanelComponent {
 
   protected toggleMindforce(): void {
     this.game.updateCombat((c) => ({ ...c, mindforce: c.mindforce ? 0 : 2 }));
+  }
+
+  /** Objets à effet temporaire du sac à dos, avalables avant le premier assaut. */
+  protected readonly swallowable = computed(() => {
+    const c = this.character();
+    const combat = this.combat();
+    if (!c || !combat || combat.outcome !== 'ongoing' || combat.rounds.length) return [];
+    return c.backpack
+      .map((name, index) => ({ name, index, buff: itemEffect(name)?.buff }))
+      .filter((o): o is { name: string; index: number; buff: { combatSkill: number } } => !!o.buff);
+  });
+  protected readonly buffError = signal<string | null>(null);
+
+  protected async swallow(index: number): Promise<void> {
+    this.buffError.set(null);
+    const error = await this.game.swallowInCombat(index);
+    if (error === 'buffActive') this.buffError.set(this.i18n.t('chart.error.buffActive'));
   }
 
   protected readonly psiSurgeLow = computed(() => (this.character()?.endurance ?? 0) <= 6);

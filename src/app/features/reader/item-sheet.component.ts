@@ -7,8 +7,10 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
-import { Grant, ItemSlot, itemEffect } from '../../core/game/equipment';
+import { Grant, ItemSlot, itemEffect, itemSize } from '../../core/game/equipment';
+import { setItemSize } from '../../core/game/item-sizes';
 import { GameService } from '../../core/game/game.service';
 import { FoundItem } from '../../core/game/item-detection';
 import { DISCIPLINE, SeriesRules, hasDiscipline, isSkilledWeapon } from '../../core/game/rules';
@@ -57,7 +59,7 @@ import { MessageKey } from '../../core/i18n/messages';
         </label>
         @if (!enoughGold()) {
           <p class="notice notice--error" role="alert">
-            {{ i18n.t('buy.noGold', { gold: character()?.gold ?? 0, price: price() }) }}
+            {{ i18n.t('buy.noGold', { gold: character()?.gold ?? 0, price: totalPrice() }) }}
           </p>
         }
       }
@@ -95,6 +97,30 @@ import { MessageKey } from '../../core/i18n/messages';
               </button>
             }
           </div>
+          @if (slot() === 'backpack') {
+            <label class="item-sheet__price">
+              {{ i18n.t('item.size') }}
+              <input
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="8"
+                [value]="size()"
+                (input)="size.set(+$any($event.target).value)"
+              />
+            </label>
+          }
+          <label class="item-sheet__price">
+            {{ i18n.t('item.quantity') }}
+            <input
+              type="number"
+              inputmode="numeric"
+              min="1"
+              max="9"
+              [value]="quantity()"
+              (input)="quantity.set(Math.max(1, Math.min(9, +$any($event.target).value || 1)))"
+            />
+          </label>
           @if (effectText(); as text) {
             <p class="item-sheet__effect" [class.item-sheet__effect--good]="skilled()">
               {{ text }}
@@ -160,7 +186,7 @@ import { MessageKey } from '../../core/i18n/messages';
         </button>
         <button type="button" class="button button--primary" [disabled]="!canAdd()" (click)="add()">
           @if (isPurchase()) {
-            {{ i18n.t(justPay() ? 'buy.payAction' : 'buy.action', { price: price() }) }}
+            {{ i18n.t(justPay() ? 'buy.payAction' : 'buy.action', { price: totalPrice() }) }}
           } @else if (isEndurance()) {
             {{ i18n.t('endurance.apply') }}
           } @else {
@@ -203,10 +229,20 @@ export class ItemSheetComponent {
   protected readonly isEndurance = computed(() => this.item().kind === 'endurance');
   /** Montant signé d'ENDURANCE (négatif = perte), modifiable avant d'appliquer. */
   protected readonly amount = signal(0);
+  protected readonly Math = Math;
   protected readonly price = signal(0);
   /** Achat d'un service (chambre, boisson…) : seul l'or est débité. */
   protected readonly justPay = signal(false);
-  protected readonly enoughGold = computed(() => (this.character()?.gold ?? 0) >= this.price());
+  /** Nombre d'exemplaires achetés ou ajoutés d'un coup. */
+  protected readonly quantity = signal(1);
+  /** Places que l'objet prend dans le sac à dos. */
+  protected readonly size = signal(1);
+  protected readonly totalPrice = computed(
+    () => this.price() * (this.justPay() ? 1 : this.quantity()),
+  );
+  protected readonly enoughGold = computed(
+    () => (this.character()?.gold ?? 0) >= this.totalPrice(),
+  );
   /** Nom et emplacement modifiables : objets trouvés et achats d'objet. */
   protected readonly hasItemFields = computed(() => {
     const kind = this.item().kind;
@@ -230,7 +266,7 @@ export class ItemSheetComponent {
     if (this.isEndurance()) return this.amount() !== 0;
     if (this.isPurchase()) {
       const price = this.price();
-      if (!(price >= 1) || !this.enoughGold()) return false;
+      if (!(price >= 1) || !this.enoughGold() || !(this.quantity() >= 1)) return false;
       if (this.justPay()) return true;
     }
     return (
@@ -277,7 +313,13 @@ export class ItemSheetComponent {
       if (item.kind === 'purchase') this.price.set(item.price);
       if (item.kind === 'endurance') this.amount.set(item.amount);
       this.justPay.set(false);
+      this.quantity.set(1);
       this.error.set(null);
+    });
+    // Taille de départ d'un objet : celle du livre (corde = 2 places), modifiable pour ce nom.
+    effect(() => {
+      const name = this.name();
+      untracked(() => this.size.set(itemSize(name)));
     });
   }
 
@@ -295,12 +337,13 @@ export class ItemSheetComponent {
     const item = this.item();
     if (item.kind === 'purchase') return this.buy();
     if (item.kind === 'endurance') return this.applyEndurance(this.amount());
-    const grant: Grant =
+    if (item.kind === 'item') this.rememberSize();
+    const grant: Grant | Grant[] =
       item.kind === 'gold'
         ? { slot: 'gold', amount: item.amount }
         : item.kind === 'meals'
           ? { slot: 'meals', count: item.count }
-          : { slot: this.slot(), name: this.name().trim() };
+          : this.copies({ slot: this.slot(), name: this.name().trim() });
     const error = await this.game.grant(grant, this.rules());
     if (error) {
       this.error.set(this.i18n.t(`chart.error.${error}`));
@@ -309,6 +352,16 @@ export class ItemSheetComponent {
     this.added.emit(
       item.kind === 'item' ? this.name().trim() : 'label' in item ? item.label : item.name,
     );
+  }
+
+  /** La même ligne d'inventaire en `quantity` exemplaires. */
+  private copies(grant: Grant): Grant[] {
+    return Array.from({ length: this.quantity() }, () => grant);
+  }
+
+  /** Une taille de sac différente de celle du livre est mémorisée pour ce nom d'objet. */
+  private rememberSize(): void {
+    if (this.slot() === 'backpack') setItemSize(this.name(), this.size());
   }
 
   /** Perte ou gain d'ENDURANCE du récit, borné entre 0 et le total. */
@@ -323,8 +376,10 @@ export class ItemSheetComponent {
   private async buy(): Promise<void> {
     const price = this.price();
     const name = this.name().trim();
-    const grant: Grant | null = this.justPay() ? null : { slot: this.slot(), name };
-    const error = await this.game.buy(price, grant, this.rules());
+    const qty = this.justPay() ? 1 : this.quantity();
+    if (!this.justPay()) this.rememberSize();
+    const grant = this.justPay() ? null : this.copies({ slot: this.slot(), name });
+    const error = await this.game.buy(price * qty, grant, this.rules());
     if (error === 'noGold') return;
     if (error) {
       this.error.set(this.i18n.t(`chart.error.${error}`));
@@ -333,7 +388,7 @@ export class ItemSheetComponent {
     this.bought.emit({
       message: this.justPay()
         ? this.i18n.t('buy.paid', { price })
-        : this.i18n.t('buy.done', { item: name, price }),
+        : this.i18n.t('buy.done', { item: qty > 1 ? `${name} ×${qty}` : name, price: price * qty }),
       name: this.justPay() ? this.summary() : name,
       price,
     });

@@ -2,6 +2,7 @@ import {
   choicePayment,
   guessPrice,
   parseBuySentence,
+  parseCostSentence,
   parsePriceLine,
   paymentsOf,
 } from './purchases';
@@ -81,5 +82,18 @@ describe('guessPrice', () => {
     expect(guessPrice('A rope is on sale for 3 Gold Crowns.', 'rope')).toBe(3);
     expect(guessPrice('It costs 4 Gold Crowns to get the lantern', 'lantern')).toBe(4);
     expect(guessPrice('Nothing here', 'rope')).toBe(0);
+  });
+});
+
+describe('parseCostSentence', () => {
+  it('lit « A handful of X costs N Gold Crowns »', () => {
+    expect(parseCostSentence('A handful of Alether Berries costs 3 Gold Crowns.')).toMatchObject({
+      name: 'Alether Berries',
+      price: 3,
+    });
+  });
+  it('ignore ce qui ne ressemble pas à un objet à prix', () => {
+    expect(parseCostSentence('the innkeeper costs nothing')).toBeNull();
+    expect(parseCostSentence('It costs 3 Gold Crowns.')).toBeNull();
   });
 });

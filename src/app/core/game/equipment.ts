@@ -18,6 +18,8 @@ export interface ItemEffect {
   combatSkill?: number;
   /** Objet consommable qui rend de l'ENDURANCE (potion). */
   heal?: number;
+  /** Objet consommable à effet temporaire : bonus d'HABILETÉ pour un combat (ex. Alether Berries). */
+  buff?: { combatSkill: number };
 }
 
 const ITEM_EFFECTS: Record<string, ItemEffect> = {
@@ -30,6 +32,14 @@ const ITEM_EFFECTS: Record<string, ItemEffect> = {
   'healing potion': { heal: 4 },
   'potion of laumspur': { heal: 4 },
   laumspur: { heal: 4 },
+  // Listes de prix du livre 5 (§27, §154) : effets indiqués entre parenthèses.
+  'larnuma oil': { heal: 2 },
+  'vial of larnuma oil': { heal: 2 },
+  'rendalim’s elixir': { heal: 6 },
+  "rendalim's elixir": { heal: 6 },
+  'potion of alether': { buff: { combatSkill: 2 } },
+  // Livre 6 §123 : avalées avant un combat, +2 HAB pour sa durée ; une poignée par combat.
+  'alether berries': { buff: { combatSkill: 2 } },
 };
 
 /** Contenu d'un Quiver neuf (« This contains six Arrows »). */
@@ -45,7 +55,12 @@ export function arrowCount(character: Character): number {
 }
 
 export function itemEffect(name: string): ItemEffect | null {
-  return ITEM_EFFECTS[name.trim().toLowerCase()] ?? null;
+  // « A handful of Alether Berries » et « Alether Berries » sont le même objet.
+  const key = name
+    .trim()
+    .toLowerCase()
+    .replace(/^(?:an?\s+)?(?:handfuls?|bunch(?:es)?)\s+of\s+/, '');
+  return ITEM_EFFECTS[key] ?? null;
 }
 
 /** Suggestions de saisie (noms anglais, comme dans les livres). */
@@ -256,9 +271,35 @@ export function startingEquipmentFor(bookId: string): StartingEquipment | null {
 
 export type InventoryError = 'weaponsFull' | 'backpackFull';
 
-/** Les Repas comptent dans la capacité du sac à dos. */
+/**
+ * Places occupées dans le sac à dos par les objets encombrants, relevées dans les livres (« The Rope counts as
+ * two Backpack Items », Sleeping Furs 2, Tent 3, Shovel 2). Un objet qui n'y figure pas prend une place.
+ */
+const BULKY_ITEMS: readonly { pattern: RegExp; size: number }[] = [
+  { pattern: /\brope\b/i, size: 2 },
+  { pattern: /\bsleeping furs?\b/i, size: 2 },
+  { pattern: /\btent\b/i, size: 3 },
+  { pattern: /\bshovel\b/i, size: 2 },
+];
+
+/** Tailles choisies par le joueur (nom en minuscules → places), qui l'emportent sur la table du livre. */
+let sizeOverrides: Readonly<Record<string, number>> = {};
+
+export function configureItemSizes(overrides: Readonly<Record<string, number>>): void {
+  sizeOverrides = overrides;
+}
+
+/** Nombre de places que prend l'objet dans le sac à dos. */
+export function itemSize(name: string): number {
+  const key = name.trim().toLowerCase();
+  const own = sizeOverrides[key];
+  if (own) return own;
+  return BULKY_ITEMS.find((b) => b.pattern.test(key))?.size ?? 1;
+}
+
+/** Les objets (selon leur taille) et les Repas comptent dans la capacité du sac à dos. */
 export function backpackLoad(character: Character): number {
-  return character.backpack.length + character.meals;
+  return character.backpack.reduce((sum, item) => sum + itemSize(item), 0) + character.meals;
 }
 
 export function addItem(
@@ -272,7 +313,7 @@ export function addItem(
   if (slot === 'weapons' && character.weapons.length >= rules.maxWeapons) {
     return { character, error: 'weaponsFull' };
   }
-  if (slot === 'backpack' && backpackLoad(character) >= rules.maxBackpackItems) {
+  if (slot === 'backpack' && backpackLoad(character) + itemSize(item) > rules.maxBackpackItems) {
     return { character, error: 'backpackFull' };
   }
   const next = { ...character, [slot]: [...character[slot], item] };

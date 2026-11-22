@@ -99,9 +99,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
           [items]="c.backpack"
           [full]="load() >= rules().maxBackpackItems"
           [canUse]="!inCombat() && c.endurance < c.enduranceMax"
+          [canBuff]="!inCombat()"
           (added)="add('backpack', $event)"
           (removed)="game.removeItem('backpack', $event)"
-          (used)="game.useItem($event)"
+          (used)="useItem($event)"
         />
       </section>
       <section class="card">
@@ -165,6 +166,12 @@ export class CharacterPanelComponent {
       (c) => ({ ...c, arrows: Math.min(99, Math.max(0, arrowCount(c) + delta)) }),
       'arrows',
     );
+  }
+
+  protected async useItem(index: number): Promise<void> {
+    this.error.set(null);
+    const error = await this.game.useItem(index);
+    if (error === 'buffActive') this.error.set(this.i18n.t('chart.error.buffActive'));
   }
 
   protected adjust(field: 'endurance' | 'gold' | 'meals', delta: number): void {

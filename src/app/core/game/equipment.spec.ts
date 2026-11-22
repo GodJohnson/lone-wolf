@@ -5,6 +5,8 @@ import {
   applyGrants,
   arrowCount,
   backpackLoad,
+  configureItemSizes,
+  itemSize,
   removeItem,
   requiresMeal,
   resolveMeal,
@@ -65,9 +67,9 @@ describe('equipment', () => {
     expect(addItem(hero({ weapons: ['Axe', 'Sword'] }), 'weapons', 'Mace', kai).error).toBe(
       'weaponsFull',
     );
-    const full = hero({ backpack: ['Rope', 'Rope', 'Rope'], meals: 5 });
+    const full = hero({ backpack: ['Torch', 'Torch', 'Torch'], meals: 5 });
     expect(backpackLoad(full)).toBe(8);
-    expect(addItem(full, 'backpack', 'Rope', kai).error).toBe('backpackFull');
+    expect(addItem(full, 'backpack', 'Torch', kai).error).toBe('backpackFull');
   });
 
   it('une potion rend 4 END sans dépasser le total et disparaît', () => {
@@ -116,5 +118,41 @@ describe('flèches', () => {
     expect(arrowCount(c(['Quiver (6 Arrows)'], 3))).toBe(3);
     expect(arrowCount(c(['Carquois'], 4))).toBe(4);
     expect(arrowCount(c(['Quiver of Plenty'], 4))).toBe(4);
+  });
+});
+
+describe('places dans le sac', () => {
+  const rules = SERIES_RULES.kai;
+  const pack = (backpack: string[], meals = 0) => ({
+    ...newCharacter('kai', 5, 5),
+    backpack,
+    meals,
+  });
+  afterEach(() => configureItemSizes({}));
+
+  it('une corde prend 2 places, comme les autres objets encombrants du texte', () => {
+    expect(itemSize('Rope')).toBe(2);
+    expect(itemSize('30 Feet of Rope')).toBe(2);
+    expect(itemSize('Sleeping Furs')).toBe(2);
+    expect(itemSize('Tent')).toBe(3);
+    expect(itemSize('Shovel')).toBe(2);
+    expect(itemSize('Tinderbox')).toBe(1);
+  });
+
+  it('la charge du sac additionne les tailles et les Repas', () => {
+    expect(backpackLoad(pack(['Rope', 'Tinderbox'], 2))).toBe(5);
+  });
+
+  it('refuse un objet dont la taille dépasse la place restante', () => {
+    const c = pack(['a', 'b', 'c', 'd', 'e', 'f', 'g']); // 7 places sur 8
+    expect(addItem(c, 'backpack', 'Rope', rules).error).toBe('backpackFull');
+    expect(addItem(c, 'backpack', 'Torch', rules).error).toBeUndefined();
+  });
+
+  it('la taille choisie par le joueur l’emporte sur celle du livre', () => {
+    configureItemSizes({ rope: 3, lantern: 2 });
+    expect(itemSize('Rope')).toBe(3);
+    expect(itemSize('Lantern')).toBe(2);
+    expect(backpackLoad(pack(['Rope', 'Lantern']))).toBe(5);
   });
 });

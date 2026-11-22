@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { database } from '../storage/database';
+import { PriceRecord, priceRecordsOf } from '../game/consumables';
 import { buildNonItemLexicon } from '../game/item-detection';
 import { BookMeta, PageRecord, ParsedBook, SectionRecord } from './book.models';
 
@@ -24,6 +25,18 @@ export class BookRepository {
 
   async section(bookId: string, number: number): Promise<SectionRecord | undefined> {
     return (await database()).get('sections', [bookId, number]);
+  }
+
+  /** Prix d'objets du livre (lexique des consommables) ; calculés et mémorisés à la première demande. */
+  async priceRecords(bookId: string): Promise<PriceRecord[]> {
+    const db = await database();
+    const book = await db.get('books', bookId);
+    if (!book) return [];
+    if (book.priceRecords) return book.priceRecords;
+    const sections = await db.getAllFromIndex('sections', 'byBook', bookId);
+    const priceRecords = priceRecordsOf(sections);
+    await db.put('books', { ...book, priceRecords });
+    return priceRecords;
   }
 
   /** Lexique des mots non-objets du livre ; calculé et mémorisé s'il manque (anciens imports). */

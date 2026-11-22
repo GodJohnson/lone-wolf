@@ -26,6 +26,7 @@ import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
 import { StashPanelComponent } from './stash-panel.component';
+import { ConsumablesPanelComponent } from './consumables-panel.component';
 import {
   DEFAULT_ARROWS,
   ItemSlot,
@@ -38,7 +39,13 @@ type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'mea
 
 @Component({
   selector: 'lw-action-chart-page',
-  imports: [TopBarComponent, ItemListComponent, CounterComponent, StashPanelComponent],
+  imports: [
+    TopBarComponent,
+    ItemListComponent,
+    CounterComponent,
+    StashPanelComponent,
+    ConsumablesPanelComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './action-chart.page.html',
 })
@@ -229,8 +236,10 @@ export class ActionChartPage {
     this.game.removeItem(slot, index);
   }
 
-  protected useItem(index: number): void {
-    this.game.useItem(index);
+  protected async useItem(index: number): Promise<void> {
+    this.error.set(null);
+    const error = await this.game.useItem(index);
+    if (error === 'buffActive') this.error.set(this.i18n.t('chart.error.buffActive'));
   }
 
   protected toggleDiscipline(name: string): void {
