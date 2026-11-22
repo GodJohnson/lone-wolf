@@ -113,5 +113,8 @@ describe('flèches', () => {
     expect(arrowCount(c(['Quiver']))).toBe(6);
     expect(arrowCount(c(['quiver'], 2))).toBe(2);
     expect(arrowCount(c(['Quiver'], 0))).toBe(0);
+    expect(arrowCount(c(['Quiver (6 Arrows)'], 3))).toBe(3);
+    expect(arrowCount(c(['Carquois'], 4))).toBe(4);
+    expect(arrowCount(c(['Quiver of Plenty'], 4))).toBe(4);
   });
 });

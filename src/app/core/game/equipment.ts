@@ -36,7 +36,7 @@ const ITEM_EFFECTS: Record<string, ItemEffect> = {
 export const DEFAULT_ARROWS = 6;
 
 export function hasQuiver(character: Character): boolean {
-  return character.specialItems.some((i) => i.trim().toLowerCase() === 'quiver');
+  return character.specialItems.some((i) => /^(?:quiver|carquois)\b/i.test(i.trim()));
 }
 
 /** Flèches restantes : 0 sans Quiver ; 6 tant que le joueur n'a rien décompté. */
