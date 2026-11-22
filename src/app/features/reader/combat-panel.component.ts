@@ -22,8 +22,14 @@ export class CombatPanelComponent {
   });
   protected readonly canMindblast = computed(() => {
     const c = this.character();
-    return !!c && hasDiscipline(c, DISCIPLINE.mindblast);
+    return !!c && (hasDiscipline(c, DISCIPLINE.mindblast) || hasDiscipline(c, DISCIPLINE.psisurge));
   });
+  /** Psi-surge (Magnakai) : possédé, mais impossible quand l'ENDURANCE est à 6 ou moins. */
+  protected readonly canPsiSurge = computed(() => {
+    const c = this.character();
+    return !!c && hasDiscipline(c, DISCIPLINE.psisurge);
+  });
+  protected readonly psiSurgeLow = computed(() => (this.character()?.endurance ?? 0) <= 6);
   protected readonly rounds = computed(() => [...(this.combat()?.rounds ?? [])].reverse());
 
   protected signed(n: number): string {
@@ -47,7 +53,20 @@ export class CombatPanelComponent {
     this.game.updateCombat((c) => ({ ...c, undead: !c.undead }));
   }
 
+  /** Psi-surge et Mindblast ne se cumulent pas : activer l'un coupe l'autre. */
   protected toggleMindblast(): void {
-    this.game.updateCombat((c) => ({ ...c, useMindblast: !c.useMindblast }));
+    this.game.updateCombat((c) => ({
+      ...c,
+      useMindblast: !c.useMindblast,
+      usePsiSurge: !c.useMindblast ? false : c.usePsiSurge,
+    }));
+  }
+
+  protected togglePsiSurge(): void {
+    this.game.updateCombat((c) => ({
+      ...c,
+      usePsiSurge: !c.usePsiSurge,
+      useMindblast: !c.usePsiSurge ? false : c.useMindblast,
+    }));
   }
 }

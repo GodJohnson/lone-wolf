@@ -106,7 +106,14 @@ function character(value: unknown): Character {
     meals: int(c['meals'], 0, 50),
     notes: typeof c['notes'] === 'string' ? c['notes'].slice(0, MAX_NOTES) : '',
     ...(c['stash'] === undefined ? {} : { stash: stash(c['stash']) }),
+    ...(c['weaponmastery'] === undefined ? {} : { weaponmastery: names(c['weaponmastery'], 10) }),
+    ...(c['loreApplied'] === undefined ? {} : { loreApplied: loreApplied(c['loreApplied']) }),
   };
+}
+
+function loreApplied(value: unknown): { cs: number; ep: number } {
+  const l = asRecord(value);
+  return { cs: int(l['cs'], 0, 20), ep: int(l['ep'], 0, 40) };
 }
 
 function stash(value: unknown): Stash {

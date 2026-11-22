@@ -17,7 +17,37 @@ export const KAI_RANKS = [
   'Master',
 ] as const;
 
+/** Rangs Magnakai (« Levels of Magnakai Training ») : un rang par Discipline Magnakai ; 3 au départ. */
+export const MAGNAKAI_RANKS = [
+  'Kai Master',
+  'Kai Master Senior',
+  'Kai Master Superior',
+  'Primate',
+  'Tutelary',
+  'Principalin',
+  'Mentora',
+  'Scion-kai',
+  'Archmaster',
+  'Kai Grand Master',
+] as const;
+
+/** Liste des armes de Weaponmastery (« Weaponmastery Checklist » du livre 6). */
+export const WEAPONMASTERY_WEAPONS = [
+  'Dagger',
+  'Spear',
+  'Mace',
+  'Short Sword',
+  'Warhammer',
+  'Bow',
+  'Axe',
+  'Sword',
+  'Quarterstaff',
+  'Broadsword',
+] as const;
+
 export interface SeriesRules {
+  /** Les Cercles de Lore (bonus HAB/END des Disciplines Magnakai groupées) s'appliquent. */
+  loreCircles?: boolean;
   /** Rangs de la série, du plus bas au plus haut (absent : rangs non gérés). */
   ranks?: readonly string[];
   disciplinesToChoose: number;
@@ -51,7 +81,9 @@ export const SERIES_RULES: Record<Series, SeriesRules> = {
     maxWeapons: 2,
     maxBackpackItems: 8,
     maxGold: 50,
-    verified: false,
+    verified: true,
+    ranks: MAGNAKAI_RANKS,
+    loreCircles: true,
   },
   grandmaster: {
     disciplinesToChoose: 4,
@@ -108,6 +140,11 @@ export const DISCIPLINE = {
   mindblast: 'Mindblast',
   healing: 'Healing',
   hunting: 'Hunting',
+  // Disciplines Magnakai (livres 6 et suivants).
+  weaponmastery: 'Weaponmastery',
+  psisurge: 'Psi-surge',
+  curing: 'Curing',
+  huntmastery: 'Huntmastery',
 } as const;
 
 export function hasDiscipline(character: Character, name: string): boolean {
@@ -120,11 +157,23 @@ export function hasDiscipline(character: Character, name: string): boolean {
  * (« Short Sword » n'est pas un Sword).
  */
 export function isSkilledWeapon(character: Character, weapon: string): boolean {
-  const skill = character.weaponskill?.trim().toLowerCase();
-  if (!skill || !hasDiscipline(character, DISCIPLINE.weaponskill)) return false;
   const name = weapon.trim().toLowerCase();
-  // Sommerswerd : se traite comme une épée à une main ; Weaponskill avec Short Sword, Sword ou Broadsword
-  // lui donne +2 (soit +10 au total avec ses +8), sans cumul avec une autre arme maîtrisée.
+  const skill = character.weaponskill?.trim().toLowerCase();
+  if (skill && hasDiscipline(character, DISCIPLINE.weaponskill)) {
+    return matchesSkill(skill, name);
+  }
+  // Weaponmastery (Magnakai) : une des armes cochées sur la liste.
+  if (hasDiscipline(character, DISCIPLINE.weaponmastery)) {
+    return (character.weaponmastery ?? []).some((w) => matchesSkill(w.trim().toLowerCase(), name));
+  }
+  return false;
+}
+
+/** L'arme (en minuscules) relève-t-elle de la maîtrise `skill` ? Exacte, ou variante du même type. */
+function matchesSkill(skill: string, name: string): boolean {
+  // Sommerswerd : se traite comme une épée à une main ; maîtrise de Short Sword, Sword ou Broadsword
+  // lui donne le bonus de maîtrise (soit +10 au total avec ses +8 pour Weaponskill), sans cumul avec
+  // une autre arme maîtrisée.
   if (name === 'sommerswerd') return ['short sword', 'sword', 'broadsword'].includes(skill);
   if (name === skill) return true;
   const otherTableWeapon = KAI_WEAPONSKILL_TABLE.some((t) => t.toLowerCase() === name);
@@ -154,6 +203,8 @@ export interface CombatSkillBreakdown {
   weaponskill: number;
   noWeapon: number;
   mindblast: number;
+  /** Psi-surge (Magnakai) : +4 HAB, mais −2 END par assaut. */
+  psisurge: number;
   /** Objets spéciaux (ex. Shield +2). */
   items: number;
   modifier: number;
@@ -172,14 +223,27 @@ export function combatWeapons(character: Character): string[] {
   ];
 }
 
+/** Psi-surge actif : Discipline possédée, activé, et ENDURANCE au-dessus de 6 (sinon impossible). */
+export function psiSurgeActive(character: Character, combat: { usePsiSurge?: boolean }): boolean {
+  return (
+    !!combat.usePsiSurge && hasDiscipline(character, DISCIPLINE.psisurge) && character.endurance > 6
+  );
+}
+
 export function effectiveCombatSkill(
   character: Character,
-  combat: Pick<CombatState, 'modifier' | 'useMindblast'>,
+  combat: Pick<CombatState, 'modifier' | 'useMindblast'> & { usePsiSurge?: boolean },
 ): CombatSkillBreakdown {
   const weapons = combatWeapons(character);
-  const weaponskill = weapons.some((w) => isSkilledWeapon(character, w)) ? 2 : 0;
+  // Maîtrise d'arme : +3 avec Weaponmastery (Magnakai), +2 avec Weaponskill (Kaï).
+  const masteryBonus = hasDiscipline(character, DISCIPLINE.weaponmastery) ? 3 : 2;
+  const weaponskill = weapons.some((w) => isSkilledWeapon(character, w)) ? masteryBonus : 0;
   const noWeapon = weapons.length === 0 ? -4 : 0;
-  const mindblast = combat.useMindblast && hasDiscipline(character, DISCIPLINE.mindblast) ? 2 : 0;
+  const psisurge = psiSurgeActive(character, combat) ? 4 : 0;
+  const canMindblast =
+    hasDiscipline(character, DISCIPLINE.mindblast) || hasDiscipline(character, DISCIPLINE.psisurge);
+  // Psi-surge et Mindblast ne se cumulent pas : Psi-surge l'emporte.
+  const mindblast = combat.useMindblast && canMindblast && !psisurge ? 2 : 0;
   const items = itemsCombatBonus(character);
   const base = character.combatSkill;
   return {
@@ -187,9 +251,10 @@ export function effectiveCombatSkill(
     weaponskill,
     noWeapon,
     mindblast,
+    psisurge,
     items,
     modifier: combat.modifier,
-    total: base + weaponskill + noWeapon + mindblast + items + combat.modifier,
+    total: base + weaponskill + noWeapon + mindblast + psisurge + items + combat.modifier,
   };
 }
 
@@ -209,7 +274,10 @@ export function startCombat(
     enemy,
     enemyEndurance: enemy.endurance,
     modifier: 0,
-    useMindblast: hasDiscipline(character, DISCIPLINE.mindblast),
+    useMindblast:
+      hasDiscipline(character, DISCIPLINE.mindblast) &&
+      !hasDiscipline(character, DISCIPLINE.psisurge),
+    usePsiSurge: hasDiscipline(character, DISCIPLINE.psisurge) && character.endurance > 6,
     undead: /helghast/i.test(enemy.name),
     rounds: [],
     outcome: 'ongoing',
@@ -230,7 +298,10 @@ export function playRound(
 
   const ratio = effectiveCombatSkill(character, combat).total - combat.enemy.combatSkill;
   const result = combatResult(ratio, roll);
-  const { playerLoss } = result;
+  // Psi-surge : 2 points d'ENDURANCE de plus perdus à chaque assaut où on l'utilise.
+  const psiCost = psiSurgeActive(character, combat) ? 2 : 0;
+  const playerLoss =
+    typeof result.playerLoss === 'number' ? result.playerLoss + psiCost : result.playerLoss;
   // Sommerswerd : double les pertes d'ENDURANCE des morts-vivants (Helghast…).
   const doubled = combat.undead && hasSommerswerd(character);
   const enemyLoss =
@@ -273,7 +344,9 @@ export function healingOnLeave(
   leftSection: number,
   foughtIn: readonly number[],
 ): Character {
-  if (!hasDiscipline(character, DISCIPLINE.healing)) return character;
+  // Healing (Kaï) et Curing (Magnakai) : +1 END par section sans combat.
+  if (!hasDiscipline(character, DISCIPLINE.healing) && !hasDiscipline(character, DISCIPLINE.curing))
+    return character;
   if (foughtIn.includes(leftSection) || character.endurance <= 0) return character;
   if (character.endurance >= character.enduranceMax) return character;
   return { ...character, endurance: character.endurance + 1 };

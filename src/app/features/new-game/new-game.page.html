@@ -53,6 +53,9 @@
               }
             </div>
           }
+          @if (newSeries()) {
+            <p class="notice">{{ i18n.t('carry.newSeries') }}</p>
+          }
           <p class="small muted">{{ i18n.t('carry.notCarried') }}</p>
         </section>
       } @else if (from()) {
@@ -111,6 +114,27 @@
         <button type="button" class="link-button small" (click)="openLexicon('discplnz')">
           {{ i18n.t('newGame.readDisciplines') }} ›
         </button>
+
+        @if (needsMastery()) {
+          <h3 class="small">
+            {{ i18n.t('newGame.mastery', { count: masteryCount }) }}
+            ({{ masteryChoice().length }}/{{ masteryCount }})
+          </h3>
+          <div class="chips">
+            @for (w of masteryWeapons; track w) {
+              <button
+                type="button"
+                class="chip"
+                [class.chip--on]="masteryChoice().includes(w)"
+                [attr.aria-pressed]="masteryChoice().includes(w)"
+                (click)="toggleMastery(w)"
+              >
+                {{ w }}
+              </button>
+            }
+          </div>
+          <p class="small muted">{{ i18n.t('newGame.masteryHint') }}</p>
+        }
 
         @if (needsWeapon()) {
           <div class="weapon-roll">

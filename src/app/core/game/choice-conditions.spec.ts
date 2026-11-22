@@ -168,4 +168,28 @@ describe('choice-conditions', () => {
       expect(evaluateChoices(only, [], BOOK, { index: 2, ranks: KAI })[0]?.status).toBe('unmet');
     });
   });
+
+  describe('Magnakai', () => {
+    const MAG = ['Weaponmastery', 'Huntmastery', 'Pathsmanship', 'Divination', 'Invisibility'];
+    const blocks = [
+      choice(
+        'If you have completed the Lore-circle of Fire (that is, you possess the Magnakai Disciplines of Weaponmastery and Huntmastery), turn to 169.',
+      ),
+      choice(
+        'Otherwise, if you possess the Magnakai Discipline of Pathsmanship or Divination, turn to 346.',
+      ),
+      choice('If you have neither, turn to 12.'),
+    ];
+    it('cercle de Lore accompli ou non', () => {
+      const met = evaluateChoices(blocks, ['Weaponmastery', 'Huntmastery'], MAG);
+      expect(met[0]).toMatchObject({ status: 'met' });
+      expect(met[1]?.status).toBe('unmet');
+      expect(evaluateChoices(blocks, ['Weaponmastery', 'Divination'], MAG)[0]?.status).toBe(
+        'unmet',
+      );
+    });
+    it('« Otherwise, if you possess … » est une condition de discipline', () => {
+      expect(evaluateChoices(blocks, ['Divination'], MAG)[1]?.status).toBe('met');
+    });
+  });
 });
