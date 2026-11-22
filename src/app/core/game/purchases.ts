@@ -8,6 +8,8 @@
 export interface PriceLine {
   name: string;
   price: number;
+  /** Indication entre parenthèses du livre (« restores 4 ENDURANCE points »), si elle existe. */
+  effect?: string;
   /** Position du nom dans le texte de la ligne (pour y poser le lien). */
   start: number;
   end: number;
@@ -23,7 +25,7 @@ export interface BuySentence {
 
 /** « Sword—4 Gold Crowns » (tiret) ou « Swords 4 Gold Crowns each » (pluriel, sans tiret). */
 const PRICE_LINE =
-  /^\s*([A-Z][^—–(]*?)\s*(?:\([^)]*\))?\s*(?:[—–-]\s*(\d+)\s+Gold\s+Crowns?(\s+each)?|(\d+)\s+Gold\s+Crowns?(\s+each))\s*\d*\s*$/;
+  /^\s*([A-Z][^—–(]*?)\s*(?:\(([^)]*)\))?\s*(?:[—–-]\s*(\d+)\s+Gold\s+Crowns?(\s+each)?|(\d+)\s+Gold\s+Crowns?(\s+each))\s*\d*\s*$/;
 const WORDS: Record<string, number> = {
   a: 1,
   an: 1,
@@ -61,12 +63,13 @@ export function parsePriceLine(text: string): PriceLine | null {
   const m = PRICE_LINE.exec(clean);
   if (!m) return null;
   let name = m[1].trim();
-  if (m[3] || m[5]) name = singularName(name); // « … each » : un seul objet
+  if (m[4] || m[6]) name = singularName(name); // « … each » : un seul objet
   if (!name || name.length > 60) return null;
-  const price = Number(m[2] ?? m[4]);
+  const price = Number(m[3] ?? m[5]);
   if (!(price >= 1 && price <= 999)) return null;
   const start = text.indexOf(m[1].trim());
-  return { name, price, start, end: start + m[1].trim().length };
+  const effect = m[2]?.trim();
+  return { name, price, start, end: start + m[1].trim().length, ...(effect ? { effect } : {}) };
 }
 
 /** Phrase d'achat d'un objet par le joueur ; `null` pour les refus, les ventes par un autre et les services. */

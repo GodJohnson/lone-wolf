@@ -26,6 +26,7 @@ import { CounterComponent } from '../../shared/counter.component';
 import { TopBarComponent } from '../../shared/top-bar.component';
 import { ItemListComponent } from './item-list.component';
 import { StashPanelComponent } from './stash-panel.component';
+import { ConsumablesPanelComponent } from './consumables-panel.component';
 import {
   DEFAULT_ARROWS,
   ItemSlot,
@@ -38,7 +39,13 @@ type NumericField = 'combatSkill' | 'endurance' | 'enduranceMax' | 'gold' | 'mea
 
 @Component({
   selector: 'lw-action-chart-page',
-  imports: [TopBarComponent, ItemListComponent, CounterComponent, StashPanelComponent],
+  imports: [
+    TopBarComponent,
+    ItemListComponent,
+    CounterComponent,
+    StashPanelComponent,
+    ConsumablesPanelComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './action-chart.page.html',
 })

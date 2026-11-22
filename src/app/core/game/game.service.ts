@@ -178,10 +178,14 @@ export class GameService {
   }
 
   /** Ajoute un objet, de l'or ou des Repas trouvés ; retourne l'erreur éventuelle (capacité). */
-  async grant(grant: Grant, rules: SeriesRules): Promise<InventoryError | null> {
+  async grant(grant: Grant | readonly Grant[], rules: SeriesRules): Promise<InventoryError | null> {
     const state = this._state();
     if (!state) return null;
-    const { character, errors } = applyGrants(state.character, [grant], rules);
+    const { character, errors } = applyGrants(
+      state.character,
+      Array.isArray(grant) ? grant : [grant as Grant],
+      rules,
+    );
     if (errors.length) return errors[0];
     this.remember(state.character);
     await this.commit({ ...state, character });
@@ -194,7 +198,7 @@ export class GameService {
    */
   async buy(
     price: number,
-    grant: Grant | null,
+    grant: Grant | readonly Grant[] | null,
     rules: SeriesRules,
   ): Promise<InventoryError | 'noGold' | null> {
     const state = this._state();
@@ -202,7 +206,7 @@ export class GameService {
     if (state.character.gold < price) return 'noGold';
     let character = { ...state.character, gold: state.character.gold - price };
     if (grant) {
-      const result = applyGrants(character, [grant], rules);
+      const result = applyGrants(character, Array.isArray(grant) ? grant : [grant as Grant], rules);
       if (result.errors.length) return result.errors[0];
       character = result.character;
     }

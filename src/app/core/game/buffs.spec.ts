@@ -17,6 +17,9 @@ describe('buffs', () => {
   it('reconnaît les baies, aussi sous « a handful of »', () => {
     expect(itemEffect('Alether Berries')?.buff).toEqual({ combatSkill: 2 });
     expect(itemEffect('A handful of Alether Berries')?.buff).toEqual({ combatSkill: 2 });
+    expect(itemEffect('Potion of Alether')?.buff).toEqual({ combatSkill: 2 });
+    expect(itemEffect('Rendalim’s Elixir')?.heal).toBe(6);
+    expect(itemEffect('Vial of Larnuma Oil')?.heal).toBe(2);
     expect(itemEffect('Rope')?.buff).toBeUndefined();
   });
 

@@ -7,7 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { ItemSlot, KNOWN_ITEMS, itemEffect } from '../../core/game/equipment';
+import { ItemSlot, KNOWN_ITEMS, itemEffect, itemSize } from '../../core/game/equipment';
 import { I18nService } from '../../core/i18n/i18n.service';
 
 /**
@@ -20,10 +20,13 @@ import { I18nService } from '../../core/i18n/i18n.service';
   template: `
     <h2>{{ title() }}</h2>
     <ul class="item-list">
-      @for (item of rows(); track $index) {
+      @for (item of rows(); track item.name) {
         <li>
           <span>
             {{ item.name }}
+            @if (item.count > 1) {
+              <strong class="item-count">×{{ item.count }}</strong>
+            }
             @if (item.hint) {
               <span class="item-effect">{{ item.hint }}</span>
             }
@@ -34,7 +37,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 type="button"
                 class="button button--small"
                 [disabled]="!canUse()"
-                (click)="used.emit($index)"
+                (click)="used.emit(item.first)"
               >
                 {{ i18n.t('chart.use') }}
               </button>
@@ -44,7 +47,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 type="button"
                 class="button button--small"
                 [disabled]="!canBuff()"
-                (click)="used.emit($index)"
+                (click)="used.emit(item.first)"
               >
                 {{ i18n.t('chart.swallow') }}
               </button>
@@ -52,7 +55,16 @@ import { I18nService } from '../../core/i18n/i18n.service';
             <button
               type="button"
               class="icon-button"
-              (click)="removed.emit($index)"
+              [disabled]="full()"
+              (click)="added.emit(item.name)"
+              [attr.aria-label]="i18n.t('chart.oneMore') + ' ' + item.name"
+            >
+              ＋
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              (click)="removed.emit(item.last)"
               [attr.aria-label]="i18n.t('common.delete') + ' ' + item.name"
             >
               ✕
@@ -105,9 +117,18 @@ export class ItemListComponent {
 
   protected readonly draft = signal('');
   protected readonly suggestions = computed(() => KNOWN_ITEMS[this.slot()]);
-  protected readonly rows = computed(() =>
-    this.items().map((name) => {
+  /** Les exemplaires identiques sont regroupés (« Rope ×2 ») ; chaque ligne agit sur un seul exemplaire. */
+  protected readonly rows = computed(() => {
+    const groups = new Map<string, { name: string; indexes: number[] }>();
+    this.items().forEach((name, index) => {
+      const key = name.trim().toLowerCase();
+      const group = groups.get(key) ?? { name, indexes: [] };
+      group.indexes.push(index);
+      groups.set(key, group);
+    });
+    return [...groups.values()].map(({ name, indexes }) => {
       const effect = itemEffect(name);
+      const size = this.slot() === 'backpack' ? itemSize(name) : 1;
       const hints = [
         this.extraHint()(name),
         effect?.endurance ? `+${effect.endurance} ${this.i18n.t('combat.ep')}` : '',
@@ -116,10 +137,19 @@ export class ItemListComponent {
         effect?.buff
           ? `+${effect.buff.combatSkill} ${this.i18n.t('combat.cs')} (${this.i18n.t('chart.buffOneCombat')})`
           : '',
+        size > 1 ? this.i18n.t('chart.places', { n: size }) : '',
       ].filter(Boolean);
-      return { name, heal: !!effect?.heal, buff: !!effect?.buff, hint: hints.join(' · ') };
-    }),
-  );
+      return {
+        name,
+        count: indexes.length,
+        first: indexes[0],
+        last: indexes[indexes.length - 1],
+        heal: !!effect?.heal,
+        buff: !!effect?.buff,
+        hint: hints.join(' · '),
+      };
+    });
+  });
 
   protected add(event: Event): void {
     event.preventDefault();

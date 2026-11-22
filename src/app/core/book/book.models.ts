@@ -1,3 +1,5 @@
+import type { PriceRecord } from '../game/consumables';
+
 /**
  * Modèle d'un livre importé. Le contenu est dérivé du zip officiel Project Aon que le joueur
  * a téléchargé lui-même ; il n'est jamais embarqué dans l'application ni dans le dépôt.
@@ -44,6 +46,8 @@ export interface BookMeta {
   declaredPlaces?: string[];
   /** Épingles posées sur la carte par le joueur : `<nom>|<x>|<y>` (fractions de l'image). */
   placePins?: string[];
+  /** Prix d'objets relevés dans le livre (lexique des consommables) ; calculés à la première utilisation. */
+  priceRecords?: PriceRecord[];
   /** Pages hors sections disponibles (règles, carte, équipement...), dans l'ordre de la table des matières. */
   pages: PageRef[];
   /** Mention de copyright, affichée sous chaque section (obligation de la licence). */
