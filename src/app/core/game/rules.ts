@@ -1,5 +1,6 @@
 import { Enemy, Series } from '../book/book.models';
 import { combatResult } from './combat-results-table';
+import { buffsBonus } from './buffs';
 import { itemsCombatBonus } from './equipment';
 import { Character, CombatRound, CombatState } from './game.models';
 
@@ -210,6 +211,8 @@ export interface CombatSkillBreakdown {
   psisurge: number;
   /** Objets spéciaux (ex. Shield +2). */
   items: number;
+  /** Effets temporaires du combat (ex. Alether Berries +2). */
+  buffs: number;
   modifier: number;
   total: number;
 }
@@ -235,7 +238,10 @@ export function psiSurgeActive(character: Character, combat: { usePsiSurge?: boo
 
 export function effectiveCombatSkill(
   character: Character,
-  combat: Pick<CombatState, 'modifier' | 'useMindblast'> & { usePsiSurge?: boolean },
+  combat: Pick<CombatState, 'modifier' | 'useMindblast'> & {
+    usePsiSurge?: boolean;
+    buffs?: CombatState['buffs'];
+  },
 ): CombatSkillBreakdown {
   const weapons = combatWeapons(character);
   // Maîtrise d'arme : +3 avec Weaponmastery (Magnakai), +2 avec Weaponskill (Kaï).
@@ -248,6 +254,7 @@ export function effectiveCombatSkill(
   // Psi-surge et Mindblast ne se cumulent pas : Psi-surge l'emporte.
   const mindblast = combat.useMindblast && canMindblast && !psisurge ? 2 : 0;
   const items = itemsCombatBonus(character);
+  const buffs = buffsBonus(combat.buffs);
   const base = character.combatSkill;
   return {
     base,
@@ -256,8 +263,9 @@ export function effectiveCombatSkill(
     mindblast,
     psisurge,
     items,
+    buffs,
     modifier: combat.modifier,
-    total: base + weaponskill + noWeapon + mindblast + psisurge + items + combat.modifier,
+    total: base + weaponskill + noWeapon + mindblast + psisurge + items + buffs + combat.modifier,
   };
 }
 
@@ -293,6 +301,8 @@ export function startCombat(
     usePsiSurge: hasDiscipline(character, DISCIPLINE.psisurge) && character.endurance > 6,
     undead: /helghast/i.test(enemy.name),
     ...(mindforce ? { mindforce } : {}),
+    // Les effets avalés avant le combat passent dans ce combat.
+    ...(character.buffs?.length ? { buffs: [...character.buffs] } : {}),
     rounds: [],
     outcome: 'ongoing',
   };

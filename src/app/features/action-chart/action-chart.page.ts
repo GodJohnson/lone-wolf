@@ -229,8 +229,10 @@ export class ActionChartPage {
     this.game.removeItem(slot, index);
   }
 
-  protected useItem(index: number): void {
-    this.game.useItem(index);
+  protected async useItem(index: number): Promise<void> {
+    this.error.set(null);
+    const error = await this.game.useItem(index);
+    if (error === 'buffActive') this.error.set(this.i18n.t('chart.error.buffActive'));
   }
 
   protected toggleDiscipline(name: string): void {

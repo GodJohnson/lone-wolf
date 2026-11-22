@@ -39,6 +39,16 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 {{ i18n.t('chart.use') }}
               </button>
             }
+            @if (item.buff) {
+              <button
+                type="button"
+                class="button button--small"
+                [disabled]="!canBuff()"
+                (click)="used.emit($index)"
+              >
+                {{ i18n.t('chart.swallow') }}
+              </button>
+            }
             <button
               type="button"
               class="icon-button"
@@ -84,6 +94,8 @@ export class ItemListComponent {
   readonly full = input(false);
   /** Les potions ne se boivent pas pendant un combat. */
   readonly canUse = input(true);
+  /** Les objets à effet temporaire (baies…) ne s'avalent pas pendant un combat ici : voir le panneau de combat. */
+  readonly canBuff = input(true);
   /** Indication supplémentaire par objet (ex. « +2 HAB » pour l'arme maîtrisée). */
   readonly extraHint = input<(name: string) => string>(() => '');
 
@@ -101,8 +113,11 @@ export class ItemListComponent {
         effect?.endurance ? `+${effect.endurance} ${this.i18n.t('combat.ep')}` : '',
         effect?.combatSkill ? `+${effect.combatSkill} ${this.i18n.t('combat.cs')}` : '',
         effect?.heal ? `+${effect.heal} ${this.i18n.t('combat.ep')}` : '',
+        effect?.buff
+          ? `+${effect.buff.combatSkill} ${this.i18n.t('combat.cs')} (${this.i18n.t('chart.buffOneCombat')})`
+          : '',
       ].filter(Boolean);
-      return { name, heal: !!effect?.heal, hint: hints.join(' · ') };
+      return { name, heal: !!effect?.heal, buff: !!effect?.buff, hint: hints.join(' · ') };
     }),
   );
 

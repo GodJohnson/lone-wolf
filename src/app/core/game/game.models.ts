@@ -8,6 +8,8 @@ export interface Character {
   /** Arme maîtrisée (discipline Weaponskill / Maîtrise des armes). */
   weaponskill: string | null;
   /** Armes maîtrisées avec la Discipline Magnakai Weaponmastery (+3 HAB), cochées sur la liste d'armes. */
+  /** Effets temporaires prêts pour le prochain combat (ex. Alether Berries avalées). */
+  buffs?: Buff[];
   weaponmastery?: string[];
   /** Flèches du Carquois (Bow) ; absent = 6, le contenu d'un Quiver neuf. */
   arrows?: number;
@@ -31,6 +33,12 @@ export interface Stash {
   meals: number;
 }
 
+/** Effet temporaire d'un objet consommé : bonus d'HABILETÉ pour la durée d'un combat. */
+export interface Buff {
+  name: string;
+  combatSkill: number;
+}
+
 export interface CombatRound {
   roll: number;
   ratio: number;
@@ -52,6 +60,8 @@ export interface CombatState {
   useMindblast: boolean;
   /** Psi-surge (Magnakai) utilisé dans ce combat : +4 HAB, −2 END par assaut. */
   usePsiSurge?: boolean;
+  /** Effets temporaires appliqués à ce combat seulement (ex. Alether Berries : +2 HAB). */
+  buffs?: Buff[];
   /** Attaque de Mindforce : END perdus à chaque assaut (0/absent : aucune), sauf protection. */
   mindforce?: number;
   /** Ennemi mort-vivant : l'Épée de Sommer double ses pertes d'ENDURANCE. */

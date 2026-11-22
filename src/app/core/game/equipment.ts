@@ -18,6 +18,8 @@ export interface ItemEffect {
   combatSkill?: number;
   /** Objet consommable qui rend de l'ENDURANCE (potion). */
   heal?: number;
+  /** Objet consommable à effet temporaire : bonus d'HABILETÉ pour un combat (ex. Alether Berries). */
+  buff?: { combatSkill: number };
 }
 
 const ITEM_EFFECTS: Record<string, ItemEffect> = {
@@ -30,6 +32,8 @@ const ITEM_EFFECTS: Record<string, ItemEffect> = {
   'healing potion': { heal: 4 },
   'potion of laumspur': { heal: 4 },
   laumspur: { heal: 4 },
+  // Livre 6 §123 : avalées avant un combat, +2 HAB pour sa durée ; une poignée par combat.
+  'alether berries': { buff: { combatSkill: 2 } },
 };
 
 /** Contenu d'un Quiver neuf (« This contains six Arrows »). */
@@ -45,7 +49,12 @@ export function arrowCount(character: Character): number {
 }
 
 export function itemEffect(name: string): ItemEffect | null {
-  return ITEM_EFFECTS[name.trim().toLowerCase()] ?? null;
+  // « A handful of Alether Berries » et « Alether Berries » sont le même objet.
+  const key = name
+    .trim()
+    .toLowerCase()
+    .replace(/^(?:an?\s+)?(?:handfuls?|bunch(?:es)?)\s+of\s+/, '');
+  return ITEM_EFFECTS[key] ?? null;
 }
 
 /** Suggestions de saisie (noms anglais, comme dans les livres). */

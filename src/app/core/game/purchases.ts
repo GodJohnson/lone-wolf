@@ -87,6 +87,28 @@ export function parseBuySentence(sentence: string): BuySentence | null {
   };
 }
 
+const COST = new RegExp(
+  String.raw`^\s*(?:[Aa]n?|[Oo]ne|[Tt]he)?\s*(?:(?:handful|bunch|dose|vial|flask|bottle|portion)s?\s+of\s+)?([A-Z][A-Za-z' -]{2,40}?)\s+costs?\s+${AMOUNT}\s+Gold\s+Crowns?\b`,
+);
+
+/**
+ * Phrase de prix d'un objet à acheter (« A handful of Alether Berries costs 3 Gold Crowns. »). À n'utiliser
+ * que dans un paragraphe qui parle d'acheter (la phrase seule n'exprime pas l'achat).
+ */
+export function parseCostSentence(sentence: string): BuySentence | null {
+  const m = COST.exec(sentence);
+  if (!m) return null;
+  const gold = new RegExp(GOLD.source, 'i').exec(sentence.slice(m.index));
+  if (!gold) return null;
+  const start = m.index + gold.index;
+  return {
+    name: m[1].trim().replace(/\s+/g, ' '),
+    price: amount(m[2]),
+    start,
+    end: start + gold[0].length,
+  };
+}
+
 /**
  * Prix d'un choix payant (« pay the driver 3 Gold Crowns and turn to 37 »), ou `null`.
  * Exclut les refus (« cannot afford to pay … »), et les cas où le joueur reçoit de l'argent.

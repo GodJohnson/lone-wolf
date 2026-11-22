@@ -45,6 +45,9 @@
         @if (b.items) {
           <li>{{ i18n.t('combat.items') }} {{ signed(b.items) }}</li>
         }
+        @if (b.buffs) {
+          <li>{{ i18n.t('combat.buffs') }} {{ signed(b.buffs) }}</li>
+        }
       </ul>
     }
 
@@ -64,6 +67,14 @@
           <input type="checkbox" [checked]="c.useMindblast" (change)="toggleMindblast()" />
           {{ i18n.t('combat.mindblast') }}
         </label>
+      }
+      @for (o of swallowable(); track o.index) {
+        <button type="button" class="button button--small" (click)="swallow(o.index)">
+          ✨ {{ i18n.t('combat.swallow', { name: o.name, n: o.buff.combatSkill }) }}
+        </button>
+      }
+      @if (buffError(); as message) {
+        <p class="notice notice--error small" role="alert">{{ message }}</p>
       }
       @if (canPsiSurge()) {
         <label class="toggle">
