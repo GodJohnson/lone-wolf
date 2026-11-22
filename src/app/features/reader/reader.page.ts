@@ -38,6 +38,7 @@ import { PORTHOLES } from '../../core/game/portholes';
 import { PortholesComponent } from './portholes.component';
 import { SamorComponent } from './samor.component';
 import { ArcheryComponent } from './archery.component';
+import { BowShotComponent } from './bow-shot.component';
 import { ARCHERY } from '../../core/game/archery';
 import { SAMOR } from '../../core/game/samor';
 import { CARTWHEEL_SECTION } from '../../core/game/cartwheel';
@@ -55,6 +56,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     PortholesComponent,
     SamorComponent,
     ArcheryComponent,
+    BowShotComponent,
     ItemSheetComponent,
     PaymentSheetComponent,
     MapViewerComponent,
@@ -412,6 +414,14 @@ export class ReaderPage {
     if (at({ book: ARCHERY.book, section: ARCHERY.final })) return 'archeryFinal' as const;
     return null;
   });
+
+  /** Section de tir à l'arc (livre 6) : le texte cite « Weaponmastery with Bow » (hors tournoi, qui a son panneau). */
+  protected readonly bowShot = computed(
+    () =>
+      this.bookId() === ARCHERY.book &&
+      !this.minigame() &&
+      /Weaponmastery with Bow/i.test(this.sourceText()),
+  );
 
   protected readonly isDeadEnd = computed(
     () => !!this.section.value()?.blocks.some((b) => b.kind === 'deadend'),

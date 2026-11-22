@@ -17,7 +17,8 @@ import {
 } from '../../core/game/archery';
 import { GameService } from '../../core/game/game.service';
 import { randomNumber } from '../../core/game/random';
-import { effectiveCombatSkill, isSkilledWeapon } from '../../core/game/rules';
+import { bowShotBonus } from '../../core/game/bow';
+import { effectiveCombatSkill } from '../../core/game/rules';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { MessageKey } from '../../core/i18n/messages';
 
@@ -74,8 +75,11 @@ import { MessageKey } from '../../core/i18n/messages';
             {{ i18n.t('archery.continue', { section: exitQualify() }) }}
           </button>
         } @else {
-          @if (bowMastery()) {
-            <p class="small">{{ i18n.t('archery.bowMastery', { bonus: bonus }) }}</p>
+          @if (bow().mastery) {
+            <p class="small">{{ i18n.t('archery.bowMastery', { bonus: bow().mastery }) }}</p>
+          }
+          @if (bow().silverBow) {
+            <p class="small">{{ i18n.t('archery.silverBow', { bonus: bow().silverBow }) }}</p>
           }
           <button type="button" class="button button--primary button--block" (click)="shoot()">
             🏹 {{ i18n.t('archery.shoot') }}
@@ -143,7 +147,6 @@ export class ArcheryComponent {
   protected readonly target = ARCHERY.targetPoints;
   protected readonly altanCs = ARCHERY.altanCombatSkill;
   protected readonly needed = ARCHERY.qualifyingScore;
-  protected readonly bonus = ARCHERY.bowMasteryBonus;
   protected readonly jakan = signal(false);
   protected readonly qualified = signal<Qualification | null>(null);
   protected readonly state = signal(FINAL_START);
@@ -153,10 +156,10 @@ export class ArcheryComponent {
   protected readonly started = computed(() => !!this.qualified() || this.rounds().length > 0);
   protected readonly finished = computed(() => !!this.outcome());
 
-  /** Weaponmastery avec Bow (+3 à la qualification et en finale). */
-  protected readonly bowMastery = computed(() => {
+  /** Bonus aux tirs : Weaponmastery avec Bow (+3) et Silver Bow of Duadon (+3), cumulables. */
+  protected readonly bow = computed(() => {
     const c = this.game.character();
-    return !!c && isSkilledWeapon(c, 'Bow');
+    return c ? bowShotBonus(c) : { mastery: 0, silverBow: 0, total: 0 };
   });
 
   /** HABILETÉ pour la finale : arc seul en main (arc prêté compris), Sommerswerd laissé de côté. */
@@ -166,7 +169,8 @@ export class ArcheryComponent {
     const archer = {
       ...c,
       weapons: ['Bow'],
-      specialItems: c.specialItems.filter((i) => !/sommerswerd/i.test(i)),
+      // Note du §26 : ni Bouclier ni autre arme que l'arc ; aucun objet spécial ne donne de bonus.
+      specialItems: [],
     };
     return effectiveCombatSkill(archer, {
       modifier: this.jakan() ? -ARCHERY.jakanPenalty : 0,
@@ -192,7 +196,7 @@ export class ArcheryComponent {
 
   protected shoot(): void {
     const picks = [randomNumber(), randomNumber(), randomNumber()];
-    this.qualified.set(qualification(picks, this.bowMastery(), this.jakan()));
+    this.qualified.set(qualification(picks, this.bow().total, this.jakan()));
   }
 
   protected round(): void {

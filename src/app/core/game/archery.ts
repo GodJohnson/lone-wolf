@@ -3,7 +3,7 @@ import { combatResult } from './combat-results-table';
 /**
  * Tournoi d'archerie du livre 6 (Project Aon : sections 340 et 26). Règles du texte :
  *  - Qualification (§340) : trois nombres tirés dans la Table de hasard, additionnés ; +3 avec la Discipline
- *    Weaponmastery avec Bow. 7 ou moins : éliminé (103) ; 8 ou plus : qualifié pour la finale (26).
+ *    Weaponmastery avec Bow, +3 de plus avec le Silver Bow of Duadon (voir `bowShotBonus`). 7 ou moins : éliminé (103) ; 8 ou plus : qualifié pour la finale (26).
  *  - Finale (§26) : combat normal contre Altan (HABILETÉ 28), mais avec 50 points de CIBLE de part et d'autre :
  *    les pertes d'ENDURANCE s'y déduisent (l'ENDURANCE réelle ne change pas). Le premier à zéro perd :
  *    vous → 183, Altan → 252. Aucune flèche n'est effacée.
@@ -20,7 +20,6 @@ export const ARCHERY = {
   targetPoints: 50,
   altanCombatSkill: 28,
   qualifyingScore: 8,
-  bowMasteryBonus: 3,
   jakanPenalty: 2,
 } as const;
 
@@ -37,13 +36,13 @@ export interface Qualification {
 
 export function qualification(
   picks: readonly number[],
-  bowMastery: boolean,
+  /** Bonus d'arc ajouté au total (Weaponmastery avec Bow, Silver Bow). */
+  bonus: number,
   jakan = false,
 ): Qualification {
   if (picks.length !== 3 || picks.some((n) => !Number.isInteger(n) || n < 0 || n > 9))
     throw new RangeError('picks');
   const sum = picks.reduce((a, b) => a + b, 0);
-  const bonus = bowMastery ? ARCHERY.bowMasteryBonus : 0;
   const total = sum + bonus;
   return {
     picks: [...picks],

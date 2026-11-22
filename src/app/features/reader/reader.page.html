@@ -67,6 +67,9 @@
           @if (minigame() === 'archeryFinal') {
             <lw-archery lwBeforeChoices mode="final" (leave)="goTo($event)" />
           }
+          @if (bowShot()) {
+            <lw-bow-shot lwBeforeChoices />
+          }
           @if (minigame() === 'samor') {
             <lw-samor lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
           }
