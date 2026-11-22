@@ -15,6 +15,7 @@
   </label>
 
   <a class="button button--block" routerLink="/import"> ⇄ {{ i18n.t('library.importGame') }} </a>
+  <a class="button button--block" routerLink="/tower-war"> ⚔ {{ i18n.t('tw.open') }} </a>
 
   @if (message(); as msg) {
     <p class="notice" [class.notice--error]="msg.error" role="status">{{ msg.text }}</p>
