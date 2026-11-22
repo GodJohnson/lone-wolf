@@ -15,6 +15,10 @@ describe('places', () => {
     expect(findPlace('02fotw', 'Holmgard', ['Holmgard|0.5|0.25'])).toEqual({ x: 0.5, y: 0.25 });
     expect(findPlace('02fotw', 'Atlantis', ['Atlantis|0.1|0.9'])).toEqual({ x: 0.1, y: 0.9 });
   });
+  it('« Bir Rabalou » est le lieu, « Rabalou » sa graphie courte', () => {
+    expect(findPlace('05sots', 'Bir Rabalou')).toEqual(findPlace('05sots', 'Rabalou'));
+    expect(findPlace('05sots', 'Ikaresh')).not.toBeNull();
+  });
   it('rejette une épingle mal formée', () => {
     expect(parsePin('X|2|0.5')).toBeNull();
     expect(parsePin('|0.1|0.1')).toBeNull();
