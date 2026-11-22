@@ -1467,3 +1467,40 @@ lw-character-panel > * {
     bottom: 1.5rem;
   }
 }
+
+/* ---------- Tournoi d'archerie (livre 6) ---------- */
+
+.archery__picks {
+  font-size: 1.2rem;
+}
+.archery__pick {
+  display: inline-block;
+  min-width: 2rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  background: var(--surface-2);
+  text-align: center;
+  font-weight: 700;
+}
+.archery__pick--bonus {
+  background: var(--accent);
+  color: #fff;
+}
+.archery__bars {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+.archery__bars label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+.archery__bars progress {
+  width: 100%;
+  height: 0.9rem;
+}
+.archery__log {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+}

@@ -37,6 +37,8 @@ import { CartwheelComponent } from './cartwheel.component';
 import { PORTHOLES } from '../../core/game/portholes';
 import { PortholesComponent } from './portholes.component';
 import { SamorComponent } from './samor.component';
+import { ArcheryComponent } from './archery.component';
+import { ARCHERY } from '../../core/game/archery';
 import { SAMOR } from '../../core/game/samor';
 import { CARTWHEEL_SECTION } from '../../core/game/cartwheel';
 import { CombatPanelComponent } from './combat-panel.component';
@@ -52,6 +54,7 @@ import { CombatPanelComponent } from './combat-panel.component';
     CartwheelComponent,
     PortholesComponent,
     SamorComponent,
+    ArcheryComponent,
     ItemSheetComponent,
     PaymentSheetComponent,
     MapViewerComponent,
@@ -404,6 +407,9 @@ export class ReaderPage {
     if (at(CARTWHEEL_SECTION)) return 'cartwheel' as const;
     if (at(PORTHOLES)) return 'portholes' as const;
     if (at(SAMOR)) return 'samor' as const;
+    if (at({ book: ARCHERY.book, section: ARCHERY.qualification }))
+      return 'archeryQualify' as const;
+    if (at({ book: ARCHERY.book, section: ARCHERY.final })) return 'archeryFinal' as const;
     return null;
   });
 

@@ -61,6 +61,12 @@
           @if (minigame() === 'portholes') {
             <lw-portholes lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
           }
+          @if (minigame() === 'archeryQualify') {
+            <lw-archery lwBeforeChoices mode="qualify" (leave)="goTo($event)" />
+          }
+          @if (minigame() === 'archeryFinal') {
+            <lw-archery lwBeforeChoices mode="final" (leave)="goTo($event)" />
+          }
           @if (minigame() === 'samor') {
             <lw-samor lwBeforeChoices [rules]="rules()" (leave)="goTo($event)" />
           }
