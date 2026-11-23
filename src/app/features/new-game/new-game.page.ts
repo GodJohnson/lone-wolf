@@ -186,6 +186,38 @@ export class NewGamePage {
       this.equipmentReady(),
   );
 
+  /**
+   * Ce qu'il reste à faire pour pouvoir commencer (un bouton grisé sans explication bloque le joueur).
+   * Choisir des objets d'équipement n'est jamais obligatoire : seuls le tirage d'or, les Disciplines et les
+   * armes de maîtrise le sont.
+   */
+  protected readonly missing = computed<string[]>(() => {
+    const out: string[] = [];
+    if (!this.carried() && (this.csRoll() === null || this.epRoll() === null)) {
+      out.push(this.i18n.t('newGame.missing.stats'));
+    }
+    const left = this.disciplinesToChoose() - this.selected().length;
+    if (left > 0) out.push(this.i18n.t('newGame.missing.disciplines', { n: left }));
+    if (left < 0) out.push(this.i18n.t('newGame.missing.tooMany', { n: -left }));
+    if (this.needsWeapon() && this.weapon() === null) {
+      out.push(this.i18n.t('newGame.missing.weapon'));
+    }
+    if (this.needsMastery() && this.masteryChoice().length !== this.masteryCount()) {
+      out.push(
+        this.i18n.t('newGame.missing.mastery', {
+          n: this.masteryCount() - this.masteryChoice().length,
+        }),
+      );
+    }
+    const eq = this.equipment();
+    if (eq && this.goldRoll() === null) out.push(this.i18n.t('newGame.missing.gold'));
+    if (eq?.pick.mode === 'random' && this.itemRoll() === null) {
+      out.push(this.i18n.t('newGame.missing.item'));
+    }
+    return out;
+  });
+  protected readonly startError = signal<string | null>(null);
+
   protected rollStats(): void {
     this.csRoll.set(randomNumber());
     this.epRoll.set(randomNumber());
@@ -311,6 +343,17 @@ export class NewGamePage {
   }));
 
   protected async start(): Promise<void> {
+    this.startError.set(null);
+    try {
+      await this.doStart();
+    } catch (error) {
+      // Jamais de bouton muet : le joueur voit qu'il y a eu un problème.
+      console.error(error);
+      this.startError.set(this.i18n.t('newGame.startFailed'));
+    }
+  }
+
+  private async doStart(): Promise<void> {
     const book = this.book.value();
     if (!book || !this.canStart()) return;
     if ((await this.game.exists(book.id)) && !confirm(this.i18n.t('newGame.overwrite'))) return;

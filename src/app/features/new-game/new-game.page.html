@@ -203,6 +203,7 @@
                   {{
                     i18n.t('newGame.chooseItems', { count: chosen().length, max: eq.pick.count })
                   }}
+                  <span class="muted">{{ i18n.t('newGame.optional') }}</span>
                 </h3>
                 <div class="chips">
                   @for (option of eq.pick.options; track $index) {
@@ -236,6 +237,19 @@
         </p>
       }
 
+      @if (missing().length) {
+        <aside class="notice" role="status">
+          <strong>{{ i18n.t('newGame.missing.title') }}</strong>
+          <ul class="missing-list">
+            @for (item of missing(); track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </aside>
+      }
+      @if (startError(); as message) {
+        <p class="notice notice--error" role="alert">{{ message }}</p>
+      }
       <button
         type="button"
         class="button button--primary button--block"
