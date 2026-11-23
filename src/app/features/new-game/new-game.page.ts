@@ -19,6 +19,7 @@ import {
 } from '../../core/game/equipment';
 import { CarriedHero, alreadyOwned, carryOver } from '../../core/game/carry-over';
 import { syncLoreBonus } from '../../core/game/lore-circles';
+import { addToStash } from '../../core/game/stash';
 import { GameService } from '../../core/game/game.service';
 import { randomNumber } from '../../core/game/random';
 import {
@@ -117,7 +118,11 @@ export class NewGamePage {
   /** Weaponmastery choisie : cocher des armes sur la liste (3 au départ de la série). */
   protected readonly masteryWeapons = WEAPONMASTERY_WEAPONS;
   protected readonly masteryChoice = signal<string[]>([]);
-  protected readonly masteryCount = 3;
+  /** 3 armes au départ de la série ; un héros reporté en garde la liste et en coche une de plus par livre. */
+  protected readonly masteryCount = computed(() => {
+    const existing = this.carried()?.character.weaponmastery?.length ?? 0;
+    return !this.newSeries() && existing ? existing + 1 : 3;
+  });
   protected readonly needsMastery = computed(
     () =>
       this.isMagnakai() &&
@@ -127,7 +132,7 @@ export class NewGamePage {
     this.masteryChoice.update((list) =>
       list.includes(weapon)
         ? list.filter((w) => w !== weapon)
-        : list.length < this.masteryCount
+        : list.length < this.masteryCount()
           ? [...list, weapon]
           : list,
     );
@@ -141,7 +146,13 @@ export class NewGamePage {
   );
 
   /** Équipement de départ structuré (livres 1 à 5) ; sinon saisie manuelle sur la Feuille. */
-  protected readonly equipment = computed(() => startingEquipmentFor(this.bookId()));
+  protected readonly equipment = computed(() => {
+    const eq = startingEquipmentFor(this.bookId());
+    // Livre 11 : un héros reporté a déjà son équipement, la section est sautée.
+    return eq?.skipWhenCarried && this.carried() ? null : eq;
+  });
+  /** Le livre a un équipement de départ connu (même sauté pour un héros reporté). */
+  protected readonly bookHasEquipment = computed(() => !!startingEquipmentFor(this.bookId()));
   protected readonly goldRoll = signal<number | null>(null);
   protected readonly itemRoll = signal<number | null>(null);
   protected readonly chosen = signal<number[]>([]);
@@ -171,7 +182,7 @@ export class NewGamePage {
       (!this.from() || !!this.carried()) &&
       this.selected().length === this.disciplinesToChoose() &&
       (!this.needsWeapon() || this.weapon() !== null) &&
-      (!this.needsMastery() || this.masteryChoice().length === this.masteryCount) &&
+      (!this.needsMastery() || this.masteryChoice().length === this.masteryCount()) &&
       this.equipmentReady(),
   );
 
@@ -267,9 +278,37 @@ export class NewGamePage {
       const carried = this.carried();
       if (!carried) return;
       this.selected.set([...carried.disciplines]);
+      // Héros de la même série : la liste d'armes maîtrisées est reprise, il n'en reste qu'une à ajouter.
+      if (!this.newSeries()) this.masteryChoice.set([...(carried.character.weaponmastery ?? [])]);
       this.keptWeapons.set([...carried.character.weapons]);
     });
   }
+
+  /** Armes reportées que le joueur laisse (au-delà de deux) : elles vont dans le coffre du monastère. */
+  private droppedWeapons(): string[] {
+    const kept = [...this.keptWeapons()];
+    return (this.carried()?.character.weapons ?? []).filter((w) => {
+      const i = kept.indexOf(w);
+      if (i < 0) return true;
+      kept.splice(i, 1);
+      return false;
+    });
+  }
+
+  /** Surplus d'or (au-delà de 50 couronnes) : il reste en sûreté au monastère Kai. */
+  private surplusGold(): number {
+    const eq = this.equipment();
+    const roll = this.goldRoll();
+    if (!eq || roll === null) return 0;
+    const base = this.carried()?.character.gold ?? 0;
+    return Math.max(0, base + eq.goldBase + roll - this.rules().maxGold);
+  }
+
+  /** Ce qui sera laissé au monastère, pour l'afficher avant de commencer. */
+  protected readonly monasteryLeft = computed(() => ({
+    gold: this.surplusGold(),
+    items: this.droppedWeapons().length,
+  }));
 
   protected async start(): Promise<void> {
     const book = this.book.value();
@@ -297,6 +336,11 @@ export class NewGamePage {
       ];
       equipped = applyGrants(character, grants, this.rules()).character;
     }
+    // Surplus d'or et armes laissées : coffre du monastère Kai.
+    equipped = addToStash(equipped, 'monastery', {
+      gold: this.surplusGold(),
+      weapons: this.droppedWeapons(),
+    });
     // Cercles de Lore (Magnakai) : bonus HAB/END des Disciplines groupées.
     if (this.rules().loreCircles) equipped = syncLoreBonus(equipped);
     await this.game.newGame(book.id, equipped);

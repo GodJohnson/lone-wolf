@@ -188,9 +188,9 @@ export const fr = {
   'jump.label': 'Numéro de section',
   'jump.go': 'Y aller',
   'jump.invalid': 'Section inconnue (de 1 à {max}).',
-  'newGame.mastery': 'Armes de Weaponmastery : choisissez-en {count}',
+  'newGame.mastery': 'Armes de Weaponmastery : {count} au total',
   'newGame.masteryHint':
-    'Maîtriser une arme donne +3 HAB quand vous la portez. Vous n’avez pas besoin de la posséder au départ ; une arme de plus se coche à chaque livre terminé (depuis la Feuille d’aventure).',
+    'Maîtriser une arme donne +3 HAB quand vous la portez. Vous n’avez pas besoin de la posséder au départ ; une arme de plus se coche à chaque livre terminé (reprise de votre liste, à compléter ici).',
   'carry.newSeries':
     'Nouvelle série : HABILETÉ, ENDURANCE, armes, objets spéciaux et or sont reportés ; vous choisissez maintenant vos Disciplines Magnakai.',
   'chart.mastery': 'Armes maîtrisées (Weaponmastery, +3 HAB)',
@@ -261,6 +261,14 @@ export const fr = {
   'consumables.where': 'livre {book}, §{sections}',
   'combat.resistance': 'RÉSISTANCE',
   'combat.stop': 'Cesser le combat',
+  'monastery.title': 'Coffre du monastère Kai',
+  'monastery.hint':
+    'Le surplus d’or (au-delà de 50 couronnes) et les objets laissés au monastère entre deux aventures. Reprenez-les au début d’un livre ; le livre 11 n’y donne pas accès au départ.',
+  'monastery.action': 'Laisser au monastère…',
+  'monastery.sheetTitle': 'Laisser au monastère Kai',
+  'monastery.confirm': 'Laisser au monastère ({n})',
+  'newGame.monastery': 'Laissé au monastère Kai : {gold} couronnes de trop et {items} objet(s).',
+  'newGame.skipEquipment': 'Équipement : cette étape est sautée, vous gardez celui de votre héros.',
   'endurance.title': 'Appliquer à la Feuille d’aventure',
   'endurance.apply': 'Appliquer',
   'endurance.lose': 'Perdre {n} ENDURANCE',
@@ -611,7 +619,7 @@ export const en: Record<MessageKey, string> = {
   'jump.label': 'Section number',
   'jump.go': 'Go',
   'jump.invalid': 'Unknown section (1 to {max}).',
-  'newGame.mastery': 'Weaponmastery weapons: choose {count}',
+  'newGame.mastery': 'Weaponmastery weapons: {count} in total',
   'newGame.masteryHint':
     'Mastering a weapon gives +3 COMBAT SKILL when you carry it. You do not need to own it at the start; one more weapon is ticked after each book (from the Action Chart).',
   'carry.newSeries':
@@ -684,6 +692,14 @@ export const en: Record<MessageKey, string> = {
   'consumables.where': 'book {book}, §{sections}',
   'combat.resistance': 'RESISTANCE',
   'combat.stop': 'Stop fighting',
+  'monastery.title': 'Kai Monastery safekeeping',
+  'monastery.hint':
+    'Surplus gold (beyond 50 Crowns) and items left at the Monastery between adventures. Take them back at the start of a book; book 11 gives no access at the start.',
+  'monastery.action': 'Leave at the Monastery…',
+  'monastery.sheetTitle': 'Leave at the Kai Monastery',
+  'monastery.confirm': 'Leave at the Monastery ({n})',
+  'newGame.monastery': 'Left at the Kai Monastery: {gold} surplus Crowns and {items} item(s).',
+  'newGame.skipEquipment': 'Equipment: this step is skipped, you keep your hero’s equipment.',
   'endurance.title': 'Apply to the Action Chart',
   'endurance.apply': 'Apply',
   'endurance.lose': 'Lose {n} ENDURANCE',

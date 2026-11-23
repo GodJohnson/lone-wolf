@@ -23,6 +23,8 @@ export interface Character {
   loreApplied?: { cs: number; ep: number };
   /** Objets, or et Repas mis de côté (confisqués, laissés en route) : ne comptent plus, mais restent récupérables. */
   stash?: Stash;
+  /** Coffre du monastère Kai : surplus d'or (au-delà de 50) et objets laissés entre deux aventures. */
+  monastery?: Stash;
 }
 
 export interface Stash {
