@@ -18,8 +18,8 @@
           >{{ i18n.t('combat.cs') }} <strong>{{ c.enemy.combatSkill }}</strong></span
         >
         <span
-          >{{ i18n.t('combat.ep') }} <strong>{{ c.enemyEndurance }}</strong> /
-          {{ c.enemy.endurance }}</span
+          >{{ c.enemy.pointsLabel ? poolLabel(c.enemy.pointsLabel) : i18n.t('combat.ep') }}
+          <strong>{{ c.enemyEndurance }}</strong> / {{ c.enemy.endurance }}</span
         >
       </div>
     </div>
@@ -62,7 +62,7 @@
           +
         </button>
       </div>
-      @if (canMindblast()) {
+      @if (canMindblast() && !inanimate()) {
         <label class="toggle">
           <input type="checkbox" [checked]="c.useMindblast" (change)="toggleMindblast()" />
           {{ i18n.t('combat.mindblast') }}
@@ -76,7 +76,7 @@
       @if (buffError(); as message) {
         <p class="notice notice--error small" role="alert">{{ message }}</p>
       }
-      @if (canPsiSurge()) {
+      @if (canPsiSurge() && !inanimate()) {
         <label class="toggle">
           <input
             type="checkbox"
@@ -90,29 +90,37 @@
           <p class="small muted">{{ i18n.t('combat.psisurgeLow') }}</p>
         }
       }
-      <label class="toggle">
-        <input type="checkbox" [checked]="!!c.mindforce" (change)="toggleMindforce()" />
-        {{ i18n.t('combat.mindforce', { n: c.mindforce || 2 }) }}
-      </label>
-      @if (c.mindforce) {
-        <p class="small muted">
-          {{
-            i18n.t(mindProtected() ? 'combat.mindforceSafe' : 'combat.mindforceHit', {
-              n: c.mindforce,
-            })
-          }}
-        </p>
+      @if (!inanimate()) {
+        <label class="toggle">
+          <input type="checkbox" [checked]="!!c.mindforce" (change)="toggleMindforce()" />
+          {{ i18n.t('combat.mindforce', { n: c.mindforce || 2 }) }}
+        </label>
+        @if (c.mindforce) {
+          <p class="small muted">
+            {{
+              i18n.t(mindProtected() ? 'combat.mindforceSafe' : 'combat.mindforceHit', {
+                n: c.mindforce,
+              })
+            }}
+          </p>
+        }
       }
-      @if (hasSommerswerd()) {
+      @if (hasSommerswerd() && !inanimate()) {
         <label class="toggle">
           <input type="checkbox" [checked]="!!c.undead" (change)="toggleUndead()" />
           {{ i18n.t('combat.undead') }}
         </label>
       }
       <div class="combat-actions">
-        <button type="button" class="button" (click)="game.fightRound(true)">
-          {{ i18n.t('combat.evade') }}
-        </button>
+        @if (inanimate()) {
+          <button type="button" class="button" (click)="game.closeCombat()">
+            {{ i18n.t('combat.stop') }}
+          </button>
+        } @else {
+          <button type="button" class="button" (click)="game.fightRound(true)">
+            {{ i18n.t('combat.evade') }}
+          </button>
+        }
         <button type="button" class="button button--danger" (click)="game.fightRound()">
           {{ i18n.t('combat.fight') }}
         </button>

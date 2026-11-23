@@ -295,10 +295,15 @@ export function startCombat(
     enemy,
     enemyEndurance: enemy.endurance,
     modifier: 0,
+    // Une porte ou une cible n'est pas une créature : ni Mindblast ni Psi-surge.
     useMindblast:
+      !enemy.pointsLabel &&
       hasDiscipline(character, DISCIPLINE.mindblast) &&
       !hasDiscipline(character, DISCIPLINE.psisurge),
-    usePsiSurge: hasDiscipline(character, DISCIPLINE.psisurge) && character.endurance > 6,
+    usePsiSurge:
+      !enemy.pointsLabel &&
+      hasDiscipline(character, DISCIPLINE.psisurge) &&
+      character.endurance > 6,
     undead: /helghast/i.test(enemy.name),
     ...(mindforce ? { mindforce } : {}),
     // Les effets avalés avant le combat passent dans ce combat.

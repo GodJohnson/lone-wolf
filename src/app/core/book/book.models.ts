@@ -74,6 +74,11 @@ export interface Enemy {
   name: string;
   combatSkill: number;
   endurance: number;
+  /**
+   * Combat dont les points ne sont pas de l'ENDURANCE d'un être vivant (« ENDURANCE ( RESISTANCE points) 35 » : une
+   * porte à enfoncer ; « ( TARGET points) 50 » : un tournoi) : ni Psi-surge ni Mindblast, ni effets de créature.
+   */
+  pointsLabel?: string;
 }
 
 export interface SectionRecord {

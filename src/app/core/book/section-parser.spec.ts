@@ -42,6 +42,20 @@ describe('section-parser', () => {
     expect(blocks[1]).toEqual({ kind: 'figure', image: 'ill1.png' });
   });
 
+  it('parseEnemy lit « ENDURANCE ( RESISTANCE points) 35 » (porte) et « ( TARGET points) 50 » (tournoi)', () => {
+    expect(parseEnemy('Sewer Door: COMBAT SKILL 13 ENDURANCE ( RESISTANCE points) 35')).toEqual({
+      name: 'Sewer Door',
+      combatSkill: 13,
+      endurance: 35,
+      pointsLabel: 'RESISTANCE',
+    });
+    expect(parseEnemy('Altan: COMBAT SKILL 28 ENDURANCE ( TARGET points) 50')).toMatchObject({
+      endurance: 50,
+      pointsLabel: 'TARGET',
+    });
+    expect(parseEnemy('Kraan: COMBAT SKILL 16 ENDURANCE 24')?.pointsLabel).toBeUndefined();
+  });
+
   it('parseEnemy tolère les variantes de mise en forme', () => {
     expect(parseEnemy('Kraan: COMBAT SKILL 16 ENDURANCE 24')).toEqual({
       name: 'Kraan',

@@ -61,6 +61,14 @@ export class CombatPanelComponent {
     if (error === 'buffActive') this.buffError.set(this.i18n.t('chart.error.buffActive'));
   }
 
+  /** Combat contre une porte (« RESISTANCE points ») : pas d'effets de créature, on peut cesser à tout moment. */
+  protected readonly inanimate = computed(() => !!this.combat()?.enemy.pointsLabel);
+
+  /** Nom des points de l'adversaire quand ce n'est pas de l'ENDURANCE (« RESISTANCE »). */
+  protected poolLabel(label: string): string {
+    return label === 'RESISTANCE' ? this.i18n.t('combat.resistance') : label;
+  }
+
   protected readonly psiSurgeLow = computed(() => (this.character()?.endurance ?? 0) <= 6);
   protected readonly rounds = computed(() => [...(this.combat()?.rounds ?? [])].reverse());
 

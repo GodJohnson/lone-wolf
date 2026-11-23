@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { Block, Enemy, FootnoteRecord } from '../core/book/book.models';
+import { parseEnemy } from '../core/book/section-parser';
 import { ChoiceCondition } from '../core/game/choice-conditions';
 import { ITEM_LINK_PREFIX } from '../core/game/item-detection';
 import { I18nService } from '../core/i18n/i18n.service';
@@ -82,7 +83,7 @@ export type BookLink = { kind: 'section'; number: number } | { kind: 'page'; id:
         @case ('combat') {
           <div class="combat-block">
             <p translate="yes" [attr.lang]="lang()" [innerHTML]="block.html"></p>
-            @if (interactive() && block.enemy; as enemy) {
+            @if (interactive() && enemyOf(block); as enemy) {
               <button
                 type="button"
                 class="button button--danger"
@@ -169,6 +170,17 @@ export class BlocksComponent {
     return this.i18n.t(cond.negated ? 'choice.excludedBy' : 'choice.requires', {
       disciplines: names.join(joiner),
     });
+  }
+
+  /**
+   * Ennemi d'un bloc de combat. Relu depuis le texte quand le livre importé ne l'a pas reconnu (formats
+   * « ENDURANCE ( RESISTANCE points) 35 ») ; un tournoi (« TARGET points ») a son propre panneau.
+   */
+  protected enemyOf(block: Block): Enemy | null {
+    if (block.kind !== 'combat') return null;
+    const enemy =
+      block.enemy ?? parseEnemy(block.html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' '));
+    return enemy && enemy.pointsLabel !== 'TARGET' ? enemy : null;
   }
 
   protected choose(target: number, index: number): void {

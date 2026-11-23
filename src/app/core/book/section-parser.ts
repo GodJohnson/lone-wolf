@@ -8,7 +8,8 @@ import { cleanInnerHtml, cleanOuterHtml, normalizedText } from './html-cleaner';
  */
 
 const SECTION_LINK = /^sect(\d+)\.htm$/i;
-const COMBAT_STATS = /^(.*?):?\s*COMBAT\s*SKILL\s*:?\s*(\d+)\s*ENDURANCE\s*:?\s*(\d+)/i;
+const COMBAT_STATS =
+  /^(.*?):?\s*COMBAT\s*SKILL\s*:?\s*(\d+)\s*ENDURANCE\s*(?:\(\s*([A-Za-z ]+?)\s*points?\s*\))?\s*:?\s*(\d+)/i;
 const CONTAINER_TAGS = new Set(['div', 'section', 'article']);
 
 export function parseDocument(html: string): Document {
@@ -115,7 +116,8 @@ export function parseEnemy(text: string): Enemy | null {
   return {
     name: match[1].trim(),
     combatSkill: Number(match[2]),
-    endurance: Number(match[3]),
+    endurance: Number(match[4]),
+    ...(match[3] ? { pointsLabel: match[3].trim().toUpperCase() } : {}),
   };
 }
 
