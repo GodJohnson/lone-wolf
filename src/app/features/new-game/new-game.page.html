@@ -117,8 +117,8 @@
 
         @if (needsMastery()) {
           <h3 class="small">
-            {{ i18n.t('newGame.mastery', { count: masteryCount }) }}
-            ({{ masteryChoice().length }}/{{ masteryCount }})
+            {{ i18n.t('newGame.mastery', { count: masteryCount() }) }}
+            ({{ masteryChoice().length }}/{{ masteryCount() }})
           </h3>
           <div class="chips">
             @for (w of masteryWeapons; track w) {
@@ -147,6 +147,21 @@
           </div>
         }
       </section>
+
+      @if (carried() && !equipment() && bookHasEquipment()) {
+        <p class="notice">{{ i18n.t('newGame.skipEquipment') }}</p>
+      }
+
+      @if (monasteryLeft().gold || monasteryLeft().items) {
+        <p class="notice">
+          {{
+            i18n.t('newGame.monastery', {
+              gold: monasteryLeft().gold,
+              items: monasteryLeft().items,
+            })
+          }}
+        </p>
+      }
 
       @if (equipment(); as eq) {
         <section class="card">

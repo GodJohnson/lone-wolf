@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { GameService } from '../../core/game/game.service';
 import { SeriesRules } from '../../core/game/rules';
 import {
+  StashField,
   StashPick,
   StashSlot,
   StashTarget,
@@ -26,14 +27,14 @@ const SLOTS: StashSlot[] = ['weapons', 'backpack', 'specialItems'];
   template: `
     <section class="card stash">
       <div class="card__header">
-        <h2>{{ i18n.t('stash.title') }}</h2>
+        <h2>{{ i18n.t(key('title')) }}</h2>
         <button
           type="button"
           class="button button--small"
           [disabled]="!anything()"
           (click)="openSheet()"
         >
-          {{ i18n.t('stash.action') }}
+          {{ i18n.t(key('action')) }}
         </button>
       </div>
       @if (entries().length) {
@@ -61,7 +62,7 @@ const SLOTS: StashSlot[] = ['weapons', 'backpack', 'specialItems'];
           {{ i18n.t('stash.restoreAll') }}
         </button>
       } @else {
-        <p class="small muted">{{ i18n.t('stash.hint') }}</p>
+        <p class="small muted">{{ i18n.t(key('hint')) }}</p>
       }
       @if (error(); as message) {
         <p class="notice notice--error" role="alert">{{ message }}</p>
@@ -71,7 +72,7 @@ const SLOTS: StashSlot[] = ['weapons', 'backpack', 'specialItems'];
     @if (sheetOpen()) {
       <div class="sheet-backdrop" (click)="sheetOpen.set(false)"></div>
       <section class="sheet stash-sheet" role="dialog" aria-modal="true">
-        <h2>{{ i18n.t('stash.sheetTitle') }}</h2>
+        <h2>{{ i18n.t(key('sheetTitle')) }}</h2>
         <div class="chips">
           @for (option of options(); track option.key) {
             <button
@@ -107,7 +108,7 @@ const SLOTS: StashSlot[] = ['weapons', 'backpack', 'specialItems'];
             [disabled]="!selected().size"
             (click)="confirm()"
           >
-            {{ i18n.t('stash.confirm', { n: selected().size }) }}
+            {{ i18n.t(key('confirm'), { n: selected().size }) }}
           </button>
         </div>
       </section>
@@ -118,6 +119,13 @@ export class StashPanelComponent {
   protected readonly i18n = inject(I18nService);
   private readonly game = inject(GameService);
   readonly rules = input.required<SeriesRules>();
+  /** Réserve gérée : « mis de côté » (défaut) ou coffre du monastère Kai. */
+  readonly field = input<StashField>('stash');
+
+  /** Libellé propre à la réserve (`stash.*` ou `monastery.*`). */
+  protected key(name: 'title' | 'action' | 'hint' | 'sheetTitle' | 'confirm'): MessageKey {
+    return `${this.field() === 'monastery' ? 'monastery' : 'stash'}.${name}` as MessageKey;
+  }
 
   protected readonly sheetOpen = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -151,7 +159,7 @@ export class StashPanelComponent {
 
   /** Ce qui est de côté, avec de quoi le récupérer ou l'abandonner. */
   protected readonly entries = computed(() => {
-    const stash = this.character()?.stash;
+    const stash = this.character()?.[this.field()];
     if (!stash || !stashCount(stash)) return [];
     const rows: { key: string; label: string; target: StashTarget }[] = [];
     for (const slot of SLOTS) {
@@ -204,14 +212,14 @@ export class StashPanelComponent {
     }
     this.sheetOpen.set(false);
     this.error.set(null);
-    await this.game.updateCharacter((c) => putAside(c, pick));
+    await this.game.updateCharacter((c) => putAside(c, pick, this.field()));
   }
 
   protected async restore(target: StashTarget): Promise<void> {
     this.error.set(null);
     const c = this.character();
     if (!c) return;
-    const result = getBack(c, this.rules(), target);
+    const result = getBack(c, this.rules(), target, this.field());
     if (result.error) this.error.set(this.i18n.t(`chart.error.${result.error}` as MessageKey));
     if (result.character !== c) await this.game.updateCharacter(() => result.character);
   }
@@ -229,7 +237,7 @@ export class StashPanelComponent {
         typeof entry.target === 'string'
           ? entry.target
           : { slot: entry.target.slot, index: stuck[entry.target.slot] ?? 0 };
-      const result = getBack(current, this.rules(), target);
+      const result = getBack(current, this.rules(), target, this.field());
       if (result.error) {
         failed = this.i18n.t(`chart.error.${result.error}` as MessageKey);
         if (typeof target !== 'string') stuck[target.slot] = (stuck[target.slot] ?? 0) + 1;
@@ -242,6 +250,6 @@ export class StashPanelComponent {
 
   protected async forget(target: StashTarget): Promise<void> {
     this.error.set(null);
-    await this.game.updateCharacter((c) => discard(c, target));
+    await this.game.updateCharacter((c) => discard(c, target, this.field()));
   }
 }

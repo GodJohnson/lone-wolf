@@ -110,6 +110,8 @@ export interface StartingEquipment {
   /** Or de départ = `goldBase` + tirage. */
   goldBase: number;
   pick: StartingPick;
+  /** Un héros reporté d'un livre précédent a déjà son équipement : cette étape est sautée (livre 11). */
+  skipWhenCarried?: boolean;
 }
 
 const weapon = (name: string): EquipmentOption => ({
@@ -129,7 +131,75 @@ const meals = (label: string, count: number): EquipmentOption => ({
   grants: [{ slot: 'meals', count }],
 });
 
+/** Équipement proposé au début des livres 7 à 12 (page « Equipment » de chaque livre). */
+const MAGNAKAI_KIT: EquipmentOption[] = [
+  weapon('Sword'),
+  weapon('Bow'),
+  special('Quiver'),
+  backpack('Rope'),
+  backpack('Potion of Laumspur'),
+  backpack('Lantern'),
+  weapon('Mace'),
+  meals('3 Meals', 3),
+  weapon('Dagger'),
+];
+
 export const STARTING_EQUIPMENT: Record<string, StartingEquipment> = {
+  // Castle Death : les Elder Magi donnent une carte et une bourse, puis 5 objets au choix.
+  '07cd': {
+    fixed: [{ slot: 'specialItems', name: 'Map of Dessi' }],
+    goldBase: 10,
+    pick: { mode: 'choose', count: 5, options: [...MAGNAKAI_KIT, special('3 Fireseeds')] },
+  },
+  '08tjoh': {
+    fixed: [{ slot: 'specialItems', name: 'Map of the Jungle-Swamp' }],
+    goldBase: 10,
+    pick: { mode: 'choose', count: 5, options: [...MAGNAKAI_KIT, special('3 Fireseeds')] },
+  },
+  '09tcof': {
+    fixed: [{ slot: 'specialItems', name: 'Map of the Republic of Anari' }],
+    goldBase: 10,
+    pick: { mode: 'choose', count: 5, options: [...MAGNAKAI_KIT, special('3 Fireseeds')] },
+  },
+  // Le Sénat de Tahou : une Potion of Alether (+2 HAB un combat) remplace les Fireseeds.
+  '10tdot': {
+    fixed: [{ slot: 'specialItems', name: 'Map of Ghatan' }],
+    goldBase: 10,
+    pick: {
+      mode: 'choose',
+      count: 5,
+      options: [...MAGNAKAI_KIT, backpack('Potion of Alether')],
+    },
+  },
+  // Un héros reporté garde son équipement (section sautée) ; un premier héros a 2 Repas, une bourse et 6 objets.
+  '11tpot': {
+    fixed: [{ slot: 'meals', count: 2 }],
+    goldBase: 10,
+    skipWhenCarried: true,
+    pick: { mode: 'choose', count: 6, options: MAGNAKAI_KIT },
+  },
+  // Banedon : carte des Terres Sombres, bourse, vêtements polaires (non listés), et 6 objets.
+  '12tmod': {
+    fixed: [{ slot: 'specialItems', name: 'Map of the Darklands' }],
+    goldBase: 10,
+    pick: {
+      mode: 'choose',
+      count: 6,
+      options: [
+        weapon('Sword'),
+        weapon('Bow'),
+        special('Quiver'),
+        backpack('Rope'),
+        backpack('Potion of Laumspur'),
+        backpack('Lantern'),
+        weapon('Mace'),
+        meals('4 Meals', 4),
+        weapon('Dagger'),
+        weapon('Quarterstaff'),
+        weapon('Axe'),
+      ],
+    },
+  },
   '01fftd': {
     fixed: [
       { slot: 'weapons', name: 'Axe' },

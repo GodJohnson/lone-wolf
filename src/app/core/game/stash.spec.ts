@@ -1,6 +1,6 @@
 import { Character } from './game.models';
 import { SERIES_RULES } from './rules';
-import { discard, getBack, pickAll, putAside, stashCount } from './stash';
+import { addToStash, discard, getBack, pickAll, putAside, stashCount } from './stash';
 
 const rules = SERIES_RULES.kai;
 const hero = (over: Partial<Character> = {}): Character => ({
@@ -81,5 +81,24 @@ describe('stash', () => {
       },
     );
     expect(discard(one, { slot: 'weapons', index: 0 }).stash).toBeUndefined();
+  });
+});
+
+describe('coffre du monastère Kai', () => {
+  it('reçoit le surplus d’or et les armes laissées, sans toucher à la réserve « mis de côté »', () => {
+    const c = addToStash(hero(), 'monastery', { gold: 13, weapons: ['Axe'] });
+    expect(c.monastery).toMatchObject({ gold: 13, weapons: ['Axe'] });
+    expect(c.stash).toBeUndefined();
+    expect(addToStash(hero(), 'monastery', {})).toEqual(hero());
+  });
+
+  it('on y laisse et on y reprend des objets avec les mêmes règles de capacité', () => {
+    const left = putAside(hero(), pickAll(hero()), 'monastery');
+    expect(left.monastery?.specialItems).toEqual(['Helmet']);
+    expect(left.stash).toBeUndefined();
+    const back = getBack(left, rules, { slot: 'weapons', index: 0 }, 'monastery');
+    expect(back.character.weapons).toEqual(['Sword']);
+    expect(back.character.monastery?.weapons).toEqual(['Axe']);
+    expect(discard(left, 'gold', 'monastery').monastery?.gold).toBe(0);
   });
 });

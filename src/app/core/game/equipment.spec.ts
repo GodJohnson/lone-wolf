@@ -1,6 +1,7 @@
 import { Character } from './game.models';
 import {
   STARTING_EQUIPMENT,
+  startingEquipmentFor,
   addItem,
   applyGrants,
   arrowCount,
@@ -154,5 +155,43 @@ describe('places dans le sac', () => {
     expect(itemSize('Rope')).toBe(3);
     expect(itemSize('Lantern')).toBe(2);
     expect(backpackLoad(pack(['Rope', 'Lantern']))).toBe(5);
+  });
+});
+
+const optionLabels = (id: string): string[] => {
+  const pick = startingEquipmentFor(id)!.pick;
+  return pick.mode === 'choose' ? pick.options.map((o) => o.label) : [];
+};
+
+describe('équipement de départ des livres 7 à 12', () => {
+  it('livres 7 à 10 : carte, or 10 + tirage, 5 objets au choix', () => {
+    for (const id of ['07cd', '08tjoh', '09tcof', '10tdot']) {
+      const eq = startingEquipmentFor(id)!;
+      expect(eq.goldBase).toBe(10);
+      expect(eq.fixed).toHaveLength(1);
+      expect(eq.fixed[0]).toMatchObject({ slot: 'specialItems' });
+      expect(eq.pick).toMatchObject({ mode: 'choose', count: 5 });
+    }
+  });
+
+  it('livres 7 à 9 offrent des Fireseeds, le livre 10 une Potion of Alether', () => {
+    expect(optionLabels('07cd')).toContain('3 Fireseeds');
+    expect(optionLabels('10tdot')).toContain('Potion of Alether');
+    expect(optionLabels('10tdot')).not.toContain('3 Fireseeds');
+    expect(optionLabels('07cd')).toContain('Quiver');
+  });
+
+  it('livre 11 : étape sautée pour un héros reporté, 2 Repas et 6 objets sinon', () => {
+    const eq = startingEquipmentFor('11tpot')!;
+    expect(eq.skipWhenCarried).toBe(true);
+    expect(eq.fixed).toEqual([{ slot: 'meals', count: 2 }]);
+    expect(eq.pick).toMatchObject({ count: 6 });
+  });
+
+  it('livre 12 : 6 objets, dont 4 Repas, Quarterstaff et Axe', () => {
+    expect(startingEquipmentFor('12tmod')!.pick).toMatchObject({ count: 6 });
+    expect(optionLabels('12tmod')).toEqual(
+      expect.arrayContaining(['4 Meals', 'Quarterstaff', 'Axe']),
+    );
   });
 });

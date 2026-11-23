@@ -34,6 +34,8 @@ export function carryOver(
       ...(newSeries ? { weaponskill: null, weaponmastery: undefined, loreApplied: undefined } : {}),
       backpack: [],
       meals: 0,
+      // Ce qui était « mis de côté » (confiscation…) n'est pas repris : le coffre du monastère, si.
+      stash: undefined,
     },
   };
 }
