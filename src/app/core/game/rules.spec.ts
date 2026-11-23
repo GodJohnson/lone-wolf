@@ -79,6 +79,23 @@ describe('rules', () => {
     );
   });
 
+  describe('porte à enfoncer (RESISTANCE)', () => {
+    const door = { name: 'Sewer Door', combatSkill: 13, endurance: 35, pointsLabel: 'RESISTANCE' };
+    it('ni Mindblast ni Psi-surge contre une porte', () => {
+      const c = hero({ disciplines: ['Mindblast', 'Psi-surge'], endurance: 25 });
+      const combat = startCombat(156, 0, door, c);
+      expect(combat.useMindblast).toBe(false);
+      expect(combat.usePsiSurge).toBe(false);
+      expect(startCombat(1, 0, { ...door, pointsLabel: undefined }, c).usePsiSurge).toBe(true);
+    });
+    it('les pertes du joueur sont de vraies pertes d’ENDURANCE (fatigue)', () => {
+      const c = hero({ endurance: 25 });
+      const round = playRound(startCombat(156, 0, door, c), c, 5);
+      expect(round.character.endurance).toBeLessThan(25);
+      expect(round.combat.enemyEndurance).toBeLessThan(35);
+    });
+  });
+
   describe('Mindforce', () => {
     const enemy = { name: 'Helghast', combatSkill: 22, endurance: 30 };
     const loss = (c: Character, mindforce: number) =>
